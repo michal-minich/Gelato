@@ -1,0 +1,18 @@
+a = 1
+
+f = fn (a,b) {
+    x()
+    y=2
+
+    if r() then t() end -- else x() end
+
+    label q
+
+    goto q
+
+    return a()
+ }
+
+ch = 'a'
+
+t = "abc"
