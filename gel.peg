@@ -1,15 +1,21 @@
 Gel:
-File   <- Comment / Declrs
-    Comment <- : "--" .* :EOL
-Declrs <- Spacing Declr (:EOL+ Spacing Declr)* Spacing
-Declr  <- Ident Spacing :"=" Spacing Exp :Blank*
-Exp    <- Char/ Text / Number / Fn / FnApply / Ident
+File   <- Declrs EOI
+   Declrs <- Spacing DecrlItem (:LineSep Spacing DecrlItem)* Spacing
+       DecrlItem < Declr / Comment
+
+LineSep <- EOL+ / :","
+Comment <- :"--" ~(!EOL .)*
+Declr  <- (Ident Spacing :"=" Spacing Exp :Blank* Comment?)
+        / (Ident Spacing :":" Spacing Exp (Spacing :"=" Spacing Exp)? :Blank* Comment?)
+
+Exp    <- Char/ Text / Number / Fn / FnApply / Ident / Struct Comment?
     Char    <- :"'" . :"'"
     Text    <- :"\"" ~(!"\"" .)* :"\""
     Number  <~ Digit+
-    Fn      <- :"fn" Spacing :"(" Spacing FnArgs* Spacing :")" Spacing :"{" Spacing FnBody Spacing :"}"
-        FnArgs <- Ident (Spacing :"," Spacing Ident)*
-        FnBody <- Spacing FnItem (:EOL+ Spacing FnItem)* Spacing
+    Struct  <- :"struct" Spacing :"{" Declrs :"}"
+    Fn      <- :"fn" Spacing :"(" Spacing FnArgs* Spacing :")" Spacing :"{" Spacing FnBody* Spacing :"}"
+        FnArgs <- Declrs
+        FnBody <- Spacing FnItem (:LineSep Spacing FnItem)* Spacing
             FnItem <- Declr / FnApply / Stm
             Stm    <- If / Label / Goto / Return
             If     <- :"if" Spacing Exp Spacing :"then" Spacing FnBody (:"else" FnBody)? :"end"
@@ -18,4 +24,4 @@ Exp    <- Char/ Text / Number / Fn / FnApply / Ident
             Return <- :"return" :Blank* Exp
     FnApply <- !Key Ident Spacing :"(" Spacing :")"
     Ident   <- !Key Identifier
-    Key     <- "fn" / "if" / "label" / "goto" / "return"
+    Key     <- "fn" / "if" / "label" / "goto" / "return" / "struct"

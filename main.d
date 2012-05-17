@@ -1,7 +1,6 @@
-module main;
+﻿module main;
 
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file;
-import pegged.grammar;
 import gel;
 
 int main (string[] argv)
