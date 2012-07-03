@@ -18,6 +18,7 @@ interface IStm : IAstItem
 
 }
 
+
 final class AstFile : IStm
 {
     AstDeclr[] declarations;
@@ -27,6 +28,7 @@ final class AstFile : IStm
         return declarations.map!(d => d.toString()).join("\r\n");
     }
 }
+
 
 final class AstDeclr : IStm
 {
@@ -45,6 +47,7 @@ final class AstDeclr : IStm
     }
 }
 
+
 final class AstStruct : IStm
 {
     override string toString()
@@ -52,6 +55,7 @@ final class AstStruct : IStm
         return "struct";
     }
 }
+
 
 final class AstIdent : IExp
 {
@@ -63,6 +67,7 @@ final class AstIdent : IExp
     }
 }
 
+
 final class AstNum : IExp
 {
     string value;
@@ -72,6 +77,48 @@ final class AstNum : IExp
         return value;
     }
 }
+
+
+final class AstText : IExp
+{
+    string value;
+
+    override string toString()
+    {
+        return text("\"", toVisibleCharsText(value), "\"");
+    }
+}
+
+
+final class AstChar: IExp
+{
+    dchar value;
+
+    override string toString()
+    {
+        return text("'", toVisibleCharsChar(to!string(value)), "'");
+    }
+}
+
+
+string toVisibleCharsText (string str)
+{
+    return str
+        .replace("\\", "\\\\")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t");
+}
+
+
+string toVisibleCharsChar (string str)
+{
+    return str
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t");
+}
+
 
 IAstItem astAll (ParseTree pt)
 {
@@ -89,12 +136,15 @@ IAstItem astAll (ParseTree pt)
     }
 }
 
+
 IExp astExp (ParseTree ptExp)
 {
     switch (ptExp.children[0].ruleName)
     {
         case "Ident": return astIdent(ptExp);
         case "Number": return astNum(ptExp);
+        case "Text": return astText(ptExp);
+        case "Char": return astChar(ptExp);
 
         default:
             assert (false, to!string(ptExp.toString()));
@@ -104,15 +154,16 @@ IExp astExp (ParseTree ptExp)
 
 AstFile astFile (ParseTree ptFile)
 {
-    auto f = new AstFile ();
+    auto f = new AstFile;
     foreach (ptDeclr; ptFile.children[0].children)
         f.declarations ~= astDeclr(ptDeclr);
     return f;
 }
 
+
 AstDeclr astDeclr (ParseTree ptDeclr)
 {
-    auto d = new AstDeclr ();
+    auto d = new AstDeclr;
     d.ident = astIdent(ptDeclr.children[0]);
     if (ptDeclr.capture[1] == ":")
     {
@@ -150,3 +201,28 @@ AstNum astNum (ParseTree ptNum)
     return n;
 }
 
+
+AstText astText (ParseTree ptText)
+{
+    auto t = new AstText;
+    t.value = to!string(ptText.capture[0]
+        .replace("\\n", "\n")
+        .replace("\\r", "\r")
+        .replace("\\t", "\t")
+        .replace("\\\\", "\\"));
+    return t;
+}
+
+
+AstChar astChar (ParseTree ptChar)
+{
+    auto t = new AstChar;
+    switch (ptChar.capture[0])
+    {
+        case "\\n": t.value = '\n'; break;
+        case "\\r": t.value = '\r'; break;
+        case "\\t": t.value = '\t'; break;
+        default: t.value = ptChar.capture[0][0];
+    }
+    return t;
+}

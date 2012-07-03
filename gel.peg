@@ -8,7 +8,7 @@ Declr  <- (Ident Spacing :"=" Spacing Exp :Blank* Comment?)
         / (Ident Spacing ":" Spacing Exp (Spacing :"=" Spacing Exp)? :Blank* Comment?)
 
 Exp    <- (Char/ Text / Number / Fn / FnApply / Ident / Struct) Comment?
-    Char    <- :"'" . :"'"
+    Char    <- :"'" ("'" / ~(!"'" .)+) :"'"
     Text    <- :"\"" ~(!"\"" .)* :"\""
     Number  <~ Digit+
     Struct  <- :"struct" Spacing :"{" Declrs :"}"
