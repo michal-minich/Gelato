@@ -1,1 +1,4 @@
-a : T = '\n'
+Point = struct {
+    x : T = 1
+    y : T = 2
+}
