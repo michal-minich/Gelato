@@ -1,13 +1,17 @@
 ﻿module main;
 
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file;
-import gel;
+import gel, ast, interpreter;
 
 int main (string[] argv)
 {
-    auto parseTree1 = Gel.parse(toUTF32(readText!string("test.gel")));
+    auto pt = Gel.parse(toUTF32(readText!string("test.gel")));
 
-    writeln(parseTree1);
+    auto ast1 = astAll(pt);
+
+    writeln(ast1);
+
+    interpret(pt);
 
     return 0;
 }
