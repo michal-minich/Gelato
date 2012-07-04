@@ -12,11 +12,10 @@ Exp    <- (Char/ Text / Number / Fn / FnApply / Ident / Struct) Comment?
     Text    <- :"\"" ~(!"\"" .)* :"\""
     Number  <~ Digit+
     Struct  <- :"struct" Spacing :"{" Declrs :"}"
-    Fn      <- :"fn" Spacing :"(" Spacing FnArgs* Spacing :")" Spacing :"{" Spacing FnBody* Spacing :"}"
-        FnArgs <- Declrs
+    Fn      <- :"fn" Spacing :"(" Spacing FnParams* Spacing :")" Spacing :"{" Spacing FnBody* Spacing :"}"
+        FnParams <- Declrs
         FnBody <- Spacing FnItem (:LineSep Spacing FnItem)* Spacing
-            FnItem <- Declr / FnApply / Stm
-            Stm    <- If / Label / Goto / Return
+            FnItem <- Declr / FnApply / If / Label / Goto / Return
             If     <- :"if" Spacing Exp Spacing :"then" Spacing FnBody (:"else" FnBody)? :"end"
             Label  <- :"label" :Blank* Ident
             Goto   <- :"goto" :Blank* Ident

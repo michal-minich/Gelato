@@ -13,24 +13,24 @@ interface IExp : IAstItem
 
 }
 
-interface IStm : IAstItem
+interface IFnItem : IAstItem
 {
 
 }
 
 
-final class AstFile : IStm
+final class AstFile : IAstItem
 {
     AstDeclr[] declarations;
 
     override string toString()
     {
-        return declarations.map!(d => d.toString()).join("\r\n");
+        return declarations.map!(d => d.toString())().join("\r\n");
     }
 }
 
 
-final class AstDeclr : IStm
+final class AstDeclr : IFnItem
 {
     AstIdent ident;
     IExp type;
@@ -54,7 +54,7 @@ final class AstStruct : IExp
 
     override string toString()
     {
-        return text("struct\r\n{\r\n\t", declarations.map!(d => d.toString()).join("\r\n\t"), "\r\n}");
+        return text("struct\r\n{\r\n\t", declarations.map!(d => d.toString())().join("\r\n\t"), "\r\n}");
     }
 }
 
@@ -92,13 +92,91 @@ final class AstText : IExp
 }
 
 
-final class AstChar: IExp
+final class AstChar : IExp
 {
     dchar value;
 
     override string toString()
     {
         return text("'", toVisibleCharsChar(to!string(value)), "'");
+    }
+}
+
+
+final class AstFn : IExp
+{
+    AstDeclr[] params;
+    IFnItem[] exps;
+
+    override string toString()
+    {
+        return text("fn (",
+                    params.map!(p => p.toString())().join(", "),
+                    ")\r\n{\r\n\t",
+                    exps.map!(e => e.toString())().join("\r\n\t"),
+                    "\r\n}");
+    }
+}
+
+
+final class AstFnApply : IFnItem, IExp
+{
+    AstIdent ident;
+    AstDeclr[] args;
+
+    override string toString()
+    {
+        return text(ident, args.map!(a => a.toString())().join(", "), "(", ")");
+    }
+}
+
+
+final class AstIf : IFnItem
+{
+    IExp when;
+    IFnItem[] then;
+    IFnItem[] otherwise;
+
+    override string toString()
+    {
+        auto t = then.map!(th => th.toString())().join("\r\n\t");
+        return otherwise.length == 0
+            ? text("if ", when.toString(), " then ", t, " end")
+            : text("if ", when.toString(), " then ", t, " else ",
+                otherwise.map!(o => o.toString())().join("\r\n\t"), " end");
+    }
+}
+
+
+final class AstLabel : IFnItem
+{
+    string label;
+
+    override string toString()
+    {
+        return "label " ~ label;
+    }
+}
+
+
+final class AstGoto : IFnItem
+{
+    string label;
+
+    override string toString()
+    {
+        return "goto " ~ label;
+    }
+}
+
+
+final class AstReturn : IFnItem
+{
+    IExp exp;
+
+    override string toString()
+    {
+        return "return " ~ exp.toString();
     }
 }
 
@@ -151,9 +229,32 @@ IExp astExp (ParseTree ptExp)
         case "Text": return astText(ptExp);
         case "Char": return astChar(ptExp);
         case "Struct": return astStruct(ptExp);
+        case "Fn": return astFn(ptExp);
+        case "FnApply": return astFnApply(ptExp);
 
         default:
             assert (false, to!string(ptExp.toString()));
+    }
+}
+
+
+IFnItem astFnItem (ParseTree ptFnItem)
+{
+    assert (ptFnItem.ruleName == "FnItem");
+
+    ptFnItem = ptFnItem.children[0];
+
+    switch (ptFnItem.ruleName)
+    {
+        case "Declr": return astDeclr(ptFnItem);
+        case "FnApply": return astFnApply(ptFnItem);
+        case "If": return astIf(ptFnItem);
+        case "Label": return astLabel(ptFnItem);
+        case "Goto": return astGoto(ptFnItem);
+        case "Return": return astReturn(ptFnItem);
+
+        default:
+            assert (false, to!string(ptFnItem.toString()));
     }
 }
 
@@ -254,3 +355,70 @@ AstChar astChar (ParseTree ptChar)
     }
     return t;
 }
+
+
+AstFn astFn (ParseTree ptFn)
+{
+    assert (ptFn.ruleName == "Fn");
+
+    auto f = new AstFn;
+    f.params = astDeclrs(ptFn.children[0].children[0]);
+    foreach (pt; ptFn.children[1].children)
+        f.exps ~= astFnItem(pt);
+    return f;
+}
+
+
+AstFnApply astFnApply (ParseTree ptFnApply)
+{
+    assert (ptFnApply.ruleName == "FnApply");
+
+    auto fna = new AstFnApply;
+    fna.ident = astIdent(ptFnApply.children[0]);
+    return fna;
+}
+
+
+AstIf astIf (ParseTree ptIf)
+{
+    assert (ptIf.ruleName == "If");
+    auto i = new AstIf;
+    i.when = astExp(ptIf.children[0]);
+    foreach (pt; ptIf.children[1].children)
+        i.then ~= astFnItem(pt);
+    if (ptIf.children.length == 3)
+        foreach (pt; ptIf.children[2].children)
+            i.otherwise ~= astFnItem(pt);
+    return i;
+}
+
+
+AstLabel astLabel (ParseTree ptLabel)
+{
+    assert (ptLabel.ruleName == "Label");
+
+    auto l = new AstLabel;
+    l.label = ptLabel.children[0].capture[0].to!string();
+    return l;
+}
+
+
+AstGoto astGoto (ParseTree ptGoto)
+{
+    assert (ptGoto.ruleName == "Goto");
+
+    auto g = new AstGoto;
+    g.label = ptGoto.children[0].capture[0].to!string();
+    return g;
+}
+
+
+AstReturn astReturn (ParseTree ptReturn)
+{
+    assert (ptReturn.ruleName == "Return");
+
+    auto r = new AstReturn;
+    r.exp = astExp(ptReturn.children[0]);
+    return r;
+}
+
