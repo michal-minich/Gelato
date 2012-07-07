@@ -1,18 +1,14 @@
-Point = struct {
-    x : T = 1
-    y : T = 2
+start = fn (a : T)
+{
+    print (1, 'a', x(1))
 }
 
-s = struct { x : T, y : T }
-s = struct { q = 1, w = 2 }
-ch = 'a'
-t = "abc"
-a = 1 -- aaa
+x = fn (a:T)
+{
+    y(1)
+}
 
-f = fn (a : T, b = 1) {
-    x(), y = 2
-    if r() then t() else x() end
-    label q
-    goto q
-    return a()
+y = fn (a:T)
+{
+    "y"
 }

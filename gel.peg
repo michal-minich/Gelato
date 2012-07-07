@@ -15,11 +15,12 @@ Exp    <- (Char/ Text / Number / Fn / FnApply / Ident / Struct) Comment?
     Fn      <- :"fn" Spacing :"(" Spacing FnParams* Spacing :")" Spacing :"{" Spacing FnBody* Spacing :"}"
         FnParams <- Declrs
         FnBody <- Spacing FnItem (:LineSep Spacing FnItem)* Spacing
-            FnItem <- Declr / FnApply / If / Label / Goto / Return
+            FnItem <- Exp / Declr / If / Label / Goto / Return
             If     <- :"if" Spacing Exp Spacing :"then" Spacing FnBody (:"else" FnBody)? :"end"
             Label  <- :"label" :Blank* Ident
             Goto   <- :"goto" :Blank* Ident
             Return <- :"return" :Blank* Exp
-    FnApply <- !Key Ident Spacing :"(" Spacing :")"
+    FnApply <- !Key Ident Spacing :"(" FnArgs :")"
+        FnArgs <- Spacing (Exp / Comment) (:LineSep Spacing (Exp / Comment))* Spacing
     Ident   <- !Key Identifier
     Key     <- "fn" / "if" / "label" / "goto" / "return" / "struct"

@@ -3,15 +3,20 @@
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file;
 import gel, ast, interpreter;
 
+
+
+
 int main (string[] argv)
 {
     auto pt = Gel.parse(toUTF32(readText!string("test.gel")));
 
-    auto ast1 = astAll(pt);
+    writeln(pt);
 
-    writeln(ast1);
+    auto ast1 = astFile(pt);
 
-    interpret(pt);
+    //writeln(ast1);
+
+    interpret(ast1);
 
     return 0;
 }

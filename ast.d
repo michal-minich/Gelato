@@ -1,17 +1,20 @@
 module ast;
 
 import std.stdio, std.algorithm, std.array, std.conv;
-import gel;
+import gel, interpreter;
+
 
 interface IAstItem
 {
     string toString();
 }
 
-interface IExp : IAstItem
+
+interface IExp : IFnItem, IAstItem
 {
 
 }
+
 
 interface IFnItem : IAstItem
 {
@@ -51,6 +54,8 @@ final class AstDeclr : IFnItem
 final class AstStruct : IExp
 {
     AstDeclr[] declarations;
+
+    Env env;
 
     override string toString()
     {
@@ -106,27 +111,27 @@ final class AstChar : IExp
 final class AstFn : IExp
 {
     AstDeclr[] params;
-    IFnItem[] exps;
+    IFnItem[] fnItems;
 
     override string toString()
     {
         return text("fn (",
                     params.map!(p => p.toString())().join(", "),
                     ")\r\n{\r\n\t",
-                    exps.map!(e => e.toString())().join("\r\n\t"),
+                    fnItems.map!(e => e.toString())().join("\r\n\t"),
                     "\r\n}");
     }
 }
 
 
-final class AstFnApply : IFnItem, IExp
+final class AstFnApply : IExp
 {
     AstIdent ident;
-    AstDeclr[] args;
+    IExp[] args;
 
     override string toString()
     {
-        return text(ident, args.map!(a => a.toString())().join(", "), "(", ")");
+        return text(ident, "(", args.map!(a => a.toString())().join(", "), ")");
     }
 }
 
@@ -202,8 +207,6 @@ string toVisibleCharsChar (string str)
 
 IAstItem astAll (ParseTree pt)
 {
-    writeln(pt);
-
     switch (pt.ruleName)
     {
         case "File": return astFile(pt);
@@ -246,8 +249,8 @@ IFnItem astFnItem (ParseTree ptFnItem)
 
     switch (ptFnItem.ruleName)
     {
+        case "Exp": return astExp(ptFnItem);
         case "Declr": return astDeclr(ptFnItem);
-        case "FnApply": return astFnApply(ptFnItem);
         case "If": return astIf(ptFnItem);
         case "Label": return astLabel(ptFnItem);
         case "Goto": return astGoto(ptFnItem);
@@ -364,7 +367,7 @@ AstFn astFn (ParseTree ptFn)
     auto f = new AstFn;
     f.params = astDeclrs(ptFn.children[0].children[0]);
     foreach (pt; ptFn.children[1].children)
-        f.exps ~= astFnItem(pt);
+        f.fnItems ~= astFnItem(pt);
     return f;
 }
 
@@ -375,6 +378,8 @@ AstFnApply astFnApply (ParseTree ptFnApply)
 
     auto fna = new AstFnApply;
     fna.ident = astIdent(ptFnApply.children[0]);
+    foreach (pt; ptFnApply.children[1].children)
+        fna.args ~= astExp(pt);
     return fna;
 }
 

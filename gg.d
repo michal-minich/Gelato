@@ -4,6 +4,7 @@ import std.file,
        std.utf,
        pegged.grammar;
 
+
 void main ()
 {
     auto g = grammar (toUTF32(readText!string("gel.peg")));
