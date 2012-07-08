@@ -1,14 +1,22 @@
 module gg;
 
-import std.file,
-       std.utf,
-       pegged.grammar;
+import std.file, std.utf;
+import pegged.grammar;
 
 
-void main ()
+void main (string[] cmdArgs)
 {
-    auto g = grammar (toUTF32(readText!string("gel.peg")));
+    auto fileName = cmdArgs[1];
 
-    write("gel.d", "module gel;\r\npublic import pegged.grammar;\r\n");
-    append("gel.d", toUTF8(g));
+    auto g = grammar (toUTF32(readText!string(fileName ~ ".peg")));
+
+    write(fileName ~ ".d", "module " ~ fileName ~ ";\r\npublic import pegged.grammar;\r\n");
+
+    if (cmdArgs.length >= 3)
+    {
+        auto dependencies = cmdArgs[2];
+        append(fileName ~ ".d", "import " ~ dependencies ~ ";\r\n");
+    }
+
+    append(fileName ~ ".d", toUTF8(g));
 }

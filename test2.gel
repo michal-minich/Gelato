@@ -18,3 +18,19 @@ f2 = fn (a : T, b = 1) {
     goto q
     return a()
 }
+
+
+start = fn (a : T)
+{
+    print (1, 'a', x(1))
+}
+
+x = fn (a:T)
+{
+    y(1)
+}
+
+y = fn (a:T)
+{
+    "y"
+}

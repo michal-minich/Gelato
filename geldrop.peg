@@ -1,0 +1,3 @@
+Geldrop:
+
+   Declrs <- Spacing (Gel.Declr / Gel.Comment) (:Gel.LineSep Spacing (Gel.Declr / Gel.Comment))* Spacing

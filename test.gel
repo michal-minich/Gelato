@@ -1,3 +1,25 @@
+Point = struct {
+    x : T = 1
+    y : T = 2
+}
+
+s = struct { x : T, y : T }
+s2 = struct { q = 1, w = 2 }
+ch = 'a'
+t = "abc"
+a = 1 -- aaa
+
+f = fn () { }
+
+f2 = fn (a : T, b = 1) {
+    x(), y = 2
+    if r() then t() else x() end
+    label q
+    goto q
+    return a()
+}
+
+
 start = fn (a : T)
 {
     print (1, 'a', x(1))

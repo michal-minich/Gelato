@@ -28,7 +28,10 @@ void interpret (AstFile file)
 
     initEnv (env, file.declarations);
 
-    eval(env, env.values["start"]);
+    if ("start" in env.values)
+        eval(env, env.values["start"]);
+    else
+        writeln ("No start function defined");
 
     //printEnv(env);
 }

@@ -365,9 +365,17 @@ AstFn astFn (ParseTree ptFn)
     assert (ptFn.ruleName == "Fn");
 
     auto f = new AstFn;
-    f.params = astDeclrs(ptFn.children[0].children[0]);
-    foreach (pt; ptFn.children[1].children)
-        f.fnItems ~= astFnItem(pt);
+    if (ptFn.children.length == 0)
+        return f;
+    auto bodyIndex = 0;
+    if (ptFn.children[0].ruleName == "FnParams")
+    {
+        f.params = astDeclrs(ptFn.children[0].children[0]);
+        bodyIndex = 1;
+    }
+    if (ptFn.children.length == bodyIndex + 1)
+        foreach (pt; ptFn.children[bodyIndex].children)
+            f.fnItems ~= astFnItem(pt);
     return f;
 }
 
@@ -378,8 +386,9 @@ AstFnApply astFnApply (ParseTree ptFnApply)
 
     auto fna = new AstFnApply;
     fna.ident = astIdent(ptFnApply.children[0]);
-    foreach (pt; ptFnApply.children[1].children)
-        fna.args ~= astExp(pt);
+    if (ptFnApply.children.length != 1)
+        foreach (pt; ptFnApply.children[1].children)
+            fna.args ~= astExp(pt);
     return fna;
 }
 

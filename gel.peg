@@ -1,26 +1,29 @@
 Gel:
-File   <- Declrs EOI
-   Declrs <- Spacing (Declr / Comment) (:LineSep Spacing (Declr / Comment))* Spacing
+File   <- Spacing Declrs Spacing EOI
+   Declrs <- (Declr / Comment) (:LineSep Spacing (Declr / Comment))*
 
 LineSep <- EOL+ / :","
 Comment <- :"--" ~(!EOL .)*
+
 Declr  <- (Ident Spacing :"=" Spacing Exp :Blank* Comment?)
         / (Ident Spacing ":" Spacing Exp (Spacing :"=" Spacing Exp)? :Blank* Comment?)
 
-Exp    <- (Char/ Text / Number / Fn / FnApply / Ident / Struct) Comment?
+Exp    <- (Char/ Text / Number / Struct / Fn / FnApply / Ident)
+     / ("(" (Char/ Text / Number / Struct / Fn / FnApply / Ident) ")") Comment?
     Char    <- :"'" ("'" / ~(!"'" .)+) :"'"
     Text    <- :"\"" ~(!"\"" .)* :"\""
-    Number  <~ Digit+
-    Struct  <- :"struct" Spacing :"{" Declrs :"}"
-    Fn      <- :"fn" Spacing :"(" Spacing FnParams* Spacing :")" Spacing :"{" Spacing FnBody* Spacing :"}"
+    Number  <~ "-"? Spacing Integer (Spacing "." Spacing Integer)?
+        Integer <- :"_"* Digit (:"_"+ / Digit)*
+    Struct  <- :"struct" Spacing :"{" Spacing Declrs Spacing :"}"
+    Fn      <- "fn" Spacing :"(" Spacing FnParams? Spacing :")" Spacing :"{" Spacing FnBody* Spacing :"}"
         FnParams <- Declrs
-        FnBody <- Spacing FnItem (:LineSep Spacing FnItem)* Spacing
-            FnItem <- Exp / Declr / If / Label / Goto / Return
-            If     <- :"if" Spacing Exp Spacing :"then" Spacing FnBody (:"else" FnBody)? :"end"
+        FnBody <- FnItem (:LineSep Spacing FnItem)*
+            FnItem <- If / Label / Goto / Return / Declr / Exp
+            If     <- :"if" Spacing Exp Spacing :"then" Spacing FnBody Spacing (:"else" Spacing FnBody Spacing)? :"end"
             Label  <- :"label" :Blank* Ident
             Goto   <- :"goto" :Blank* Ident
             Return <- :"return" :Blank* Exp
-    FnApply <- !Key Ident Spacing :"(" FnArgs :")"
-        FnArgs <- Spacing (Exp / Comment) (:LineSep Spacing (Exp / Comment))* Spacing
-    Ident   <- !Key Identifier
+    FnApply <- !Key Ident Spacing :"(" Spacing FnArgs? Spacing :")"
+        FnArgs <- (Exp / Comment) (:LineSep Spacing (Exp / Comment))*
+    Ident   <~ !Key ^"_"* (letter / Letter)+ Alphanum*
     Key     <- "fn" / "if" / "label" / "goto" / "return" / "struct"

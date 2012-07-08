@@ -12,6 +12,9 @@ int main (string[] argv)
 
     writeln(pt);
 
+    if (!pt.success)
+        return 1;
+
     auto ast1 = astFile(pt);
 
     //writeln(ast1);
