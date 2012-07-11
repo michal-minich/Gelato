@@ -1,39 +1,79 @@
 module interpreter;
 
-import std.stdio, std.algorithm, std.array, std.conv;
+import std.stdio, std.algorithm, std.array, std.conv, std.string;
 import ast;
-
-
-@safe pure nothrow
 
 
 final class Env
 {
-    this () { }
-
-    this (Env parent)
-    {
-        this.parent = parent;
-    }
-
     Env parent;
-
     IExp[string] values;
+
+    this () { }
+    this (Env parent) { this.parent = parent; }
+
+    IExp get (string key)
+    {
+        if (auto v = key in values)
+            return eval(this, *v);
+        else if (parent)
+            return eval(this, parent.get(key));
+        else
+            throw new Exception ("Variable " ~ key ~ " is not declared.");
+    }
+}
+
+
+final class Lambda : IExp
+{
+    Env env;
+    AstFn fn;
+
+    this (Env e, AstFn f) { env = e; fn = f; }
+
+    override string toString () { return fn.toString(); }
 }
 
 
 void interpret (AstFile file)
 {
     auto env = new Env;
-
     initEnv (env, file.declarations);
 
     if ("start" in env.values)
-        eval(env, env.values["start"]);
+        evalLambda(cast (Lambda)env.values["start"], null);
     else
-        writeln ("No start function defined");
+        writeln ("No start function is defined.");
+}
 
-    //printEnv(env);
+
+void initEnv (Env env, AstDeclr[] declarations)
+{
+    foreach (d; declarations)
+        setEnv (env, d);
+
+    foreach (d; declarations)
+        env.values[d.ident.ident] = eval (env, d.value);
+}
+
+
+void setEnv (Env env, AstDeclr declaration)
+{
+    auto ident = declaration.ident.ident;
+    if (ident in env.values)
+        throw new Exception ("Variable " ~ ident ~ " is already declared.");
+    env.values[ident] = declaration.value;
+}
+
+
+void printEnv (Env env, int level = 0)
+{
+    foreach (k, v; env.values)
+        writeln(".".replicate(level), k, " = ",
+                v is null ? "<null>" : v.toString().splitLines()[0]);
+
+    if (env.parent)
+        printEnv(env.parent, ++level);
 }
 
 
@@ -41,64 +81,72 @@ IExp eval (Env env, IExp exp)
 {
     auto fn = cast (AstFn)exp;
     if (fn)
-    {
-        return evalFn(env, fn);
-    }
+        return new Lambda (new Env (env), fn);
 
-    auto fnApply = cast (AstFnApply) exp;
-    if (fnApply)
-    {
-        IExp[] eas;
-        foreach (a; fnApply.args)
-            eas ~= eval(env, a);
+    auto ident = cast (AstIdent)exp;
+    if (ident)
+        return env.get(ident.ident);
 
-        if (fnApply.ident.ident == "print")
-        {
-            foreach (ea; eas)
-                write(ea.toString());
-            writeln();
-            return null;
-        }
-        else
-        {
-            return evalFn(env, cast(AstFn)env.values[fnApply.ident.ident]);
-        }
-    }
+    auto fa = cast (AstFnApply) exp;
+    if (fa)
+        return evalFnApply (env, fa);
 
-    auto num = cast (AstNum) exp;
-    if (num)
-    {
-        return num;
-    }
-
-    auto text = cast (AstText) exp;
-    if (text)
-    {
-        return text;
-    }
-
-    auto ch = cast (AstChar) exp;
-    if (ch)
-    {
-        return ch;
-    }
-
-    return null;
+    return exp;
 }
 
 
-IExp evalFn (Env env, AstFn fn)
+IExp evalFnApply (Env env, AstFnApply fnApply)
 {
-    int[string] labelIndex;
-    auto c = 0;
-    while (c < fn.fnItems.length)
+    IExp[] eas;
+    foreach (a; fnApply.args)
+        eas ~= eval(env, a);
+
+    if (fnApply.ident.ident == "print")
     {
-        auto fnItem = fn.fnItems[c];
+        foreach (ea; eas)
+            write(ea.toString());
+        writeln();
+        return null;
+    }
+    else if (fnApply.ident.ident == "printEnv")
+    {
+        printEnv (env);
+        return null;
+    }
+    else
+    {
+        return evalLambda(cast(Lambda)env.get(fnApply.ident.ident), eas);
+    }
+}
+
+
+IExp evalLambda (Lambda lambda, IExp[] args)
+{
+    lambda = new Lambda (new Env (lambda.env), lambda.fn);
+
+    int[string] labelIndex;
+
+    foreach (argIx, a; args)
+        lambda.env.values[lambda.fn.params[argIx].ident.ident] = a;
+
+    auto c = 0;
+    while (c < lambda.fn.fnItems.length)
+    {
+        auto fnItem = lambda.fn.fnItems[c];
+        ++c;
 
         auto i = cast (AstIf)fnItem;
         if (i)
         {
 
+            continue;
+        }
+
+        auto d = cast (AstDeclr)fnItem;
+        if (d)
+        {
+            d.value = eval (lambda.env, d.value);
+            setEnv (lambda.env, d);
             continue;
         }
 
@@ -119,51 +167,18 @@ IExp evalFn (Env env, AstFn fn)
         auto r = cast (AstReturn)fnItem;
         if (r)
         {
-            return r.exp;
+            return eval(lambda.env, r.exp);
         }
 
-        auto e = cast (IExp) fnItem;
+        auto e = cast (IExp)fnItem;
         if (e)
         {
-            auto res = eval(env, e);
-            if (fn.fnItems.length == 1)
-                return res;
+            if (lambda.fn.fnItems.length == 1)
+                return eval(lambda.env, e);
+            else
+                eval(lambda.env, e);
         }
-
-        ++c;
     }
 
     return null;
-}
-
-
-void initEnv (Env env, AstDeclr[] declarations)
-{
-    foreach (d; declarations)
-    {
-        auto ident = d.ident.toString();
-        if (ident in env.values)
-            throw new Exception ("Variable " ~ ident ~ " is already declared");
-        env.values[ident] = d.value;
-        auto s = cast(AstStruct)d.value;
-        if (s)
-        {
-            s.env = new Env(env);
-            initEnv(s.env, s.declarations);
-        }
-    }
-}
-
-void printEnv (Env env, int level = 0)
-{
-    foreach (k, v; env.values)
-    {
-        writeln ("  ".replicate(level), k, " = ", v is null ? "<null>" : typeid(v).name);
-        auto s = cast(AstStruct)v;if (s)
-        {
-            ++level;
-            printEnv(s.env, level);
-            --level;
-        }
-    }
 }

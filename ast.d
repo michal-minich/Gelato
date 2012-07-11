@@ -1,28 +1,16 @@
 module ast;
 
 import std.stdio, std.algorithm, std.array, std.conv;
-import gel, interpreter;
+import gel;
 
 
-interface IAstItem
+interface IExp
 {
     string toString();
 }
 
 
-interface IExp : IFnItem, IAstItem
-{
-
-}
-
-
-interface IFnItem : IAstItem
-{
-
-}
-
-
-final class AstFile : IAstItem
+final class AstFile : IExp
 {
     AstDeclr[] declarations;
 
@@ -33,7 +21,7 @@ final class AstFile : IAstItem
 }
 
 
-final class AstDeclr : IFnItem
+final class AstDeclr : IExp
 {
     AstIdent ident;
     IExp type;
@@ -54,8 +42,6 @@ final class AstDeclr : IFnItem
 final class AstStruct : IExp
 {
     AstDeclr[] declarations;
-
-    Env env;
 
     override string toString()
     {
@@ -111,7 +97,7 @@ final class AstChar : IExp
 final class AstFn : IExp
 {
     AstDeclr[] params;
-    IFnItem[] fnItems;
+    IExp[] fnItems;
 
     override string toString()
     {
@@ -136,11 +122,11 @@ final class AstFnApply : IExp
 }
 
 
-final class AstIf : IFnItem
+final class AstIf : IExp
 {
     IExp when;
-    IFnItem[] then;
-    IFnItem[] otherwise;
+    IExp[] then;
+    IExp[] otherwise;
 
     override string toString()
     {
@@ -153,7 +139,7 @@ final class AstIf : IFnItem
 }
 
 
-final class AstLabel : IFnItem
+final class AstLabel : IExp
 {
     string label;
 
@@ -164,7 +150,7 @@ final class AstLabel : IFnItem
 }
 
 
-final class AstGoto : IFnItem
+final class AstGoto : IExp
 {
     string label;
 
@@ -175,7 +161,7 @@ final class AstGoto : IFnItem
 }
 
 
-final class AstReturn : IFnItem
+final class AstReturn : IExp
 {
     IExp exp;
 
@@ -205,20 +191,6 @@ string toVisibleCharsChar (string str)
 }
 
 
-IAstItem astAll (ParseTree pt)
-{
-    switch (pt.ruleName)
-    {
-        case "File": return astFile(pt);
-        case "Declr": return astDeclr(pt);
-        case "Exp": return astExp(pt);
-
-        default:
-            assert (false);
-    }
-}
-
-
 IExp astExp (ParseTree ptExp)
 {
     assert (ptExp.ruleName == "Exp");
@@ -241,7 +213,7 @@ IExp astExp (ParseTree ptExp)
 }
 
 
-IFnItem astFnItem (ParseTree ptFnItem)
+IExp astFnItem (ParseTree ptFnItem)
 {
     assert (ptFnItem.ruleName == "FnItem");
 
@@ -396,6 +368,7 @@ AstFnApply astFnApply (ParseTree ptFnApply)
 AstIf astIf (ParseTree ptIf)
 {
     assert (ptIf.ruleName == "If");
+
     auto i = new AstIf;
     i.when = astExp(ptIf.children[0]);
     foreach (pt; ptIf.children[1].children)

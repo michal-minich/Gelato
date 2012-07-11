@@ -10,10 +10,11 @@ int main (string[] argv)
 {
     auto pt = Gel.parse(toUTF32(readText!string("test.gel")));
 
-    writeln(pt);
-
     if (!pt.success)
-        return 1;
+    {
+        writeln(pt);
+        return 101;
+    }
 
     auto ast1 = astFile(pt);
 

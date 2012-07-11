@@ -1,0 +1,11 @@
+call function immediately after declaration - fn (b:T) { b } (1)
+ref
+if expression, statement
+struct
+var / mutable variables
+print without string qoutes
+type parameters for fn
+multiple files
+custom struct functions - construct, destruct, clone, ...
+
+simple type check
