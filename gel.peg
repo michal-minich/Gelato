@@ -8,18 +8,18 @@ Comment <- :"--" ~(!EOL .)*
 Declr  <- (Ident Spacing :"=" Spacing Exp :Blank* Comment?)
         / (Ident Spacing ":" Spacing Exp (Spacing :"=" Spacing Exp)? :Blank* Comment?)
 
-Exp    <- (Char/ Text / Number / Struct / Fn / FnApply / Ident)
-     / ("(" (Char/ Text / Number / Struct / Fn / FnApply / Ident) ")") Comment?
+Exp    <- (Char/ Text / Number / Struct / Fn / FnApply / If / Ident)
+     / ("(" (Char/ Text / Number / Struct / Fn / FnApply / If / Ident) ")") Comment?
     Char    <- :"'" ("'" / ~(!"'" .)+) :"'"
     Text    <- :"\"" ~(!"\"" .)* :"\""
     Number  <~ "-"? Spacing Integer (Spacing "." Spacing Integer)?
         Integer <- :"_"* Digit (:"_"+ / Digit)*
+    If      <- :"if" Spacing Exp Spacing :"then" Spacing FnBody Spacing (:"else" Spacing FnBody Spacing)? :"end"
     Struct  <- :"struct" Spacing :"{" Spacing Declrs Spacing :"}"
     Fn      <- "fn" Spacing :"(" Spacing FnParams? Spacing :")" Spacing :"{" Spacing FnBody* Spacing :"}"
         FnParams <- Declrs
         FnBody <- FnItem (:LineSep Spacing FnItem)*
-            FnItem <- If / Label / Goto / Return / Declr / Exp
-            If     <- :"if" Spacing Exp Spacing :"then" Spacing FnBody Spacing (:"else" Spacing FnBody Spacing)? :"end"
+            FnItem <- Label / Goto / Return / Declr / Exp
             Label  <- :"label" :Blank* Ident
             Goto   <- :"goto" :Blank* Ident
             Return <- :"return" :Blank* Exp

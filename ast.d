@@ -206,6 +206,7 @@ IExp astExp (ParseTree ptExp)
         case "Struct": return astStruct(ptExp);
         case "Fn": return astFn(ptExp);
         case "FnApply": return astFnApply(ptExp);
+        case "If": return astIf(ptExp);
 
         default:
             assert (false, to!string(ptExp.toString()));
@@ -223,7 +224,6 @@ IExp astFnItem (ParseTree ptFnItem)
     {
         case "Exp": return astExp(ptFnItem);
         case "Declr": return astDeclr(ptFnItem);
-        case "If": return astIf(ptFnItem);
         case "Label": return astLabel(ptFnItem);
         case "Goto": return astGoto(ptFnItem);
         case "Return": return astReturn(ptFnItem);

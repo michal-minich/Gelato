@@ -1,11 +1,11 @@
-call function immediately after declaration - fn (b:T) { b } (1)
-ref
-if expression, statement
 struct
 var / mutable variables
-print without string qoutes
-type parameters for fn
-multiple files
+ref
 custom struct functions - construct, destruct, clone, ...
+type parameters for fn
 
-simple type check
+call function immediately after declaration - fn (b:T) { b } (1)
+print without string qoutes
+
+multiple files
+simple program validation / type check

@@ -87,9 +87,29 @@ IExp eval (Env env, IExp exp)
     if (ident)
         return env.get(ident.ident);
 
-    auto fa = cast (AstFnApply) exp;
+    auto fa = cast (AstFnApply)exp;
     if (fa)
         return evalFnApply (env, fa);
+
+    auto i = cast (AstIf)exp;
+    if (i)
+    {
+        auto when = cast(AstNum)eval(env, i.when);
+        if (!when)
+            throw new Exception ("if expression must evalute to number.");
+
+        if (when.value == "0" && i.otherwise is null)
+        {
+            return null;
+        }
+        else
+        {
+            auto f = new AstFn;
+            f.fnItems = when.value == "0" ? i.otherwise : i.then;
+            auto l = new Lambda (new Env(env), f);
+            return evalLambda (l, null);
+        }
+    }
 
     return exp;
 }
@@ -134,13 +154,6 @@ IExp evalLambda (Lambda lambda, IExp[] args)
     {
         auto fnItem = lambda.fn.fnItems[c];
         ++c;
-
-        auto i = cast (AstIf)fnItem;
-        if (i)
-        {
-
-            continue;
-        }
 
         auto d = cast (AstDeclr)fnItem;
         if (d)
