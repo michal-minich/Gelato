@@ -1,17 +1,1 @@
-
-start = fn ()
-{
-    r5 = retr(5)
-    r6 = retr(6)
-    i = if v1() then r5() else r6() end
-    if v0() then r5() end
-    if v1() then r6() end
-    print (1, 2.3, '*', "str", a)
-}
-
-a = second(1, 2)
-first = fn (f:T, s:T) { f }
-second = fn (f:T, s:T) { s }
-v0 = fn () { 0 }
-v1 = fn () { 1 }
-retr = fn (a:T) { fn () { printEnv(), return a } }
+abc 123
