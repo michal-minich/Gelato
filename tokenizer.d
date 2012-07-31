@@ -4,32 +4,31 @@ import common, std.array, std.algorithm;
 
 
 
-struct Position
+immutable struct Position
 {
     size_t line;
     size_t column;
 }
 
 
-struct Token
+const struct Token
 {
     TokenType type;
     Position start;
     dstring text;
 
-    size_t endColumn () @property const
+    size_t endColumn () @safe @property const
     {
         return start.column + text.length;
     }
 
-    dstring toDebugString ()
+    dstring toDebugString () const
     {
         return txt(type, "\t", start.line, ":", start.column, "-", endColumn,
                "(", text.length, ")", "\t\"", toVisibleCharsText(text), "\"");
     }
 
-
-    static dstring toVisibleCharsText (const dstring str) @trusted
+    static dstring toVisibleCharsText (const dstring str)
     {
         return str
             .replace("\\", "\\\\")
@@ -54,80 +53,76 @@ enum TokenType
 }
 
 
-struct ParseResult
+immutable struct ParseResult
 {
     TokenType type;
     size_t length;
 }
 
 
-class Tokenizer
+final class Tokenizer
 {
     size_t pos;
     size_t line;
     size_t column;
 
-    Token[] tokenize (const dstring src)
+    Token[] tokenize (const dstring src) @safe
     {
         Token[] toks;
 
         next:
 
-        auto t = parseNextToken (src[pos..$]);
-        if (t.type == TokenType.empty)
-        {
-            return toks;
-        }
-        else
-        {
-            toks ~= t;
+        toks ~= parseNextToken (src[pos..$]);
+
+        if (pos < src.length)
             goto next;
-        }
+
+        return toks;
     }
 
 
-    Token parseNextToken (const dstring src)
+    Token parseNextToken (const dstring src) @safe
     {
+        assert (src.length);
+
         auto pr = parseNext(src);
-        if (pr.length)
-        {
-            auto t = Token(pr.type, Position(line, column), src[0 .. pr.length]);
-            column += pr.length;
-            pos += pr.length;
-            return t;
-        }
-        else
-        {
-            return Token(TokenType.empty);
-        }
+        auto t = Token(pr.type, Position(line, column), src[0 .. pr.length]);
+        column += pr.length;
+        pos += pr.length;
+        return t;
     }
 
 
-    ParseResult parseNext (const dstring src) const
+    ParseResult parseNext (const dstring src) const @safe
     {
+        assert (src.length);
+
+        auto mySrc = src[0 .. $];
+
+        tryAgain:
+
         foreach (f; [&parseIdent, &parseWhite, &parseNewLine, &parseNum])
         {
-            auto pr = f(src);
+            auto pr = f(mySrc);
             if (pr.length)
-                return pr;
+                return mySrc.length == src.length
+                    ? pr
+                    : ParseResult(TokenType.error, src.length - mySrc.length);
         }
 
-        return ParseResult(TokenType.error, src.length);
+        mySrc = mySrc[1 .. $];
+        goto tryAgain;
     }
 }
+
+
+@safe:
 
 
 ParseResult parseWhite (const dstring src)
 {
     auto l = goWhileCanFind (src, &isWhite);
     return ParseResult(TokenType.white, l);
-}
-
-
-ParseResult parseIdent (const dstring src)
-{
-    auto l = goWhileCanFind (src, &isIdent);
-    return ParseResult(TokenType.ident, l);
 }
 
 
@@ -138,9 +133,30 @@ ParseResult parseNewLine (const dstring src)
 }
 
 
+ParseResult parseIdent (const dstring src)
+{
+    auto l = goWhileCanFind (src, &isUnderscore);
+    auto il = goWhileCanFind (src[l .. $], &isIdent);
+    if (!il)
+        return ParseResult(TokenType.empty, 0);
+    l = l + il;
+    if (l)
+        l = l + goWhileCanFind (src[l .. $],
+            function (ch) { return isIdent(ch) || isUnderscore(ch) || isNum(ch); } );
+    return ParseResult(TokenType.ident, l);
+}
+
+
 ParseResult parseNum (const dstring src)
 {
-    auto l = goWhileCanFind (src, &isNum);
+    auto l = goWhileCanFind (src, &isUnderscore);
+    auto nl = goWhileCanFind (src[l .. $], &isNum);
+    if (!nl)
+        return ParseResult(TokenType.empty, 0);
+    l = l + nl;
+    if (l)
+        l = l + goWhileCanFind (src[l .. $],
+            function (ch) { return isNum(ch) || isUnderscore(ch); } );
     return ParseResult(TokenType.num, l);
 }
 
