@@ -1,9 +1,6 @@
-new parser:
-  escapes in text
-  single line comment
-  multi line comment
-  nested comment
-  convert to ast
+escapes in text
+convert to ast
+error reporting
 struct
 var / mutable variables
 ref
@@ -15,3 +12,10 @@ print without string qoutes
 
 multiple files
 simple program validation / type check
+
+interactive interpreter
+
+
+LATER -----------------------------
+  nested comment
+  documentation comments
