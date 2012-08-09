@@ -1,21 +1,39 @@
-escapes in text
+
+PARSER -----------------------------
+cancel unclosed text after escape on first line
+cancel unclosed comment on first line
+char
+hex numbers
+hex escapes
+matching braces
+nested comment
+documentation comments
 convert to ast
+
+
+INFRASTRUCTURE -----------------------------
 error reporting
+localized error reporting
+
+
+VALIDATION -----------------------------
+parse
+ast
+
+
+EVALUATION -----------------------------
 struct
 var / mutable variables
 ref
+exceptions /, scope guars
+dynamic typing
+  stack trace
+  env
 custom struct functions - construct, destruct, clone, ...
 type parameters for fn
-
-call function immediately after declaration - fn (b:T) { b } (1)
-print without string qoutes
-
-multiple files
-simple program validation / type check
-
-interactive interpreter
+cast
+arrays / mem allocation
 
 
-LATER -----------------------------
-  nested comment
-  documentation comments
+INTERACTIVE -----------------------------
+first version
