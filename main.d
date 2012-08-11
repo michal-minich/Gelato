@@ -1,7 +1,7 @@
 ﻿module main;
 
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file, std.path;
-import common, tokenizer/* ,ast, interpreter*/;
+import common, tokenizer, parser/*, interpreter*/;
 
 
 int main (string[] args)
@@ -18,9 +18,8 @@ void process (InterpretTask task)
 {
     foreach (f; task.files)
     {
-        auto src = toUTF32(readText!string(f));
-        auto tzr = new Tokenizer;
-        auto toks = tzr.tokenize(src);
+        immutable src = toUTF32(readText!string(f));
+        auto toks = new Tokenizer(src);
 
         foreach (t; toks)
             writeln(t.toDebugString());
@@ -40,7 +39,7 @@ struct InterpretTask
         {
             if (a.endsWith(".gel"))
             {
-                auto f = a.absolutePath();
+                immutable f = a.absolutePath();
                 if (f.exists())
                 {
                     if (f.isFile())

@@ -1,21 +1,16 @@
 module tokenizer;
 
-import common, std.array, std.algorithm;
+import std.array, std.algorithm, std.conv;
+import common;
 
 
 
-immutable struct Position
-{
-    size_t line;
-    size_t column;
-}
-
-
-const struct Token
+struct Token
 {
     TokenType type;
     Position start;
     dstring text;
+    uint position;
     bool isError;
 
     const @safe @property size_t endColumn ()
@@ -25,40 +20,9 @@ const struct Token
 
     const dstring toDebugString ()
     {
-        return txt(type, "\t", start.line, ":", start.column, "-", endColumn,
-               "(", text.length, ")", "\t", isError ? "Error" : "",
-               "\t\"", toVisibleCharsText(text), "\"");
-    }
-
-    @trusted static dstring toVisibleCharsText (const dstring str)
-    {
-        return str
-            .replace("\\", "\\\\")
-            .replace("\n", "\\n")
-            .replace("\r", "\\r")
-            .replace("\t", "\\t");
-    }
-}
-
-
-    @trusted static dstring toInvisibleCharsText (const dstring str)
-    {
-        return str
-            .replace("\\n", "\n")
-            .replace("\\r", "\r")
-            .replace("\\t", "\t")
-            .replace("\\\\", "\\");
-    }
-
-
-@safe pure char toInvisibleChar (const dchar escape)
-{
-    switch (escape)
-    {
-        case 'n': return '\n';
-        case 'r': return '\r';
-        case 't': return '\t';
-        default:  return 0;
+        return dtext(type, "\t", start.line, ":", start.column, "-", endColumn,
+               "(", text.length, ")", position, "\t", isError ? "Error" : "",
+               "\t\"", text.toVisibleCharsText(), "\"");
     }
 }
 
@@ -108,61 +72,48 @@ immutable struct ParseResult
 }
 
 
-final class Tokenizer
+@safe final class Tokenizer
 {
-    size_t pos;
-    size_t line;
-    size_t column;
+    dstring src;
     ParseContext context;
+    Token front;
 
-    @safe Token[] tokenize (const dstring src)
+
+    @property bool empty () { return front.text.length == 0; }
+
+
+    this (const dstring src)
     {
-        Token[] toks;
+        this.src = src;
+        popFront();
+    }
 
+
+    @trusted void popFront ()
+    {
         if (!src.length)
-            return toks;
+        {
+            front.text.length = 0;
+            return;
+        }
 
-        next:
+        auto pr = parseNext();
 
-        toks ~= parseNextToken (src[pos..$]);
+        front = Token(
+            pr.type,
+            front.type == TokenType.newLine
+                ? Position (front.start.line + 1, 0)
+                : Position (front.start.line, front.start.column + to!uint(front.text.length)),
+            src[0 .. pr.length],
+            front.position + to!uint(front.text.length),
+            pr.isError);
 
-        if (pos < src.length)
-            goto next;
-
-        return toks;
-    }
-
-
-    @safe Token parseNextToken (const dstring src)
-    in
-    {
-        assert (src.length);
-    }
-    body
-    {
-        auto pr = parseNext(src, context);
-        auto t = Token(pr.type, Position(line, column), src[0 .. pr.length], pr.isError);
-        pos += pr.length;
+        src = src[pr.length .. $];
         context = pr.contextAfter;
-        if (pr.type == TokenType.newLine)
-        {
-            ++line;
-            column = 0;
-        }
-        else
-        {
-            column += pr.length;
-        }
-        return t;
     }
 
 
-    const @safe ParseResult parseNext (dstring src, const ParseContext context)
-    in
-    {
-        assert (src.length);
-    }
-    body
+    private ParseResult parseNext ()
     {
         auto errorLength = 0;
         enum parsers = [
@@ -173,20 +124,20 @@ final class Tokenizer
             //ParseContext.character : [],
             ParseContext.comment : [&parseCommentEnd, &parseComment, &parseCommentNewLine],
         ];
-
+        auto src2 = src;
         tryAgain:
         foreach (p; parsers[context])
         {
             assert (src.length);
-            auto pr = p(src);
+            auto pr = p(src2);
             if (pr.length)
                 return errorLength == 0 ? pr : ParseResult.error(TokenType.unknown, errorLength);
         }
 
-        src = src[1 .. $];
+        src2 = src2[1 .. $];
         ++errorLength;
 
-        if (!src.length)
+        if (!src2.length)
             return ParseResult.error(TokenType.unknown, errorLength);
 
         goto tryAgain;
