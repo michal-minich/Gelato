@@ -3,16 +3,19 @@ PARSER -----------------------------
 cancel unclosed text after escape on first line
 cancel unclosed comment on first line
 char
+decimaln numbers
 hex numbers
 hex escapes
 matching braces
 nested comment
 documentation comments
-convert to ast
 
 
 AST -----------------------------
 print with intendation level
+operators
+comments
+
 
 INFRASTRUCTURE -----------------------------
 error reporting

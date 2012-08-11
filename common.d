@@ -31,8 +31,14 @@ struct Position
         .replace("\\t", "\t")
         .replace("\\\\", "\\");
 }
-
-
+/*
+    switch (ptChar.capture[0])
+    {
+        case "\\n": t.value = '\n'; break;
+        case "\\r": t.value = '\r'; break;
+        case "\\t": t.value = '\t'; break;
+        default: t.value = ptChar.capture[0][0];
+    }*/
 @safe pure dchar toInvisibleChar (const dchar escape)
 {
     switch (escape)

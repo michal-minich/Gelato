@@ -3,224 +3,411 @@ module parser;
 
 import std.stdio, std.algorithm, std.array, std.conv;
 import common, tokenizer, ast;
-/*
 
-IExp astExp (ParseTree ptExp)
+
+final class Parser
 {
-    assert (ptExp.ruleName == "Exp");
+    private Token[] toks2;
+    private Token[] toks;
+    Exp front;
 
-    ptExp = ptExp.children[0];
 
-    switch (ptExp.ruleName)
+    this (const dstring src)
     {
-        case "Ident": return astIdent(ptExp);
-        case "Number": return astNum(ptExp);
-        case "Text": return astText(ptExp);
-        case "Char": return astChar(ptExp);
-        case "Struct": return astStruct(ptExp);
-        case "Fn": return astFn(ptExp);
-        case "FnApply": return astFnApply(ptExp);
-        case "If": return astIf(ptExp);
-
-        default:
-            assert (false, to!string(ptExp.str));
+        toks = (new Tokenizer(src)).array();
+        toks2 = toks;
+        popFront();
     }
-}
 
 
-IExp astFnItem (ParseTree ptFnItem)
-{
-    assert (ptFnItem.ruleName == "FnItem");
+    @property Token current () { return toks.front; }
 
-    ptFnItem = ptFnItem.children[0];
 
-    switch (ptFnItem.ruleName)
+    @property bool empty () { return !front; }
+
+
+    void popFront () { front = parse(); }
+
+
+    Exp parse ()
     {
-        case "Exp": return astExp(ptFnItem);
-        case "Declr": return astDeclr(ptFnItem);
-        case "Label": return astLabel(ptFnItem);
-        case "Goto": return astGoto(ptFnItem);
-        case "Return": return astReturn(ptFnItem);
+        if (toks.empty)
+            return null;
 
-        default:
-            assert (false, to!string(ptFnItem.str));
+        switch (current.type)
+        {
+            case TokenType.newLine: return parseAfterWhite();
+            case TokenType.white: return parseAfterWhite();
+
+            case TokenType.num: return parseNum();
+            case TokenType.ident: return parseIdent();
+            case TokenType.textStart: return parseText();
+
+            case TokenType.braceStart: return parseBrace();
+            case TokenType.braceEnd: assert(false, "redudant brace end");
+
+            case TokenType.keyIf: return parserIf();
+            case TokenType.keyThen: assert(false, "then without if");
+            case TokenType.keyElse: assert(false, "else without if");
+            case TokenType.keyEnd: assert(false, "end without if");
+
+            case TokenType.keyFn: return parserFn();
+            case TokenType.keyReturn: return parserReturn();
+
+            case TokenType.keyGoto: return parserGoto();
+            case TokenType.keyLabel: return parserLabel();
+
+            //case TokenType.keyStruct: return parserStruct();
+            //case TokenType.keyThrow: return parserThrow();
+            //case TokenType.keyVar: return parserVar();
+
+            case TokenType.unknown: return parseUnknown();
+            case TokenType.empty: assert (false, "empty token");
+            default: return null;
+        }
     }
-}
 
 
-AstFile astFile (ParseTree ptFile)
-{
-    assert (ptFile.ruleName == "File");
-
-    auto f = new AstFile;
-    f.declarations = astDeclrs(ptFile.children[0]);
-    return f;
-}
+    void nextTok () { if (!toks.empty) toks.popFront();}
 
 
-AstDeclr[] astDeclrs (ParseTree ptDeclrs)
-{
-    assert (ptDeclrs.ruleName == "Declrs");
-
-    return ptDeclrs.children.map!(d => astDeclr(d))().array();
-}
-
-
-AstDeclr astDeclr (ParseTree ptDeclr)
-{
-    assert (ptDeclr.ruleName == "Declr");
-
-    auto d = new AstDeclr;
-    d.ident = astIdent(ptDeclr.children[0]);
-    if (ptDeclr.capture[1] == ":")
+    void skipWhite ()
     {
-        d.type = astExp(ptDeclr.children[1]);
-        if (ptDeclr.children.length == 3)
-            d.value = astExp(ptDeclr.children[2]);
+        while (!toks.empty && (current.type == TokenType.white || current.type == TokenType.newLine))
+            nextTok();
     }
-    else
+
+
+    void skipWhiteIfWhite ()
     {
-       d.value = astExp(ptDeclr.children[1]);
+        if (!toks.empty && (current.type == TokenType.white || current.type == TokenType.newLine))
+            skipWhite();
     }
-    return d;
-}
 
 
-AstStruct astStruct (ParseTree ptStruct)
-{
-    assert (ptStruct.ruleName == "Struct");
-
-    auto s = new AstStruct;
-    s.declarations = astDeclrs(ptStruct.children[0]);
-    return s;
-}
-
-
-AstIdent astIdent (ParseTree ptIdent)
-{
-    assert (ptIdent.ruleName == "Ident");
-
-    auto i = new AstIdent;
-    i.ident = to!string(ptIdent.capture[0]);
-    return i;
-}
-
-
-AstNum astNum (ParseTree ptNum)
-{
-    assert (ptNum.ruleName == "Number");
-
-    auto n = new AstNum;
-    n.value = to!string(ptNum.capture[0]);
-    return n;
-}
-
-
-AstText astText (ParseTree ptText)
-{
-    assert (ptText.ruleName == "Text");
-
-    auto t = new AstText;
-    t.value = to!string(ptText.capture[0]
-        .replace("\\n", "\n")
-        .replace("\\r", "\r")
-        .replace("\\t", "\t")
-        .replace("\\\\", "\\"));
-    return t;
-}
-
-
-AstChar astChar (ParseTree ptChar)
-{
-    assert (ptChar.ruleName == "Char");
-
-    auto t = new AstChar;
-    switch (ptChar.capture[0])
+    AstIf parserIf ()
     {
-        case "\\n": t.value = '\n'; break;
-        case "\\r": t.value = '\r'; break;
-        case "\\t": t.value = '\t'; break;
-        default: t.value = ptChar.capture[0][0];
+        Exp[] ts;
+        uint startIndex = current.index;
+
+        nextTok();
+        auto w = parse ();
+
+        skipWhite();
+        if (current.type == TokenType.keyThen)
+        {
+            nextTok();
+            skipWhite();
+
+            while (current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
+            {
+                ts ~= parse();
+                skipWhite();
+            }
+
+            Exp[] es;
+            if (current.type == TokenType.keyElse)
+            {
+                nextTok();
+                skipWhite();
+                while (current.type != TokenType.keyEnd)
+                {
+                    es ~= parse();
+                    skipWhite();
+                }
+                nextTok();
+            }
+
+            if (current.type == TokenType.keyEnd)
+                nextTok();
+
+            const last = es is null ? ts : es;
+            return new AstIf (toks2[startIndex ..  last[$ - 1].tokens[$ - 1].index + 1], w, ts, es);
+        }
+        else
+        {
+            assert (false, "no then");
+        }
     }
-    return t;
-}
 
 
-AstFn astFn (ParseTree ptFn)
-{
-    assert (ptFn.ruleName == "Fn");
+    AstFn parserFn ()
+    {
+        uint startIndex = current.index;
+        AstDeclr[] params;
 
-    auto f = new AstFn;
-    if (ptFn.children.length == 0)
+        nextTok();
+        skipWhiteIfWhite();
+        if (current.type != TokenType.braceStart && current.text != "(")
+            assert (false, "no brace after fn");
+
+        nextTok();
+        skipWhiteIfWhite();
+        if (current.type == TokenType.braceEnd && current.text == ")")
+            nextTok();
+        else
+            params = parseFnParameter();
+
+        skipWhiteIfWhite();
+        if (current.type == TokenType.braceStart && current.text == "{")
+            nextTok();
+        else
+            assert (false, "no curly brace after fn");
+
+        Exp[] items;
+        skipWhiteIfWhite();
+        if (current.type == TokenType.braceEnd && current.text == "}")
+        {
+        }
+        else
+        {
+            while (current.type != TokenType.braceEnd && current.text != "}")
+            {
+                items ~= parse();
+                skipWhiteIfWhite();
+            }
+        }
+
+        auto f = new AstFn (toks2[startIndex .. current.index + 1], params, items);
+        nextTok();
         return f;
-    auto bodyIndex = 0;
-    if (ptFn.children[0].ruleName == "FnParams")
-    {
-        f.params = astDeclrs(ptFn.children[0].children[0]);
-        bodyIndex = 1;
     }
-    if (ptFn.children.length == bodyIndex + 1)
-        foreach (pt; ptFn.children[bodyIndex].children)
-            f.fnItems ~= astFnItem(pt);
-    return f;
+
+
+    AstDeclr[] parseFnParameter ()
+    {
+        AstDeclr[] params;
+        while (true)
+        {
+            auto e = parse();
+            auto ident = cast(AstIdent)e;
+            if (!ident)
+            {
+                assert (false, "fn parameter is not identifier");
+            }
+            else
+            {
+                skipWhiteIfWhite();
+                if (current.type == TokenType.braceEnd && current.text == ")")
+                {
+                    params ~= new AstDeclr(toks2[current.index .. current.index + 1], ident, null, null);
+                    nextTok();
+                    return params;
+                }
+                else if (current.type != TokenType.op && current.text != ",")
+                {
+                    assert (false, "no fn arg coma");
+                }
+
+                params ~= new AstDeclr(toks2[current.index .. current.index + 1], ident, null, null);
+                nextTok();
+            }
+        }
+    }
+
+
+    AstReturn parserReturn ()
+    {
+        auto startIndex = current.index;
+        nextTok();
+        auto e = parse();
+        if (!e)
+            assert (false, "return without expression");
+        return new AstReturn (toks2[startIndex .. e.tokens[$ - 1].index + 1], e);
+    }
+
+
+    AstGoto parserGoto ()
+    {
+        auto startIndex = current.index;
+        nextTok();
+        skipWhite();
+        if (current.type != TokenType.ident)
+            assert (false, "goto without identifier");
+        auto g = new AstGoto (toks2[startIndex .. current.index + 1], current.text);
+        nextTok();
+        return g;
+    }
+
+
+    AstLabel parserLabel ()
+    {
+        auto startIndex = current.index;
+        nextTok();
+        skipWhite();
+        if (current.type != TokenType.ident)
+            assert (false, "label without identifier");
+        auto l = new AstLabel (toks2[startIndex .. current.index + 1], current.text);
+        nextTok();
+        return l;
+    }
+
+
+    Exp parseBrace ()
+    {
+        auto b = current.text[0];
+
+        if (b != '(')
+            assert (false, "unsupported brace");
+
+        nextTok();
+
+        if (current.type == TokenType.braceEnd)
+            assert (false, "empty braces");
+
+        auto e = parse();
+
+        if (current.type != TokenType.braceEnd || current.text[0] != oppositeBrace(b))
+        {
+            assert (false, "missing closing brace");
+        }
+        else if (e is null)
+        {
+            assert (false, "start brace without expression and unclosed");
+        }
+        else
+        {
+            nextTok();
+            return e;
+        }
+    }
+
+
+    dchar oppositeBrace (dchar brace)
+    {
+        switch (brace)
+        {
+            case '(': return ')';
+            case '[': return ']';
+            case '{': return '}';
+            default: assert (false);
+        }
+    }
+
+
+    AstText parseText ()
+    {
+        Token[] ts;
+        dstring txt;
+
+        nextTok();
+
+        if (toks.empty)
+        {
+            assert (false, "unclosed empty text");
+        }
+
+        while (current.type != TokenType.textEnd)
+        {
+            if (toks.empty)
+            {
+                assert (false, "unclosed text");
+                //return new AstText(ts, txt);
+            }
+
+            immutable t = current;
+            ts ~= t;
+            txt ~= t.type == TokenType.textEscape ? t.text.toInvisibleCharsText() : t.text;
+
+            nextTok();
+        }
+
+        nextTok();
+
+        return new AstText(ts, txt);
+    }
+
+
+    AstUnknown parseUnknown ()
+    {
+        auto u = new AstUnknown (toks[0 .. 1]);
+        nextTok();
+        return u;
+    }
+
+
+    AstNum parseNum ()
+    {
+        auto n = new AstNum (toks[0 .. 1], current.text);
+        nextTok();
+        return n;
+    }
+
+
+    Exp parseIdent ()
+    {
+        auto i = parseIdentOnly ();
+        skipWhiteIfWhite();
+        if (toks.empty)
+            return i;
+        else if (current.type == TokenType.braceStart && current.text == "(")
+            return parseFnApply(i);
+        else if (current.type == TokenType.op && current.text == "=")
+            return parseDeclr(i);
+        else
+            return i;
+    }
+
+
+    AstDeclr parseDeclr (AstIdent i)
+    {
+        nextTok();
+        auto e = parse();
+        nextTok();
+        return new AstDeclr(toks2[i.tokens[$ - 1].index .. e.tokens[$ - 1].index + 1], i, null, e);
+    }
+
+
+    AstFnApply parseFnApply (AstIdent i)
+    {
+        nextTok();
+        skipWhiteIfWhite();
+        if (current.type == TokenType.braceEnd && current.text == ")")
+        {
+            auto fa = new AstFnApply (toks2[i.tokens[$ - 1].index .. current.index + 1], i, null);
+            nextTok();
+            return fa;
+        }
+        else
+        {
+            Exp[] args;
+            while (current.type != TokenType.braceEnd && current.text != ")")
+            {
+                args ~= parse();
+                skipWhiteIfWhite();
+
+                if (current.type == TokenType.op && current.text == ",")
+                {
+                    nextTok();
+                    skipWhiteIfWhite();
+                }
+                else if (current.type == TokenType.braceEnd && current.text == ")")
+                {
+                    break;
+                }
+                else
+                {
+                    assert (false, "missing comma in fn apply");
+                }
+            }
+            auto fa = new AstFnApply (toks2[i.tokens[$ - 1].index .. current.index + 1], i, args);
+            nextTok();
+            return fa;
+        }
+    }
+
+
+    AstIdent parseIdentOnly ()
+    {
+        auto i = new AstIdent (toks[0 .. 1], current.text);
+        nextTok();
+        return i;
+    }
+
+
+    Exp parseAfterWhite ()
+    {
+        skipWhite();
+        return parse();
+    }
 }
-
-
-AstFnApply astFnApply (ParseTree ptFnApply)
-{
-    assert (ptFnApply.ruleName == "FnApply");
-
-    auto fna = new AstFnApply;
-    fna.ident = astIdent(ptFnApply.children[0]);
-    if (ptFnApply.children.length != 1)
-        foreach (pt; ptFnApply.children[1].children)
-            fna.args ~= astExp(pt);
-    return fna;
-}
-
-
-AstIf astIf (ParseTree ptIf)
-{
-    assert (ptIf.ruleName == "If");
-
-    auto i = new AstIf;
-    i.when = astExp(ptIf.children[0]);
-    foreach (pt; ptIf.children[1].children)
-        i.then ~= astFnItem(pt);
-    if (ptIf.children.length == 3)
-        foreach (pt; ptIf.children[2].children)
-            i.otherwise ~= astFnItem(pt);
-    return i;
-}
-
-
-AstLabel astLabel (ParseTree ptLabel)
-{
-    assert (ptLabel.ruleName == "Label");
-
-    auto l = new AstLabel;
-    l.label = ptLabel.children[0].capture[0].to!string();
-    return l;
-}
-
-
-AstGoto astGoto (ParseTree ptGoto)
-{
-    assert (ptGoto.ruleName == "Goto");
-
-    auto g = new AstGoto;
-    g.label = ptGoto.children[0].capture[0].to!string();
-    return g;
-}
-
-
-AstReturn astReturn (ParseTree ptReturn)
-{
-    assert (ptReturn.ruleName == "Return");
-
-    auto r = new AstReturn;
-    r.exp = astExp(ptReturn.children[0]);
-    return r;
-}
-
-*/

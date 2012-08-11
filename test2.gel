@@ -26,12 +26,12 @@ start = fn ()
     i = if v1() then r5() else r6() end
     if v0() then r5() end
     if v1() then r6() end
-    print (1, 2.3, '*', "str", a)
+    print (1, "str", a)
 }
 
 a = second(1, 2)
-first = fn (f:T, s:T) { f }
-second = fn (f:T, s:T) { s }
+first = fn (f, s) { f }
+second = fn (f, s) { s }
 v0 = fn () { 0 }
 v1 = fn () { 1 }
-retr = fn (a:T) { fn () { printEnv(), return a } }
+retr = fn (a) { fn () { printEnv() return a } }

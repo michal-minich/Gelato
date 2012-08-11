@@ -7,31 +7,31 @@ import ast;
 final class Env
 {
     Env parent;
-    IExp[string] values;
+    Exp[dstring] values;
 
     this () { }
     this (Env parent) { this.parent = parent; }
 
-    IExp get (string key)
+    Exp get (dstring key)
     {
         if (auto v = key in values)
             return eval(this, *v);
         else if (parent)
             return eval(this, parent.get(key));
         else
-            throw new Exception ("Variable " ~ key ~ " is not declared.");
+            throw new Exception ("Variable " ~ to!string(key) ~ " is not declared.");
     }
 }
 
 
-final class Lambda : IExp
+final class Lambda : Exp
 {
     Env env;
     AstFn fn;
 
-    this (Env e, AstFn f) { env = e; fn = f; }
+    this (Env e, AstFn f) { super (null); env = e; fn = f; }
 
-    override string toString () { return fn.toString(); }
+    @property dstring str () { return fn.str; }
 }
 
 
@@ -40,7 +40,7 @@ void interpret (AstFile file)
     auto env = new Env;
     initEnv (env, file.declarations);
 
-    if ("start" in env.values)
+    if ("start"d in env.values)
         evalLambda(cast (Lambda)env.values["start"], null);
     else
         writeln ("No start function is defined.");
@@ -61,7 +61,7 @@ void setEnv (Env env, AstDeclr declaration)
 {
     auto ident = declaration.ident.ident;
     if (ident in env.values)
-        throw new Exception ("Variable " ~ ident ~ " is already declared.");
+        throw new Exception ("Variable " ~ to!string(ident) ~ " is already declared.");
     env.values[ident] = declaration.value;
 }
 
@@ -70,14 +70,14 @@ void printEnv (Env env, int level = 0)
 {
     foreach (k, v; env.values)
         writeln(".".replicate(level), k, " = ",
-                v is null ? "<null>" : v.toString().splitLines()[0]);
+                v is null ? "<null>" : v.str.splitLines()[0]);
 
     if (env.parent)
         printEnv(env.parent, ++level);
 }
 
 
-IExp eval (Env env, IExp exp)
+Exp eval (Env env, Exp exp)
 {
     auto fn = cast (AstFn)exp;
     if (fn)
@@ -104,8 +104,7 @@ IExp eval (Env env, IExp exp)
         }
         else
         {
-            auto f = new AstFn;
-            f.fnItems = when.value == "0" ? i.otherwise : i.then;
+            auto f = new AstFn (null, null, when.value == "0" ? i.otherwise : i.then);
             auto l = new Lambda (new Env(env), f);
             return evalLambda (l, null);
         }
@@ -115,16 +114,16 @@ IExp eval (Env env, IExp exp)
 }
 
 
-IExp evalFnApply (Env env, AstFnApply fnApply)
+Exp evalFnApply (Env env, AstFnApply fnApply)
 {
-    IExp[] eas;
+    Exp[] eas;
     foreach (a; fnApply.args)
         eas ~= eval(env, a);
 
     if (fnApply.ident.ident == "print")
     {
         foreach (ea; eas)
-            write(ea.toString());
+            write(ea.str);
         writeln();
         return null;
     }
@@ -140,11 +139,11 @@ IExp evalFnApply (Env env, AstFnApply fnApply)
 }
 
 
-IExp evalLambda (Lambda lambda, IExp[] args)
+Exp evalLambda (Lambda lambda, Exp[] args)
 {
     lambda = new Lambda (new Env (lambda.env), lambda.fn);
 
-    int[string] labelIndex;
+    int[dstring] labelIndex;
 
     foreach (argIx, a; args)
         lambda.env.values[lambda.fn.params[argIx].ident.ident] = a;
@@ -183,7 +182,7 @@ IExp evalLambda (Lambda lambda, IExp[] args)
             return eval(lambda.env, r.exp);
         }
 
-        auto e = cast (IExp)fnItem;
+        auto e = cast (Exp)fnItem;
         if (e)
         {
             if (lambda.fn.fnItems.length == 1)

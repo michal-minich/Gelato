@@ -7,10 +7,11 @@ import common;
 
 struct Token
 {
+    uint index;
     TokenType type;
     Position start;
     dstring text;
-    uint position;
+    uint pos;
     bool isError;
 
     const @safe @property size_t endColumn ()
@@ -20,8 +21,8 @@ struct Token
 
     const dstring toDebugString ()
     {
-        return dtext(type, "\t", start.line, ":", start.column, "-", endColumn,
-               "(", text.length, ")", position, "\t", isError ? "Error" : "",
+        return dtext(index, "\t", type, "\t\t", start.line, ":", start.column, "-", endColumn,
+               "(", text.length, ")", pos, "\t", isError ? "Error" : "",
                "\t\"", text.toVisibleCharsText(), "\"");
     }
 }
@@ -35,7 +36,7 @@ enum TokenType
     textStart, text, textEscape, textEnd,
     braceStart, braceEnd,
     commentLine, commentMultiStart, commentMulti, commentMultiEnd,
-    keyIf, keyThen, keyElse,
+    keyIf, keyThen, keyElse, keyEnd,
     keyFn, keyReturn,
     keyGoto, keyLabel,
     keyStruct,
@@ -74,39 +75,48 @@ immutable struct ParseResult
 
 @safe final class Tokenizer
 {
-    dstring src;
-    ParseContext context;
+    private dstring src;
+    private ParseContext context;
     Token front;
-
-
-    @property bool empty () { return front.text.length == 0; }
+    bool empty;
+    uint index;
 
 
     this (const dstring src)
     {
         this.src = src;
-        popFront();
+        popFront2();
     }
 
 
     @trusted void popFront ()
     {
+        assert (!empty, "Cannot popFront from empty Tokenizer");
+        return popFront2();
+    }
+
+
+    @trusted void popFront2 ()
+    {
         if (!src.length)
         {
-            front.text.length = 0;
+            empty = true;
             return;
         }
 
         auto pr = parseNext();
 
         front = Token(
+            index++,
             pr.type,
             front.type == TokenType.newLine
                 ? Position (front.start.line + 1, 0)
                 : Position (front.start.line, front.start.column + to!uint(front.text.length)),
             src[0 .. pr.length],
-            front.position + to!uint(front.text.length),
+            front.pos + to!uint(front.text.length),
             pr.isError);
+
+        //std.stdio.writeln(front.toDebugString());
 
         src = src[pr.length .. $];
         context = pr.contextAfter;
@@ -219,6 +229,7 @@ ParseResult parseIdent (const dstring src)
         case "if":     return ParseResult.ok(TokenType.keyIf,     pr.length);
         case "then":   return ParseResult.ok(TokenType.keyThen,   pr.length);
         case "else":   return ParseResult.ok(TokenType.keyElse,   pr.length);
+        case "end":    return ParseResult.ok(TokenType.keyEnd,    pr.length);
         case "fn":     return ParseResult.ok(TokenType.keyFn,     pr.length);
         case "return": return ParseResult.ok(TokenType.keyReturn, pr.length);
         case "goto":   return ParseResult.ok(TokenType.keyGoto,   pr.length);
