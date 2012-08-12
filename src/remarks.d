@@ -1,11 +1,8 @@
 module remarks;
 
-import std.array, std.algorithm, std.conv;
+import std.array, std.conv, std.file, std.utf;
 import common, ast, interpreter;
 
-
-pure:
-enum GeanyBug { none }
 
 
 interface IValidationTranslation
@@ -39,14 +36,23 @@ final class RemarkLevel : IRemarkLevel
 
     RemarkSeverity severityOf (const Remark remark)
     {
+        if (!values.length)
+            return RemarkSeverity.none;
+
         return values[remark.code];
     }
 
 
-    static RemarkLevel load (const string rootPath, const string name)
+    static RemarkLevel load (IInterpreterContext icontext, const string rootPath, const string name)
     {
-        auto env = (new Interpreter!DefaultInterpreterContext)
-            .interpret (rootPath ~ "/validation/" ~ name ~ ".gel");
+        immutable src = toUTF32(readText!string(rootPath ~ "/validation/" ~ name ~ ".gel"));
+
+        dstring rem;
+        foreach (r; RemarkSeverity.min .. RemarkSeverity.max)
+            rem ~= (cast(RemarkSeverity)r).to!dstring() ~ "=" ~ (cast(int)r).to!dstring() ~ newLine;
+
+        auto env = (new Interpreter)
+            .interpret (icontext, rem ~ src);
 
         auto rl = new RemarkLevel;
 
@@ -54,15 +60,12 @@ final class RemarkLevel : IRemarkLevel
 
         foreach (k, v; env.values)
             if (k != "name")
-                rl.values[k.replace("_", "-")] = (cast(AstText)v).value.to!RemarkSeverity();
+                rl.values[k.replace("_", "-")] = cast(RemarkSeverity)(cast(AstNum)v).value.to!int();
 
         return rl;
     }
 }
 
-
-@safe:
-enum GeanyBug2 { none }
 
 
 abstract class Remark
@@ -70,8 +73,15 @@ abstract class Remark
     const dstring code;
     const Exp subject;
 
-    this (const dstring c, const Exp s) { code = c; subject = s; }
+    @safe this (const dstring c, const Exp s) { code = c; subject = s; }
+
+    @property RemarkSeverity severity () { return sett.remarkLevel.severityOf(this); }
+
+    @property dstring text () { return sett.remarkTranslation.textOf(this); }
 }
+
+@safe:
+enum GeanyBug2 { none }
 
 
 final class ParserUnderscoreRemark : Remark

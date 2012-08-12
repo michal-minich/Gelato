@@ -4,9 +4,13 @@ import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file, std.pat
 import common, settings, tokenizer, parser, ast, interpreter;
 
 
+ConsoleInterpreterContext icontext;
+
+
 int main (string[] args)
 {
-    sett = Settings.load (dirName(buildNormalizedPath(args[0])));
+    sett = Settings.beforeLoad;
+    sett = Settings.load (new ConsoleInterpreterContext, dirName(buildNormalizedPath(args[0])));
 
     auto task = InterpretTask.parse(args);
 
@@ -32,14 +36,8 @@ void process (InterpretTask task)
 
         //interpret(new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array()));
 
-        auto i = new Interpreter!DefaultInterpreterContext;
-        auto env = i.interpret (f);
-
-        foreach (r; i.context.remarks)
-        {
-            write (sett.remarkLevel.severityOf(r), "\t");
-            writeln(sett.remarkTranslation.textOf(r));
-        }
+        auto i = new Interpreter;
+        auto env = i.interpret (sett.icontext, f);
     }
 }
 

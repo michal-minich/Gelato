@@ -1,6 +1,7 @@
 module localization;
 
-import std.array, std.algorithm, std.conv;
+
+import std.array, std.conv;
 import common, ast, remarks, interpreter;
 
 
@@ -16,26 +17,26 @@ final class RemarkTranslation : IValidationTranslation
     {
         immutable key = remark.code;
 
+        if (!values.length)
+            return remark.code;
+
         if (auto v = key in values)
             return *v;
 
         if (!inherited && inherit)
-            inherited = load (rootPath, inherit);
+            inherited = load (sett.icontext, rootPath, inherit);
 
         if (inherited)
             return inherited.textOf (remark);
-
-        foreach (k, v; values)
-            std.stdio.writeln(k, "\t", v);
 
         assert (false, "no translation for " ~ to!string(remark.code));
     }
 
 
-    static RemarkTranslation load (const string rootPath, const string language)
+    static RemarkTranslation load (IInterpreterContext icontext, const string rootPath, const string language)
     {
-        auto env = (new Interpreter!DefaultInterpreterContext)
-            .interpret (rootPath ~ "/lang/" ~ language ~ "/settings.gel");
+        auto env = (new Interpreter)
+            .interpret (icontext, rootPath ~ "/lang/" ~ language ~ "/settings.gel");
 
         auto rt = new RemarkTranslation;
         rt.rootPath = rootPath;
@@ -43,16 +44,16 @@ final class RemarkTranslation : IValidationTranslation
         if (auto v = "inherit"d in env.values)
             rt.inherit = (cast(AstText)*v).value.to!string();
 
-        rt.values = loadValues (rootPath ~ "/lang/" ~ language ~ "/remarks.gel");
+        rt.values = loadValues (icontext, rootPath ~ "/lang/" ~ language ~ "/remarks.gel");
 
         return rt;
     }
 
 
-    private static dstring[dstring] loadValues (const string filePath)
+    private static dstring[dstring] loadValues (IInterpreterContext icontext, const string filePath)
     {
         dstring[dstring] vals;
-        auto env = (new Interpreter!DefaultInterpreterContext).interpret (filePath);
+        auto env = (new Interpreter).interpret (icontext, filePath);
         foreach (k, v; env.values)
             vals[k.replace("_", "-")] = (cast(AstText)v).value;
         return vals;

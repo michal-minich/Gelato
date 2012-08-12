@@ -2,13 +2,27 @@ module common;
 
 
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file;
-import settings;
+import settings, remarks, interpreter;
 
 
 Settings sett;
 
 
 enum newLine = "\r\n";
+
+
+
+
+final class ConsoleInterpreterContext : IInterpreterContext
+{
+    void print (dstring str) { write (str); }
+
+    void println () { writeln (); }
+
+    void println (dstring str) { writeln (str); }
+
+    void remark (Remark remark) { writeln (remark.severity, "\t", remark.text); }
+}
 
 
 struct Position

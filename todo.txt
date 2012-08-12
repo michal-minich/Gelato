@@ -9,6 +9,7 @@ hex escapes
 matching braces
 nested comment
 documentation comments
+validation
 
 
 AST -----------------------------
@@ -16,18 +17,11 @@ print with intendation level
 operators
 comments
 include trailing or preceding white tokens with exp
+validation
 
 
-INFRASTRUCTURE -----------------------------
-error reporting
-
-
-VALIDATION -----------------------------
-parse
-ast
-
-
-EVALUATION -----------------------------
+INTERPRETER -----------------------------
+validation
 struct
 var / mutable variables
 ref
@@ -39,6 +33,7 @@ custom struct functions - construct, destruct, clone, ...
 type parameters for fn
 cast
 arrays / mem allocation
+import
 
 
 INTERACTIVE -----------------------------

@@ -4,22 +4,21 @@ import std.stdio, std.algorithm, std.array, std.conv, std.string, std.file, std.
 import ast, remarks, parser;
 
 
-
-struct DefaultInterpreterContext
+interface IInterpreterContext
 {
-    Remark[] remarks;
+    void print (dstring);
 
-    void print (T...) (T items) { write (items); }
+    void println ();
 
-    void println (T...) (T items) { writeln (items); }
+    void println (dstring);
 
-    void remark (Remark remark) { remarks ~= remark; }
+    void remark (Remark);
 }
 
 
-final class Interpreter (T)
+final class Interpreter
 {
-    T context;
+    IInterpreterContext context;
 
     final class Env
     {
@@ -52,17 +51,24 @@ final class Interpreter (T)
     }
 
 
-    Env interpret (string filePath)
+    Env interpret (IInterpreterContext icontext, string filePath)
     {
         immutable src = toUTF32(readText!string(filePath));
-        auto ast = (new Parser(src)).parseAll();
-        auto astFile = new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array());
-        return interpret(astFile);
+        return interpret(icontext, src);
     }
 
 
-    Env interpret (AstFile file)
+    Env interpret (IInterpreterContext icontext, dstring src)
     {
+        auto ast = (new Parser(src)).parseAll();
+        auto astFile = new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array());
+        return interpret(icontext, astFile);
+    }
+
+
+    Env interpret (IInterpreterContext icontext, AstFile file)
+    {
+        context = icontext;
         auto env = new Env;
         initEnv (env, file.declarations);
 
@@ -97,8 +103,8 @@ final class Interpreter (T)
     private void printEnv (Env env, int level = 0)
     {
         foreach (k, v; env.values)
-            context.println(".".replicate(level), k, " = ",
-                    v is null ? "<null>" : v.str.splitLines()[0]);
+            context.println("."d.replicate(level) ~ k ~ " = " ~
+                    (v is null ? "<null>" : v.str.splitLines()[0]));
 
         if (env.parent)
             printEnv(env.parent, ++level);
