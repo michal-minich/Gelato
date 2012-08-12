@@ -19,8 +19,6 @@ interface IExp
 abstract class Exp : IExp
 {
     Token[] tokens;
-    //Position start;
-    //Position end;
 
     this (Token[] toks) { tokens = toks; }
 }
@@ -70,12 +68,10 @@ final class AstDeclr : Exp
 
     @property @trusted dstring str ()
     {
-        if (type is null)
-            type = new AstIdent(tokens, "T");
-
-        if (type is null)       return dtext (ident.str, " = ", value.str);
-        else if (value is null) return dtext (ident.str, " : ", type.str);
-        else                    return dtext (ident.str, " : ", type.str, " = ", value.str);
+        if (!type && !value)  return ident.str;
+        else if (!type)       return dtext (ident.str, " = ", value.str);
+        else if (!value)      return dtext (ident.str, " : ", type.str);
+        else                  return dtext (ident.str, " : ", type.str, " = ", value.str);
     }
 }
 

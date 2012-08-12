@@ -34,21 +34,27 @@ final class RemarkTranslation : IValidationTranslation
 
     static RemarkTranslation load (const string rootPath, const string language)
     {
-        auto i = new Interpreter!DefaultInterpreterContext;
-        auto env = i.interpret (rootPath ~ "/lang/" ~ language ~ "/settings.gel");
+        auto env = (new Interpreter!DefaultInterpreterContext)
+            .interpret (rootPath ~ "/lang/" ~ language ~ "/settings.gel");
 
         auto rt = new RemarkTranslation;
         rt.rootPath = rootPath;
 
         if (auto v = "inherit"d in env.values)
-            rt.inherit = to!string((cast(AstText)*v).value);
+            rt.inherit = (cast(AstText)*v).value.to!string();
 
-        auto i2 = new Interpreter!DefaultInterpreterContext;
-        auto env2 = i2.interpret (rootPath ~ "/lang/" ~ language ~ "/remarks.gel");
-
-        foreach (k, v; env2.values)
-            rt.values[k.replace("_", "-")] = (cast(AstText)v).value;
+        rt.values = loadValues (rootPath ~ "/lang/" ~ language ~ "/remarks.gel");
 
         return rt;
+    }
+
+
+    private static dstring[dstring] loadValues (const string filePath)
+    {
+        dstring[dstring] vals;
+        auto env = (new Interpreter!DefaultInterpreterContext).interpret (filePath);
+        foreach (k, v; env.values)
+            vals[k.replace("_", "-")] = (cast(AstText)v).value;
+        return vals;
     }
 }

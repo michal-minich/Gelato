@@ -3,7 +3,7 @@ PARSER -----------------------------
 cancel unclosed text after escape on first line
 cancel unclosed comment on first line
 char
-decimaln numbers
+decimal numbers
 hex numbers
 hex escapes
 matching braces
@@ -15,11 +15,11 @@ AST -----------------------------
 print with intendation level
 operators
 comments
+include trailing or preceding white tokens with exp
 
 
 INFRASTRUCTURE -----------------------------
 error reporting
-localized error reporting
 
 
 VALIDATION -----------------------------

@@ -1,18 +1,22 @@
 module remarks;
 
 import std.array, std.algorithm, std.conv;
-import common, ast;
+import common, ast, interpreter;
 
 
 pure:
-
-
 enum GeanyBug { none }
 
 
-enum RamarkSeverity
+interface IValidationTranslation
 {
-    observation,
+    dstring textOf (const Remark);
+}
+
+enum RemarkSeverity
+{
+    none,
+    notice,
     hint,
     suggestion,
     warning,
@@ -21,16 +25,41 @@ enum RamarkSeverity
 }
 
 
-interface IValidationLevel
+interface IRemarkLevel
 {
-    RamarkSeverity severityOf (const Remark);
+    RemarkSeverity severityOf (const Remark);
 }
 
 
-interface IValidationTranslation
+final class RemarkLevel : IRemarkLevel
 {
-    dstring textOf (const Remark);
+    dstring name;
+    RemarkSeverity[dstring] values;
+
+
+    RemarkSeverity severityOf (const Remark remark)
+    {
+        return values[remark.code];
+    }
+
+
+    static RemarkLevel load (const string rootPath, const string name)
+    {
+        auto env = (new Interpreter!DefaultInterpreterContext)
+            .interpret (rootPath ~ "/validation/" ~ name ~ ".gel");
+
+        auto rl = new RemarkLevel;
+
+        rl.name = (cast(AstText)env.get("name")).value;
+
+        foreach (k, v; env.values)
+            if (k != "name")
+                rl.values[k.replace("_", "-")] = (cast(AstText)v).value.to!RemarkSeverity();
+
+        return rl;
+    }
 }
+
 
 @safe:
 enum GeanyBug2 { none }

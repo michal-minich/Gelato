@@ -36,7 +36,7 @@ final class Interpreter (T)
             else if (parent)
                 return eval(this, parent.get(key));
             else
-                throw new Exception ("Variable " ~ to!string(key) ~ " is not declared.");
+                throw new Exception ("Variable " ~ key.to!string() ~ " is not declared.");
         }
     }
 
@@ -55,7 +55,7 @@ final class Interpreter (T)
     Env interpret (string filePath)
     {
         immutable src = toUTF32(readText!string(filePath));
-        auto ast = new Parser(src);
+        auto ast = (new Parser(src)).parseAll();
         auto astFile = new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array());
         return interpret(astFile);
     }
@@ -66,8 +66,8 @@ final class Interpreter (T)
         auto env = new Env;
         initEnv (env, file.declarations);
 
-        if ("start"d in env.values)
-            evalLambda(cast (Lambda)env.values["start"], null);
+        if (auto s = "start"d in env.values)
+            evalLambda(cast (Lambda)*s, null);
         else
             context.remark (new NoStartFunctionRemark());
 
@@ -151,7 +151,10 @@ final class Interpreter (T)
         if (fnApply.ident.ident == "print")
         {
             foreach (ea; eas)
-                context.print(ea.str);
+            {
+                const txt = cast(AstText)ea;
+                context.print(txt ? txt.value : ea.str);
+            }
             context.println();
             return null;
         }
@@ -179,7 +182,7 @@ final class Interpreter (T)
         auto c = 0;
         while (c < lambda.fn.fnItems.length)
         {
-            auto fnItem = lambda.fn.fnItems[c];
+            const fnItem = lambda.fn.fnItems[c];
             ++c;
 
             auto d = cast (AstDeclr)fnItem;

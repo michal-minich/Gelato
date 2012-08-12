@@ -2,7 +2,14 @@ module parser;
 
 
 import std.stdio, std.algorithm, std.array, std.conv;
-import common, tokenizer, ast;
+import common, remarks, tokenizer, ast;
+
+
+struct ParseResult
+{
+    Remark[] remarks;
+    Exp value;
+}
 
 
 final class Parser
@@ -16,17 +23,17 @@ final class Parser
     {
         toks = (new Tokenizer(src)).array();
         toks2 = toks;
-        popFront();
     }
 
 
-    @property Token current () { return toks.front; }
-
-
-    @property bool empty () { return !front; }
-
-
-    void popFront () { front = parse(); }
+    Exp[] parseAll ()
+    {
+        Exp[] res;
+        Exp e;
+        while ((e = parse()) !is null)
+            res ~= e;
+        return res;
+    }
 
 
     Exp parse ()
@@ -34,7 +41,7 @@ final class Parser
         if (toks.empty)
             return null;
 
-        switch (current.type)
+        switch (toks.front.type)
         {
             case TokenType.newLine: return parseAfterWhite();
             case TokenType.white: return parseAfterWhite();
@@ -73,14 +80,14 @@ final class Parser
 
     void skipWhite ()
     {
-        while (!toks.empty && (current.type == TokenType.white || current.type == TokenType.newLine))
+        while (!toks.empty && (toks.front.type == TokenType.white || toks.front.type == TokenType.newLine))
             nextTok();
     }
 
 
     void skipWhiteIfWhite ()
     {
-        if (!toks.empty && (current.type == TokenType.white || current.type == TokenType.newLine))
+        if (!toks.empty && (toks.front.type == TokenType.white || toks.front.type == TokenType.newLine))
             skipWhite();
     }
 
@@ -88,29 +95,29 @@ final class Parser
     AstIf parserIf ()
     {
         Exp[] ts;
-        uint startIndex = current.index;
+        uint startIndex = toks.front.index;
 
         nextTok();
         auto w = parse ();
 
         skipWhite();
-        if (current.type == TokenType.keyThen)
+        if (toks.front.type == TokenType.keyThen)
         {
             nextTok();
             skipWhite();
 
-            while (current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
+            while (toks.front.type != TokenType.keyElse && toks.front.type != TokenType.keyEnd)
             {
                 ts ~= parse();
                 skipWhite();
             }
 
             Exp[] es;
-            if (current.type == TokenType.keyElse)
+            if (toks.front.type == TokenType.keyElse)
             {
                 nextTok();
                 skipWhite();
-                while (current.type != TokenType.keyEnd)
+                while (toks.front.type != TokenType.keyEnd)
                 {
                     es ~= parse();
                     skipWhite();
@@ -118,7 +125,7 @@ final class Parser
                 nextTok();
             }
 
-            if (current.type == TokenType.keyEnd)
+            if (toks.front.type == TokenType.keyEnd)
                 nextTok();
 
             const last = es is null ? ts : es;
@@ -133,42 +140,42 @@ final class Parser
 
     AstFn parserFn ()
     {
-        uint startIndex = current.index;
+        uint startIndex = toks.front.index;
         AstDeclr[] params;
 
         nextTok();
         skipWhiteIfWhite();
-        if (current.type != TokenType.braceStart && current.text != "(")
+        if (toks.front.type != TokenType.braceStart && toks.front.text != "(")
             assert (false, "no brace after fn");
 
         nextTok();
         skipWhiteIfWhite();
-        if (current.type == TokenType.braceEnd && current.text == ")")
+        if (toks.front.type == TokenType.braceEnd && toks.front.text == ")")
             nextTok();
         else
             params = parseFnParameter();
 
         skipWhiteIfWhite();
-        if (current.type == TokenType.braceStart && current.text == "{")
+        if (toks.front.type == TokenType.braceStart && toks.front.text == "{")
             nextTok();
         else
             assert (false, "no curly brace after fn");
 
         Exp[] items;
         skipWhiteIfWhite();
-        if (current.type == TokenType.braceEnd && current.text == "}")
+        if (toks.front.type == TokenType.braceEnd && toks.front.text == "}")
         {
         }
         else
         {
-            while (current.type != TokenType.braceEnd && current.text != "}")
+            while (toks.front.type != TokenType.braceEnd && toks.front.text != "}")
             {
                 items ~= parse();
                 skipWhiteIfWhite();
             }
         }
 
-        auto f = new AstFn (toks2[startIndex .. current.index + 1], params, items);
+        auto f = new AstFn (toks2[startIndex .. toks.front.index + 1], params, items);
         nextTok();
         return f;
     }
@@ -188,18 +195,18 @@ final class Parser
             else
             {
                 skipWhiteIfWhite();
-                if (current.type == TokenType.braceEnd && current.text == ")")
+                if (toks.front.type == TokenType.braceEnd && toks.front.text == ")")
                 {
-                    params ~= new AstDeclr(toks2[current.index .. current.index + 1], ident, null, null);
+                    params ~= new AstDeclr(toks2[toks.front.index .. toks.front.index + 1], ident, null, null);
                     nextTok();
                     return params;
                 }
-                else if (current.type != TokenType.op && current.text != ",")
+                else if (toks.front.type != TokenType.op && toks.front.text != ",")
                 {
                     assert (false, "no fn arg coma");
                 }
 
-                params ~= new AstDeclr(toks2[current.index .. current.index + 1], ident, null, null);
+                params ~= new AstDeclr(toks2[toks.front.index .. toks.front.index + 1], ident, null, null);
                 nextTok();
             }
         }
@@ -208,7 +215,7 @@ final class Parser
 
     AstReturn parserReturn ()
     {
-        auto startIndex = current.index;
+        auto startIndex = toks.front.index;
         nextTok();
         auto e = parse();
         if (!e)
@@ -219,12 +226,12 @@ final class Parser
 
     AstGoto parserGoto ()
     {
-        auto startIndex = current.index;
+        auto startIndex = toks.front.index;
         nextTok();
         skipWhite();
-        if (current.type != TokenType.ident)
+        if (toks.front.type != TokenType.ident)
             assert (false, "goto without identifier");
-        auto g = new AstGoto (toks2[startIndex .. current.index + 1], current.text);
+        auto g = new AstGoto (toks2[startIndex .. toks.front.index + 1], toks.front.text);
         nextTok();
         return g;
     }
@@ -232,12 +239,12 @@ final class Parser
 
     AstLabel parserLabel ()
     {
-        auto startIndex = current.index;
+        auto startIndex = toks.front.index;
         nextTok();
         skipWhite();
-        if (current.type != TokenType.ident)
+        if (toks.front.type != TokenType.ident)
             assert (false, "label without identifier");
-        auto l = new AstLabel (toks2[startIndex .. current.index + 1], current.text);
+        auto l = new AstLabel (toks2[startIndex .. toks.front.index + 1], toks.front.text);
         nextTok();
         return l;
     }
@@ -245,19 +252,19 @@ final class Parser
 
     Exp parseBrace ()
     {
-        auto b = current.text[0];
+        auto b = toks.front.text[0];
 
         if (b != '(')
             assert (false, "unsupported brace");
 
         nextTok();
 
-        if (current.type == TokenType.braceEnd)
+        if (toks.front.type == TokenType.braceEnd)
             assert (false, "empty braces");
 
         auto e = parse();
 
-        if (current.type != TokenType.braceEnd || current.text[0] != oppositeBrace(b))
+        if (toks.front.type != TokenType.braceEnd || toks.front.text[0] != oppositeBrace(b))
         {
             assert (false, "missing closing brace");
         }
@@ -297,7 +304,7 @@ final class Parser
             assert (false, "unclosed empty text");
         }
 
-        while (current.type != TokenType.textEnd)
+        while (toks.front.type != TokenType.textEnd)
         {
             if (toks.empty)
             {
@@ -305,7 +312,7 @@ final class Parser
                 //return new AstText(ts, txt);
             }
 
-            immutable t = current;
+            immutable t = toks.front;
             ts ~= t;
             txt ~= t.type == TokenType.textEscape ? t.text.toInvisibleCharsText() : t.text;
 
@@ -328,7 +335,7 @@ final class Parser
 
     AstNum parseNum ()
     {
-        auto n = new AstNum (toks[0 .. 1], current.text);
+        auto n = new AstNum (toks[0 .. 1], toks.front.text);
         nextTok();
         return n;
     }
@@ -340,9 +347,9 @@ final class Parser
         skipWhiteIfWhite();
         if (toks.empty)
             return i;
-        else if (current.type == TokenType.braceStart && current.text == "(")
+        else if (toks.front.type == TokenType.braceStart && toks.front.text == "(")
             return parseFnApply(i);
-        else if (current.type == TokenType.op && current.text == "=")
+        else if (toks.front.type == TokenType.op && toks.front.text == "=")
             return parseDeclr(i);
         else
             return i;
@@ -362,26 +369,26 @@ final class Parser
     {
         nextTok();
         skipWhiteIfWhite();
-        if (current.type == TokenType.braceEnd && current.text == ")")
+        if (toks.front.type == TokenType.braceEnd && toks.front.text == ")")
         {
-            auto fa = new AstFnApply (toks2[i.tokens[$ - 1].index .. current.index + 1], i, null);
+            auto fa = new AstFnApply (toks2[i.tokens[$ - 1].index .. toks.front.index + 1], i, null);
             nextTok();
             return fa;
         }
         else
         {
             Exp[] args;
-            while (current.type != TokenType.braceEnd && current.text != ")")
+            while (toks.front.type != TokenType.braceEnd && toks.front.text != ")")
             {
                 args ~= parse();
                 skipWhiteIfWhite();
 
-                if (current.type == TokenType.op && current.text == ",")
+                if (toks.front.type == TokenType.op && toks.front.text == ",")
                 {
                     nextTok();
                     skipWhiteIfWhite();
                 }
-                else if (current.type == TokenType.braceEnd && current.text == ")")
+                else if (toks.front.type == TokenType.braceEnd && toks.front.text == ")")
                 {
                     break;
                 }
@@ -390,7 +397,7 @@ final class Parser
                     assert (false, "missing comma in fn apply");
                 }
             }
-            auto fa = new AstFnApply (toks2[i.tokens[$ - 1].index .. current.index + 1], i, args);
+            auto fa = new AstFnApply (toks2[i.tokens[$ - 1].index .. toks.front.index + 1], i, args);
             nextTok();
             return fa;
         }
@@ -399,7 +406,7 @@ final class Parser
 
     AstIdent parseIdentOnly ()
     {
-        auto i = new AstIdent (toks[0 .. 1], current.text);
+        auto i = new AstIdent (toks[0 .. 1], toks.front.text);
         nextTok();
         return i;
     }

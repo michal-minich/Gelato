@@ -6,6 +6,7 @@ main.d
 common.d
 settings.d
 localization.d
+validation.d
 tokenizer.d
 ast.d
 parser.d
