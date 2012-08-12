@@ -2,6 +2,10 @@ module common;
 
 
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file;
+import settings;
+
+
+Settings sett;
 
 
 enum newLine = "\r\n";

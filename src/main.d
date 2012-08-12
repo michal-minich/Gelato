@@ -1,11 +1,13 @@
 ﻿module main;
 
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file, std.path;
-import common, tokenizer, parser, ast, interpreter;
+import common, settings, tokenizer, parser, ast, interpreter;
 
 
 int main (string[] args)
 {
+    sett = Settings.load (dirName(buildNormalizedPath(args[0])));
+
     auto task = InterpretTask.parse(args);
 
     process (task);
@@ -18,17 +20,20 @@ void process (InterpretTask task)
 {
     foreach (f; task.files)
     {
-        immutable src = toUTF32(readText!string(f));
+        //immutable src = toUTF32(readText!string(f));
 
         //auto toks = new Tokenizer (src);
         //foreach (t; toks)
         //    writeln(t.toDebugString());
 
-        auto ast = new Parser(src);
+        //auto ast = new Parser(src);
         //foreach (item; ast)
         //    writeln(item.str);
 
-        interpret(new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array()));
+        //interpret(new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array()));
+
+        auto i = new Interpreter!DefaultInterpreterContext;
+        auto env = i.interpret (f);
     }
 }
 

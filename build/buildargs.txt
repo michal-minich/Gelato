@@ -4,6 +4,7 @@
 
 main.d
 common.d
+settings.d
 tokenizer.d
 ast.d
 parser.d

@@ -47,11 +47,20 @@ const abstract class Remark
 }
 
 
-final class ParserUnderscore : Remark
+final class ParserUnderscoreRemark : Remark
 {
     this (Exp subject)
     {
         super ("P-US", subject);
+    }
+}
+
+
+final class NoStartFunctionRemark : Remark
+{
+    this ()
+    {
+        super ("I-START", null);
     }
 }
 
