@@ -1,0 +1,11 @@
+-property
+-w
+-of../rel/gelato
+
+main.d
+common.d
+tokenizer.d
+ast.d
+parser.d
+interpreter.d
+remarks.d
