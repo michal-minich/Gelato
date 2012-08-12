@@ -4,13 +4,12 @@ import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file, std.pat
 import common, settings, tokenizer, parser, ast, interpreter;
 
 
-ConsoleInterpreterContext icontext;
-
-
 int main (string[] args)
 {
     sett = Settings.beforeLoad;
-    sett = Settings.load (new ConsoleInterpreterContext, dirName(buildNormalizedPath(args[0])));
+    sett = Settings.load (
+        new LoadSettingsInterpreterContext(new ConsoleInterpreterContext),
+        dirName(buildNormalizedPath(args[0])));
 
     auto task = InterpretTask.parse(args);
 

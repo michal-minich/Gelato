@@ -2,7 +2,7 @@ module parser;
 
 
 import std.stdio, std.algorithm, std.array, std.conv;
-import common, remarks, tokenizer, ast;
+import common, remarks, validation, tokenizer, ast;
 
 
 struct ParseResult
@@ -17,10 +17,12 @@ final class Parser
     private Token[] toks2;
     private Token[] toks;
     Exp front;
+    IValidationContext vctx;
 
 
-    this (const dstring src)
+    this (IValidationContext valContext, const dstring src)
     {
+        vctx = valContext;
         toks = (new Tokenizer(src)).array();
         toks2 = toks;
     }
@@ -80,14 +82,16 @@ final class Parser
 
     void skipWhite ()
     {
-        while (!toks.empty && (toks.front.type == TokenType.white || toks.front.type == TokenType.newLine))
+        while (!toks.empty && (toks.front.type == TokenType.white
+                            || toks.front.type == TokenType.newLine))
             nextTok();
     }
 
 
     void skipWhiteIfWhite ()
     {
-        if (!toks.empty && (toks.front.type == TokenType.white || toks.front.type == TokenType.newLine))
+        if (!toks.empty && (toks.front.type == TokenType.white
+                         || toks.front.type == TokenType.newLine))
             skipWhite();
     }
 
@@ -197,7 +201,8 @@ final class Parser
                 skipWhiteIfWhite();
                 if (toks.front.type == TokenType.braceEnd && toks.front.text == ")")
                 {
-                    params ~= new AstDeclr(toks2[toks.front.index .. toks.front.index + 1], ident, null, null);
+                    params ~= new AstDeclr(
+                        toks2[toks.front.index .. toks.front.index + 1], ident, null, null);
                     nextTok();
                     return params;
                 }
@@ -206,7 +211,8 @@ final class Parser
                     assert (false, "no fn arg coma");
                 }
 
-                params ~= new AstDeclr(toks2[toks.front.index .. toks.front.index + 1], ident, null, null);
+                params ~= new AstDeclr(
+                    toks2[toks.front.index .. toks.front.index + 1], ident, null, null);
                 nextTok();
             }
         }
@@ -335,7 +341,18 @@ final class Parser
 
     AstNum parseNum ()
     {
-        auto n = new AstNum (toks[0 .. 1], toks.front.text);
+        auto txt = toks.front.text;
+        auto n = new AstNum (toks[0 .. 1], txt);
+
+        if (txt.startsWith("_"))
+            vctx.remark(new NumberStartsWithUnderscore(n));
+        else if (txt.endsWith("_"))
+            vctx.remark(new NumberEndsWithUnderscore(n));
+        else if (txt.canFind("__"))
+            vctx.remark(new NumberContainsRepeatedUnderscore(n));
+        if (txt.length > 1 && txt.startsWith("0"))
+            vctx.remark(new NumberStartsWithZero(n));
+
         nextTok();
         return n;
     }
@@ -360,7 +377,6 @@ final class Parser
     {
         nextTok();
         auto e = parse();
-        nextTok();
         return new AstDeclr(toks2[i.tokens[$ - 1].index .. e.tokens[$ - 1].index + 1], i, null, e);
     }
 

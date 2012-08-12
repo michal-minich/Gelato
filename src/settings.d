@@ -1,7 +1,30 @@
 module settings;
 
 import std.conv;
-import common, ast, localization, remarks, interpreter;
+import common, ast, remarks, localization, validation, interpreter;
+
+
+
+final class LoadSettingsInterpreterContext : IInterpreterContext
+{
+    private IInterpreterContext base;
+
+    this (IInterpreterContext base) { this.base = base; }
+
+    void print (dstring str) { base.print (str); }
+
+    void println () { base.println (); }
+
+    void println (dstring str) { base.println (str); }
+
+    void remark (Remark remark)
+    {
+        if (cast(MissingStartFunction)remark)
+            return;
+
+        base.remark(remark);
+    }
+}
 
 
 final class Settings
@@ -10,17 +33,17 @@ final class Settings
     IInterpreterContext icontext;
 
     dstring language;
-    RemarkTranslation remarkTranslation;
+    IRemarkTranslation remarkTranslation;
 
     dstring remarkLevelName;
-    RemarkLevel remarkLevel;
+    IRemarkLevel remarkLevel;
 
 
     @property static Settings beforeLoad ()
     {
         auto s = new Settings;
-        s.remarkTranslation = new RemarkTranslation;
-        s.remarkLevel = new RemarkLevel;
+        s.remarkTranslation = new NoRemarkTranslation;
+        s.remarkLevel = new NoRemarkLevel;
         return s;
     }
 

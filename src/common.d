@@ -1,8 +1,8 @@
 module common;
 
 
-import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file;
-import settings, remarks, interpreter;
+import std.stdio, std.array, std.range, std.algorithm, std.conv;
+import settings, validation, interpreter;
 
 
 Settings sett;
@@ -11,6 +11,11 @@ Settings sett;
 enum newLine = "\r\n";
 
 
+@trusted dstring typeName (T) (T a)
+{
+    auto n = typeid(a).name;
+    return to!dstring(n[n.length - n.retro().countUntil('.') .. $]);
+}
 
 
 final class ConsoleInterpreterContext : IInterpreterContext
@@ -21,7 +26,13 @@ final class ConsoleInterpreterContext : IInterpreterContext
 
     void println (dstring str) { writeln (str); }
 
-    void remark (Remark remark) { writeln (remark.severity, "\t", remark.text); }
+    void remark (Remark remark)
+    {
+        write (remark.severity, "\t", remark.text);
+        if (remark.subject)
+            write ("\t", remark.subject.str);
+        writeln();
+    }
 }
 
 

@@ -1,3 +1,10 @@
 name = "ValidationMin"
-I_START = none
-P_US = none
+
+SelfStandingUnderscore = none
+
+NumberStartsWithUnderscore = none
+NumberEndsWithUnderscore = none
+NumberContainsRepeatedUnderscore = none
+NumberStartsWithZero = none
+
+MissingStartFunction = none

@@ -1,18 +1,16 @@
 module interpreter;
 
 import std.stdio, std.algorithm, std.array, std.conv, std.string, std.file, std.utf;
-import ast, remarks, parser;
+import ast, remarks, parser, validation;
 
 
-interface IInterpreterContext
+interface IInterpreterContext : IValidationContext
 {
     void print (dstring);
 
     void println ();
 
     void println (dstring);
-
-    void remark (Remark);
 }
 
 
@@ -60,7 +58,7 @@ final class Interpreter
 
     Env interpret (IInterpreterContext icontext, dstring src)
     {
-        auto ast = (new Parser(src)).parseAll();
+        auto ast = (new Parser(icontext, src)).parseAll();
         auto astFile = new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array());
         return interpret(icontext, astFile);
     }
@@ -75,7 +73,7 @@ final class Interpreter
         if (auto s = "start"d in env.values)
             evalLambda(cast (Lambda)*s, null);
         else
-            context.remark (new NoStartFunctionRemark());
+            context.remark (new MissingStartFunction());
 
         return env;
     }

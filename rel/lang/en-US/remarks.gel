@@ -1,2 +1,9 @@
-I_START = "start fn missing"
-P_US = "self standing underscore"
+
+SelfStandingUnderscore = "Underscore must be part of number or identifier"
+
+NumberStartsWithUnderscore = "Number starts with underscore"
+NumberEndsWithUnderscore = "Number ends with underscore"
+NumberContainsRepeatedUnderscore = "Number countains repeated underscore"
+NumberStartsWithZero = "Number starts with zero"
+
+MissingStartFunction = "Missing start function"

@@ -1,3 +1,10 @@
 name = "ValidationFull"
-I_START = error
-P_US = error
+
+SelfStandingUnderscore = error
+
+NumberStartsWithUnderscore = suggestion
+NumberEndsWithUnderscore = suggestion
+NumberContainsRepeatedUnderscore = suggestion
+NumberStartsWithZero = error
+
+MissingStartFunction = error

@@ -1,3 +1,10 @@
 name = "ValidationNormal"
-I_START = error
-P_US = error
+
+SelfStandingUnderscore = error
+
+NumberStartsWithUnderscore = none
+NumberEndsWithUnderscore = none
+NumberContainsRepeatedUnderscore = none
+NumberStartsWithZero = warning
+
+MissingStartFunction = error
