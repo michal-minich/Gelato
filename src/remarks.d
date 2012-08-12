@@ -4,7 +4,7 @@ import std.array, std.algorithm, std.conv;
 import common, ast;
 
 
-pure @safe:
+pure:
 
 
 enum GeanyBug { none }
@@ -20,8 +20,6 @@ enum RamarkSeverity
     blocker
 }
 
-const IValidationLanguage validationLang;
-
 
 interface IValidationLevel
 {
@@ -29,50 +27,31 @@ interface IValidationLevel
 }
 
 
-interface IValidationLanguage
+interface IValidationTranslation
 {
     dstring textOf (const Remark);
 }
 
+@safe:
+enum GeanyBug2 { none }
 
-const abstract class Remark
+
+abstract class Remark
 {
-    dstring code;
-    Exp subject;
+    const dstring code;
+    const Exp subject;
 
-    this (dstring c, Exp s)
-    {
-        code = c; subject = s;
-    }
+    this (const dstring c, const Exp s) { code = c; subject = s; }
 }
 
 
 final class ParserUnderscoreRemark : Remark
 {
-    this (Exp subject)
-    {
-        super ("P-US", subject);
-    }
+    this (const Exp subject) { super ("P-US", subject); }
 }
 
 
 final class NoStartFunctionRemark : Remark
 {
-    this ()
-    {
-        super ("I-START", null);
-    }
-}
-
-
-final class ValidationLanguageEnUs : IValidationLanguage
-{
-    @trusted dstring textOf (const Remark remark)
-    {
-        switch (remark.code)
-        {
-            case "P-US": return "";
-            default: assert (false, "no traslation for " ~ to!string(remark.code));
-        }
-    }
+    this () { super ("I-START", null); }
 }

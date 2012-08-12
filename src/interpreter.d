@@ -7,11 +7,13 @@ import ast, remarks, parser;
 
 struct DefaultInterpreterContext
 {
+    Remark[] remarks;
+
     void print (T...) (T items) { write (items); }
 
     void println (T...) (T items) { writeln (items); }
 
-    void remark (Remark remark) { /* TODO */ }
+    void remark (Remark remark) { remarks ~= remark; }
 }
 
 
@@ -21,7 +23,7 @@ final class Interpreter (T)
 
     final class Env
     {
-        Env parent;
+        private Env parent;
         Exp[dstring] values;
 
         this () { }
@@ -46,7 +48,7 @@ final class Interpreter (T)
 
         this (Env e, AstFn f) { super (null); env = e; fn = f; }
 
-        @property dstring str () { return fn.str; }
+        @property @safe dstring str () { return fn.str; }
     }
 
 

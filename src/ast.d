@@ -4,6 +4,12 @@ import std.stdio, std.algorithm, std.array, std.conv;
 import common, tokenizer;
 
 
+@safe pure:
+
+
+enum GeanyBug { none }
+
+
 interface IExp
 {
     @property dstring str ();
@@ -24,7 +30,7 @@ final class AstUnknown : Exp
 {
     this (Token[] toks) { super(toks); }
 
-    @property dstring str ()
+    @property @trusted dstring str ()
     {
         return tokens.map!(t => t.text)().join();
     }
@@ -41,7 +47,7 @@ final class AstFile : Exp
         declarations = declrs;
     }
 
-    @property dstring str ()
+    @property @trusted dstring str ()
     {
         return declarations.map!(d => d.str)().join(newLine);
     }
@@ -62,7 +68,7 @@ final class AstDeclr : Exp
         value = val;
     }
 
-    @property dstring str ()
+    @property @trusted dstring str ()
     {
         if (type is null)
             type = new AstIdent(tokens, "T");
@@ -84,7 +90,7 @@ final class AstStruct : Exp
         declarations = declrs;
     }
 
-    @property dstring str()
+    @property @trusted dstring str()
     {
         return dtext("struct", newLine, "{", newLine, "\t",
             declarations.map!(d => d.str)().join(newLine ~ "\t"), newLine ~ "}");
@@ -133,7 +139,7 @@ final class AstText : Exp
         value = val;
     }
 
-    @property dstring str ()
+    @property @trusted dstring str ()
     {
         return dtext("\"", value.toVisibleCharsText(), "\"");
     }
@@ -150,7 +156,7 @@ final class AstChar : Exp
         value = val;
     }
 
-    @property dstring str ()
+    @property @trusted dstring str ()
     {
         return dtext("'", to!dstring(value).toVisibleCharsChar(), "'");
     }
@@ -169,7 +175,7 @@ final class AstFn : Exp
         fnItems = funcItems;
     }
 
-    @property dstring str ()
+    @property @trusted dstring str ()
     {
         return dtext("fn (", params.map!(p => p.str)().join(", "),
                     ")", newLine, "{", newLine, "\t",
@@ -190,7 +196,7 @@ final class AstFnApply : Exp
         args = arguments;
     }
 
-    @property dstring str ()
+    @property @trusted dstring str ()
     {
         return dtext(ident.ident, "(", args.map!(a => a.str)().join(", "), ")");
     }
@@ -211,7 +217,7 @@ final class AstIf : Exp
         otherwise = o;
     }
 
-    @property dstring str ()
+    @property @trusted dstring str ()
     {
         auto t = then.map!(th => th.str)().join(newLine ~ "\t");
         return otherwise.length == 0

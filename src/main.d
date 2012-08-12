@@ -34,6 +34,8 @@ void process (InterpretTask task)
 
         auto i = new Interpreter!DefaultInterpreterContext;
         auto env = i.interpret (f);
+        foreach (r; i.context.remarks)
+            writeln(sett.remarkTranslation.textOf(r));
     }
 }
 

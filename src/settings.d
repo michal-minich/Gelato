@@ -1,13 +1,14 @@
 module settings;
 
-import std.array, std.algorithm, std.conv;
-import common, ast, interpreter;
+import std.conv;
+import common, ast, localization, interpreter;
 
 
 final class Settings
 {
     string rootPath;
     dstring language;
+    RemarkTranslation remarkTranslation;
 
     static Settings load (string rootPath)
     {
@@ -16,7 +17,8 @@ final class Settings
 
         auto s = new Settings;
         s.rootPath = rootPath;
-        s.language = env.get("language").str;
+        s.language = (cast(AstText)env.get("language")).value;
+        s.remarkTranslation = RemarkTranslation.load (rootPath, to!string(s.language));
         return s;
     }
 }
