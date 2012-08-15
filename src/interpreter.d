@@ -1,7 +1,7 @@
 module interpreter;
 
 import std.stdio, std.algorithm, std.array, std.conv, std.string, std.file, std.utf;
-import ast, remarks, parser, validation;
+import common, ast, remarks, parser, validation;
 
 
 interface IInterpreterContext : IValidationContext
@@ -38,17 +38,6 @@ final class Interpreter
     }
 
 
-    private final class Lambda : Exp
-    {
-        Env env;
-        AstFn fn;
-
-        this (Env e, AstFn f) { super (null); env = e; fn = f; }
-
-        @property @safe dstring str () { return fn.str; }
-    }
-
-
     Env interpret (IInterpreterContext icontext, string filePath)
     {
         immutable src = toUTF32(readText!string(filePath));
@@ -60,6 +49,8 @@ final class Interpreter
     {
         auto ast = (new Parser(icontext, src)).parseAll();
         auto astFile = new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array());
+        auto v = new Validator(icontext);
+        v.validate(astFile);
         return interpret(icontext, astFile);
     }
 
@@ -71,7 +62,7 @@ final class Interpreter
         initEnv (env, file.declarations);
 
         if (auto s = "start"d in env.values)
-            evalLambda(cast (Lambda)*s, null);
+            evalLambda(cast (AstLambda)*s, null);
         else
             context.remark (new MissingStartFunction());
 
@@ -102,7 +93,7 @@ final class Interpreter
     {
         foreach (k, v; env.values)
             context.println("."d.replicate(level) ~ k ~ " = " ~
-                    (v is null ? "<null>" : v.str.splitLines()[0]));
+                    (v is null ? "<null>" : v.accept(fv).splitLines()[0]));
 
         if (env.parent)
             printEnv(env.parent, ++level);
@@ -113,7 +104,7 @@ final class Interpreter
     {
         auto fn = cast (AstFn)exp;
         if (fn)
-            return new Lambda (new Env (env), fn);
+            return new AstLambda (new Env (env), fn);
 
         auto ident = cast (AstIdent)exp;
         if (ident)
@@ -137,7 +128,7 @@ final class Interpreter
             else
             {
                 auto f = new AstFn (null, null, when.value == "0" ? i.otherwise : i.then);
-                auto l = new Lambda (new Env(env), f);
+                auto l = new AstLambda (new Env(env), f);
                 return evalLambda (l, null);
             }
         }
@@ -157,7 +148,7 @@ final class Interpreter
             foreach (ea; eas)
             {
                 const txt = cast(AstText)ea;
-                context.print(txt ? txt.value : ea.str);
+                context.print(txt ? txt.value : ea.accept(fv));
             }
             context.println();
             return null;
@@ -169,14 +160,14 @@ final class Interpreter
         }
         else
         {
-            return evalLambda(cast(Lambda)env.get(fnApply.ident.ident), eas);
+            return evalLambda(cast(AstLambda)env.get(fnApply.ident.ident), eas);
         }
     }
 
 
-    private Exp evalLambda (Lambda lambda, Exp[] args)
+    private Exp evalLambda (AstLambda lambda, Exp[] args)
     {
-        lambda = new Lambda (new Env (lambda.env), lambda.fn);
+        lambda = new AstLambda (new Env (lambda.env), lambda.fn);
 
         int[dstring] labelIndex;
 

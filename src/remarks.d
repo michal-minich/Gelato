@@ -3,7 +3,7 @@ module remarks;
 import common, ast, validation;
 
 
-
+@safe pure nothrow:
 enum GeanyBug2 { none }
 
 
@@ -16,6 +16,12 @@ final class SelfStandingUnderscore : Remark
 final class MissingStartFunction : Remark
 {
     this () { super (null); }
+}
+
+
+final class NumberNotProperlyFormatted : GroupRemark
+{
+    this (Exp subject, Remark[] children) { super (subject, children); }
 }
 
 

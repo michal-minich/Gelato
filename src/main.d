@@ -1,11 +1,13 @@
 ﻿module main;
 
+
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file, std.path;
-import common, settings, tokenizer, parser, ast, interpreter;
+import common, settings, tokenizer, parser, ast, interpreter, formatter;
 
 
 int main (string[] args)
 {
+    fv = new FormatVisitor;
     sett = Settings.beforeLoad;
     sett = Settings.load (
         new LoadSettingsInterpreterContext(new ConsoleInterpreterContext),
@@ -31,12 +33,14 @@ void process (InterpretTask task)
 
         //auto ast = new Parser(src);
         //foreach (item; ast)
-        //    writeln(item.str);
+        //    writeln(item.accept(fv));
 
         //interpret(new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array()));
 
         auto i = new Interpreter;
         auto env = i.interpret (sett.icontext, f);
+
+        writeln((cast(Exp)new AstNum(null, "1")).accept(fv));
     }
 }
 

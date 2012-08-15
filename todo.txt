@@ -1,5 +1,15 @@
+visitor
+parser skraslit
+parser array
+parser struct
+interpret qualified names / structs
+project file
+basic format using visitor
+validate basic parsing
+project file
 
-PARSER -----------------------------
+
+TOKENIZER -----------------------------
 cancel unclosed text after escape on first line
 cancel unclosed comment on first line
 char
@@ -9,19 +19,28 @@ hex escapes
 matching braces
 nested comment
 documentation comments
-validation
 
 
 AST -----------------------------
-print with intendation level
 operators
 comments
 include trailing or preceding white tokens with exp
-validation
+
+
+VALIDATOR -----------------------------
+syntax
+intendation level
+unknown identifiers
+double identifiers
+
+
+FORMATTER -----------------------------
+configuration profiles
+fixes for validation formatting remarks
 
 
 INTERPRETER -----------------------------
-validation
+operators priority
 struct
 var / mutable variables
 ref
@@ -38,3 +57,4 @@ import
 
 INTERACTIVE -----------------------------
 first version
+

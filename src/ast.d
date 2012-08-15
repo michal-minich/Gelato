@@ -1,24 +1,56 @@
 module ast;
 
 import std.stdio, std.algorithm, std.array, std.conv;
-import common, tokenizer;
+import common, tokenizer, interpreter, formatter;
 
 
-@safe pure:
+@safe:
 
 
-enum GeanyBug { none }
+enum Geany { Bug }
+
+
+interface AstVisitor (R)
+{
+    R visit (AstNum);
+    R visit (AstUnknown);
+    R visit (AstFile);
+    R visit (AstDeclr);
+    R visit (AstStruct);
+    R visit (AstFn);
+    R visit (AstFnApply);
+    R visit (AstIdent);
+    R visit (AstLabel);
+    R visit (AstReturn);
+    R visit (AstText);
+    R visit (AstChar);
+    R visit (AstIf);
+    R visit (AstGoto);
+    R visit (AstLambda);
+}
+
+
+pure:
+
+
+mixin template visitImpl ()
+{
+    dstring accept (FormatVisitor v) { return v.visit(this); }
+}
 
 
 interface IExp
 {
-    @property dstring str ();
+    dstring accept (FormatVisitor v);
 }
 
 
 abstract class Exp : IExp
 {
     Token[] tokens;
+    Exp parent;
+    Exp prev;
+    Exp next;
 
     this (Token[] toks) { tokens = toks; }
 }
@@ -28,10 +60,7 @@ final class AstUnknown : Exp
 {
     this (Token[] toks) { super(toks); }
 
-    @property @trusted dstring str ()
-    {
-        return tokens.map!(t => t.text)().join();
-    }
+    mixin visitImpl;
 }
 
 
@@ -45,10 +74,7 @@ final class AstFile : Exp
         declarations = declrs;
     }
 
-    @property @trusted dstring str ()
-    {
-        return declarations.map!(d => d.str)().join(newLine);
-    }
+    mixin visitImpl;
 }
 
 
@@ -66,13 +92,7 @@ final class AstDeclr : Exp
         value = val;
     }
 
-    @property @trusted dstring str ()
-    {
-        if (!type && !value)  return ident.str;
-        else if (!type)       return dtext (ident.str, " = ", value.str);
-        else if (!value)      return dtext (ident.str, " : ", type.str);
-        else                  return dtext (ident.str, " : ", type.str, " = ", value.str);
-    }
+    mixin visitImpl;
 }
 
 
@@ -86,11 +106,7 @@ final class AstStruct : Exp
         declarations = declrs;
     }
 
-    @property @trusted dstring str()
-    {
-        return dtext("struct", newLine, "{", newLine, "\t",
-            declarations.map!(d => d.str)().join(newLine ~ "\t"), newLine ~ "}");
-    }
+    mixin visitImpl;
 }
 
 
@@ -104,10 +120,7 @@ final class AstIdent : Exp
         ident = identfier;
     }
 
-    @property dstring str ()
-    {
-        return ident;
-    }
+    mixin visitImpl;
 }
 
 
@@ -121,7 +134,7 @@ final class AstNum : Exp
         value = val;
     }
 
-    @property dstring str () { return value; }
+    mixin visitImpl;
 }
 
 
@@ -135,10 +148,7 @@ final class AstText : Exp
         value = val;
     }
 
-    @property @trusted dstring str ()
-    {
-        return dtext("\"", value.toVisibleCharsText(), "\"");
-    }
+    mixin visitImpl;
 }
 
 
@@ -152,10 +162,18 @@ final class AstChar : Exp
         value = val;
     }
 
-    @property @trusted dstring str ()
-    {
-        return dtext("'", to!dstring(value).toVisibleCharsChar(), "'");
-    }
+    mixin visitImpl;
+}
+
+
+final class AstLambda : Exp
+{
+    Interpreter.Env env;
+    AstFn fn;
+
+    this (Interpreter.Env e, AstFn f) { super (null); env = e; fn = f; }
+
+    mixin visitImpl;
 }
 
 
@@ -171,12 +189,7 @@ final class AstFn : Exp
         fnItems = funcItems;
     }
 
-    @property @trusted dstring str ()
-    {
-        return dtext("fn (", params.map!(p => p.str)().join(", "),
-                    ")", newLine, "{", newLine, "\t",
-                    fnItems.map!(e => e.str)().join(newLine ~ "\t"),  newLine, "}");
-    }
+    mixin visitImpl;
 }
 
 
@@ -192,10 +205,7 @@ final class AstFnApply : Exp
         args = arguments;
     }
 
-    @property @trusted dstring str ()
-    {
-        return dtext(ident.ident, "(", args.map!(a => a.str)().join(", "), ")");
-    }
+    mixin visitImpl;
 }
 
 
@@ -213,14 +223,7 @@ final class AstIf : Exp
         otherwise = o;
     }
 
-    @property @trusted dstring str ()
-    {
-        auto t = then.map!(th => th.str)().join(newLine ~ "\t");
-        return otherwise.length == 0
-            ? dtext("if ", when.str, " then ", t, " end")
-            : dtext("if ", when.str, " then ", t, " else ",
-                otherwise.map!(o => o.str)().join(newLine ~ "\t"), " end");
-    }
+    mixin visitImpl;
 }
 
 
@@ -234,10 +237,7 @@ final class AstLabel : Exp
         label = lbl;
     }
 
-    @property dstring str ()
-    {
-        return "label " ~ label;
-    }
+    mixin visitImpl;
 }
 
 
@@ -251,10 +251,7 @@ final class AstGoto : Exp
         label = lbl;
     }
 
-    @property dstring str ()
-    {
-        return "goto " ~ label;
-    }
+    mixin visitImpl;
 }
 
 
@@ -268,8 +265,5 @@ final class AstReturn : Exp
         exp = e;
     }
 
-    @property dstring str ()
-    {
-        return "return " ~ exp.str;
-    }
+    mixin visitImpl;
 }

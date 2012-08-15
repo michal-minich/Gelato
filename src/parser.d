@@ -16,8 +16,7 @@ final class Parser
 {
     private Token[] toks2;
     private Token[] toks;
-    Exp front;
-    IValidationContext vctx;
+    private IValidationContext vctx;
 
 
     this (IValidationContext valContext, const dstring src)
@@ -38,7 +37,17 @@ final class Parser
     }
 
 
-    Exp parse ()
+    private Exp prev;
+    private Exp newExp (Exp exp)
+    {
+        prev.next = exp;
+        exp.prev = prev;
+        prev = exp;
+        return exp;
+    }
+
+
+    private Exp parse ()
     {
         if (toks.empty)
             return null;
@@ -77,10 +86,10 @@ final class Parser
     }
 
 
-    void nextTok () { if (!toks.empty) toks.popFront();}
+    private void nextTok () { if (!toks.empty) toks.popFront();}
 
 
-    void skipWhite ()
+    private void skipWhite ()
     {
         while (!toks.empty && (toks.front.type == TokenType.white
                             || toks.front.type == TokenType.newLine))
@@ -88,7 +97,7 @@ final class Parser
     }
 
 
-    void skipWhiteIfWhite ()
+    private void skipWhiteIfWhite ()
     {
         if (!toks.empty && (toks.front.type == TokenType.white
                          || toks.front.type == TokenType.newLine))
@@ -96,7 +105,7 @@ final class Parser
     }
 
 
-    AstIf parserIf ()
+    private AstIf parserIf ()
     {
         Exp[] ts;
         uint startIndex = toks.front.index;
@@ -142,7 +151,7 @@ final class Parser
     }
 
 
-    AstFn parserFn ()
+    private AstFn parserFn ()
     {
         uint startIndex = toks.front.index;
         AstDeclr[] params;
@@ -185,7 +194,7 @@ final class Parser
     }
 
 
-    AstDeclr[] parseFnParameter ()
+    private AstDeclr[] parseFnParameter ()
     {
         AstDeclr[] params;
         while (true)
@@ -219,7 +228,7 @@ final class Parser
     }
 
 
-    AstReturn parserReturn ()
+    private AstReturn parserReturn ()
     {
         auto startIndex = toks.front.index;
         nextTok();
@@ -230,7 +239,7 @@ final class Parser
     }
 
 
-    AstGoto parserGoto ()
+    private AstGoto parserGoto ()
     {
         auto startIndex = toks.front.index;
         nextTok();
@@ -243,7 +252,7 @@ final class Parser
     }
 
 
-    AstLabel parserLabel ()
+    private AstLabel parserLabel ()
     {
         auto startIndex = toks.front.index;
         nextTok();
@@ -256,7 +265,7 @@ final class Parser
     }
 
 
-    Exp parseBrace ()
+    private Exp parseBrace ()
     {
         auto b = toks.front.text[0];
 
@@ -331,7 +340,7 @@ final class Parser
     }
 
 
-    AstUnknown parseUnknown ()
+    private AstUnknown parseUnknown ()
     {
         auto u = new AstUnknown (toks[0 .. 1]);
         nextTok();
@@ -339,26 +348,15 @@ final class Parser
     }
 
 
-    AstNum parseNum ()
+    private AstNum parseNum ()
     {
-        auto txt = toks.front.text;
-        auto n = new AstNum (toks[0 .. 1], txt);
-
-        if (txt.startsWith("_"))
-            vctx.remark(new NumberStartsWithUnderscore(n));
-        else if (txt.endsWith("_"))
-            vctx.remark(new NumberEndsWithUnderscore(n));
-        else if (txt.canFind("__"))
-            vctx.remark(new NumberContainsRepeatedUnderscore(n));
-        if (txt.length > 1 && txt.startsWith("0"))
-            vctx.remark(new NumberStartsWithZero(n));
-
+        auto n = new AstNum (toks[0 .. 1], toks.front.text);
         nextTok();
         return n;
     }
 
 
-    Exp parseIdent ()
+    private Exp parseIdent ()
     {
         auto i = parseIdentOnly ();
         skipWhiteIfWhite();
@@ -373,7 +371,7 @@ final class Parser
     }
 
 
-    AstDeclr parseDeclr (AstIdent i)
+    private AstDeclr parseDeclr (AstIdent i)
     {
         nextTok();
         auto e = parse();
@@ -381,7 +379,7 @@ final class Parser
     }
 
 
-    AstFnApply parseFnApply (AstIdent i)
+    private AstFnApply parseFnApply (AstIdent i)
     {
         nextTok();
         skipWhiteIfWhite();
@@ -420,7 +418,7 @@ final class Parser
     }
 
 
-    AstIdent parseIdentOnly ()
+    private AstIdent parseIdentOnly ()
     {
         auto i = new AstIdent (toks[0 .. 1], toks.front.text);
         nextTok();
@@ -428,7 +426,7 @@ final class Parser
     }
 
 
-    Exp parseAfterWhite ()
+    private Exp parseAfterWhite ()
     {
         skipWhite();
         return parse();

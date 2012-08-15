@@ -1,5 +1,6 @@
 @echo off
-echo TODO
-rem dmd -debug -gs -g @buildargs.txt
-rem del gelato.obj
-rem gelato.exe test.gel
+pushd src > NUL
+dmd -debug -gs -g -ofgelato.exe @..\build\buildargs.txt | ddemangle
+del gelato.obj
+move /Y gelato.exe ..\build\
+popd > NUL

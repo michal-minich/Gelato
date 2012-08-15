@@ -10,6 +10,12 @@ interface IValidationContext
 }
 
 
+interface IExpValidation
+{
+    void validate (Exp);
+}
+
+
 interface IRemarkTranslation
 {
     dstring textOf (const Remark);
@@ -47,6 +53,14 @@ abstract class Remark
 }
 
 
+abstract class GroupRemark : Remark
+{
+    Remark[] children;
+
+    @safe this (Exp s, Remark[] ch) { super(s); children = ch; }
+}
+
+
 final class NoRemarkLevel : IRemarkLevel
 {
     RemarkSeverity severityOf (const Remark remark)
@@ -71,11 +85,11 @@ final class RemarkLevel : IRemarkLevel
     }
 
 
-    static RemarkLevel load (IInterpreterContext icontext, const string rootPath, const string name)
+    static RemarkLevel load (IValidationContext vctx, const string rootPath, const string name)
     {
         immutable src = toUTF32(readText!string(rootPath ~ "/validation/" ~ name ~ ".gel"));
 
-        auto exps = (new Parser(icontext, src)).parseAll();
+        auto exps = (new Parser(vctx, src)).parseAll();
 
         auto rl = new RemarkLevel;
 
@@ -83,9 +97,9 @@ final class RemarkLevel : IRemarkLevel
         {
             auto declr = cast(AstDeclr)e;
             if (declr.ident.ident == "name")
-                rl.name = declr.value.str;
+                rl.name = declr.value.accept(fv);
             else
-                rl.values[declr.ident.ident] = declr.value.str.to!RemarkSeverity();
+                rl.values[declr.ident.ident] = declr.value.accept(fv).to!RemarkSeverity();
         }
 
         return rl;
@@ -152,5 +166,35 @@ final class RemarkTranslation : IRemarkTranslation
         foreach (k, v; env.values)
             vals[k] = (cast(AstText)v).value;
         return vals;
+    }
+}
+
+
+final class Validator
+{
+    IValidationContext vctx;
+
+    this (IValidationContext validationContex) { vctx = validationContex; }
+
+
+    void validate (Exp exp)
+    {
+        auto n = cast(AstNum)exp;
+        if (n)
+            validateNum(n);
+    }
+
+
+    void validateNum (AstNum n)
+    {
+        auto txt = n.accept(fv);
+        if (txt.startsWith("_"))
+            vctx.remark(new NumberStartsWithUnderscore(n));
+        else if (txt.endsWith("_"))
+            vctx.remark(new NumberEndsWithUnderscore(n));
+        else if (txt.canFind("__"))
+            vctx.remark(new NumberContainsRepeatedUnderscore(n));
+        if (txt.length > 1 && txt.startsWith("0"))
+            vctx.remark(new NumberStartsWithZero(n));
     }
 }

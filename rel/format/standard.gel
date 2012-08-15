@@ -1,0 +1,8 @@
+name = "FormatNormal"
+
+SelfStandingUnderscore = no
+
+NumberStartsWithUnderscore = yes
+NumberEndsWithUnderscore = yes
+NumberContainsRepeatedUnderscore = yes
+NumberStartsWithZero = no

@@ -2,10 +2,11 @@ module common;
 
 
 import std.stdio, std.array, std.range, std.algorithm, std.conv;
-import settings, validation, interpreter;
+import settings, validation, interpreter, formatter;
 
 
 Settings sett;
+FormatVisitor fv;
 
 
 enum newLine = "\r\n";
@@ -30,7 +31,7 @@ final class ConsoleInterpreterContext : IInterpreterContext
     {
         write (remark.severity, "\t", remark.text);
         if (remark.subject)
-            write ("\t", remark.subject.str);
+            write ("\t", remark.subject.accept(fv));
         writeln();
     }
 }
@@ -87,4 +88,3 @@ struct Position
         .replace("\r", "\\r")
         .replace("\t", "\\t");
 }
-

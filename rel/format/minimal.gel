@@ -1,0 +1,8 @@
+name = "FormatMin"
+
+SelfStandingUnderscore = no
+
+NumberStartsWithUnderscore = no
+NumberEndsWithUnderscore = no
+NumberContainsRepeatedUnderscore = no
+NumberStartsWithZero = no
