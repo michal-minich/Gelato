@@ -109,8 +109,6 @@ immutable struct TokenResult
             front.pos + to!uint(front.text.length),
             tr.isError);
 
-        //std.stdio.writeln(front.toDebugString());
-
         src = src[tr.length .. $];
         context = tr.contextAfter;
     }

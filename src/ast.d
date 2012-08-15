@@ -30,9 +30,6 @@ interface AstVisitor (R)
 }
 
 
-pure:
-
-
 mixin template visitImpl ()
 {
     dstring accept (FormatVisitor v) { return v.visit(this); }

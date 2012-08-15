@@ -1,11 +1,3 @@
-visitor
-parser skraslit
-parser array
-parser struct
-interpret qualified names / structs
-project file
-basic format using visitor
-validate basic parsing
 project file
 
 
@@ -18,12 +10,18 @@ hex numbers
 hex escapes
 matching braces
 nested comment
+qualified indentifiers
 documentation comments
 
 
 AST -----------------------------
+parser skraslit
+parser array
+parser struct
 operators
 comments
+validate basic parse erros in parser
+include parent field on ast items
 include trailing or preceding white tokens with exp
 
 
@@ -34,12 +32,8 @@ unknown identifiers
 double identifiers
 
 
-FORMATTER -----------------------------
-configuration profiles
-fixes for validation formatting remarks
-
-
 INTERPRETER -----------------------------
+interpret qualified names / structs
 operators priority
 struct
 var / mutable variables
@@ -55,6 +49,10 @@ arrays / mem allocation
 import
 
 
+FORMATTER -----------------------------
+configuration profiles
+fixes for validation formatting remarks
+
+
 INTERACTIVE -----------------------------
 first version
-

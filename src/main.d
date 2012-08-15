@@ -39,8 +39,6 @@ void process (InterpretTask task)
 
         auto i = new Interpreter;
         auto env = i.interpret (sett.icontext, f);
-
-        writeln((cast(Exp)new AstNum(null, "1")).accept(fv));
     }
 }
 

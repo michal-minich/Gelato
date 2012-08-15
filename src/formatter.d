@@ -6,11 +6,6 @@ import common, ast, remarks, parser, validation, interpreter;
 
 @trusted final class FormatVisitor : AstVisitor!(dstring)
 {
-    dstring visit (Exp e)
-    {
-        return "";
-    }
-
     dstring visit (AstNum e)
     {
         return e.value;
