@@ -4,7 +4,6 @@ project file
 TOKENIZER -----------------------------
 cancel unclosed text after escape on first line
 cancel unclosed comment on first line
-char
 decimal numbers
 hex numbers
 hex escapes
@@ -14,7 +13,7 @@ qualified indentifiers
 documentation comments
 
 
-AST -----------------------------
+PARSER -----------------------------
 parser skraslit
 parser array
 parser struct

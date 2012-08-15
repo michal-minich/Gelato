@@ -38,7 +38,7 @@ final class Parser
 
 
     private Exp prev;
-    private T newExp (T) (T exp) //if (is (T : Exp))
+    private T newExp (T) (T exp) if (is (T : Exp))
     {
         if (prev)
             prev.next = exp;
@@ -309,7 +309,7 @@ final class Parser
     }
 
 
-    AstText parseText ()
+    Exp parseText ()
     {
         Token[] ts;
         dstring txt;
@@ -338,7 +338,7 @@ final class Parser
 
         nextTok();
 
-        return newExp(new AstText(ts, txt));
+        return newExp(txt.length == 1 ? new AstChar(ts, txt[0]) : new AstText(ts, txt));
     }
 
 

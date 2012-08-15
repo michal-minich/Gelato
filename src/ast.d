@@ -7,7 +7,10 @@ import common, tokenizer, interpreter, formatter;
 @safe:
 
 
-enum Geany { Bug }
+mixin template visitImpl ()
+{
+    override dstring accept (FormatVisitor v) { return v.visit(this); }
+}
 
 
 interface AstVisitor (R)
@@ -30,19 +33,7 @@ interface AstVisitor (R)
 }
 
 
-mixin template visitImpl ()
-{
-    dstring accept (FormatVisitor v) { return v.visit(this); }
-}
-
-
-interface IExp
-{
-    dstring accept (FormatVisitor v);
-}
-
-
-abstract class Exp : IExp
+abstract class Exp
 {
     Token[] tokens;
     Exp parent;
@@ -50,6 +41,8 @@ abstract class Exp : IExp
     Exp next;
 
     this (Token[] toks) { tokens = toks; }
+
+    abstract dstring accept (FormatVisitor v);
 }
 
 

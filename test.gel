@@ -1,3 +1,6 @@
-
-start = fn () { __1 2__ 4__4 05 }
-
+start = fn ()
+{
+    a = "abc\n"
+    b = 'a'
+    printEnv()
+}

@@ -120,9 +120,9 @@ immutable struct TokenResult
         enum parsers = [
             ParseContext.any : [&parseCommentLine, &parseCommentStart, &parseWhite, &parseNewLine,
                                 &parseBraceStart, &parseBraceEnd, &parseIdent, &parseNum,
-                                &parseTextStart/*, &parseChar*/, &parseOp],
+                                &parseTextStart, &parseCharStart, &parseOp],
             ParseContext.text : [&parseText, &parseTextEscape, &parseTextEnd, &parseTextNewLine],
-            //ParseContext.character : [],
+            ParseContext.character : [&parseChar, &parseCharEscape, &parseCharEnd, &parseCharNewLine],
             ParseContext.comment : [&parseCommentEnd, &parseComment, &parseCommentNewLine],
         ];
         auto src2 = src;
@@ -147,6 +147,42 @@ immutable struct TokenResult
 
 
 @safe pure:
+
+
+TokenResult parseCharStart (const dstring src)
+{
+    return TokenResult.ok(TokenType.textStart, src[0] == '\'', ParseContext.character);
+}
+
+
+TokenResult parseCharEnd (const dstring src)
+{
+    return TokenResult.ok(TokenType.textEnd, src[0] == '\'', ParseContext.any);
+}
+
+
+TokenResult parseChar (const dstring src)
+{
+    auto l = lengthUntilIncluding!(ch => ch =='\\' || ch == '\'')(src);
+    if (!l)
+    {
+        l = lengthUntilIncluding!isNewLine(src);
+        return TokenResult.error(TokenType.text, l ? l - 1 : src.length, ParseContext.any);
+    }
+    return TokenResult.ok(TokenType.text, l - 1, ParseContext.character);
+}
+
+
+TokenResult parseCharNewLine (const dstring src)
+{
+    return TokenResult.ok(TokenType.newLine, lengthWhile!isNewLine(src), ParseContext.character);
+}
+
+
+TokenResult parseCharEscape (const dstring src)
+{
+    return parseTextEscapeImpl (src, ParseContext.character);
+}
 
 
 TokenResult parseTextStart (const dstring src)
@@ -181,15 +217,21 @@ TokenResult parseTextNewLine (const dstring src)
 
 TokenResult parseTextEscape (const dstring src)
 {
+    return parseTextEscapeImpl(src, ParseContext.text);
+}
+
+
+TokenResult parseTextEscapeImpl (const dstring src, ParseContext pc)
+{
     if (src[0] == '\\')
     {
         if (src.length < 2)
-            return TokenResult.error(TokenType.textEscape, 1, ParseContext.text);
+            return TokenResult.error(TokenType.textEscape, 1, pc);
 
         immutable ch = src[1];
         if (ch == 'n' || ch == 'r' || ch == 't')
-            return TokenResult.ok(TokenType.textEscape, 2, ParseContext.text);
-        return TokenResult.error(TokenType.textEscape, 2, ParseContext.text);
+            return TokenResult.ok(TokenType.textEscape, 2, pc);
+        return TokenResult.error(TokenType.textEscape, 2, pc);
     }
     return TokenResult.empty;
 }
