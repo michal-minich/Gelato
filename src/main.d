@@ -25,15 +25,15 @@ void process (InterpretTask task)
 {
     foreach (f; task.files)
     {
-        //immutable src = toUTF32(readText!string(f));
+        immutable src = toUTF32(readText!string(f));
 
         //auto toks = new Tokenizer (src);
         //foreach (t; toks)
         //    writeln(t.toDebugString());
 
-        //auto ast = new Parser(src);
-        //foreach (item; ast)
-        //    writeln(item.accept(fv));
+        auto ast = new Parser(sett.icontext, src);
+        foreach (item; ast.parseAll())
+            writeln(item.accept(fv));
 
         //interpret(new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array()));
 

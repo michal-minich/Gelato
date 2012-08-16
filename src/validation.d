@@ -40,12 +40,12 @@ enum RemarkSeverity
 }
 
 
-abstract class Remark
+class Remark
 {
     const dstring code;
     Exp subject;
 
-    @safe this (Exp s) { code = typeName(this); subject = s; }
+    @safe nothrow this (dstring c, Exp s) { code = c; subject = s; }
 
     @property RemarkSeverity severity () { return sett.remarkLevel.severityOf(this); }
 
@@ -53,11 +53,11 @@ abstract class Remark
 }
 
 
-abstract class GroupRemark : Remark
+final class GroupRemark : Remark
 {
     Remark[] children;
 
-    @safe this (Exp s, Remark[] ch) { super(s); children = ch; }
+    @safe nothrow this (dstring c, Exp s, Remark[] ch) { super(c, s); children = ch; }
 }
 
 
@@ -189,12 +189,12 @@ final class Validator
     {
         auto txt = n.accept(fv);
         if (txt.startsWith("_"))
-            vctx.remark(new NumberStartsWithUnderscore(n));
+            vctx.remark(NumberStartsWithUnderscore(n));
         else if (txt.endsWith("_"))
-            vctx.remark(new NumberEndsWithUnderscore(n));
+            vctx.remark(NumberEndsWithUnderscore(n));
         else if (txt.canFind("__"))
-            vctx.remark(new NumberContainsRepeatedUnderscore(n));
+            vctx.remark(NumberContainsRepeatedUnderscore(n));
         if (txt.length > 1 && txt.startsWith("0"))
-            vctx.remark(new NumberStartsWithZero(n));
+            vctx.remark(NumberStartsWithZero(n));
     }
 }

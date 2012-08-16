@@ -64,7 +64,7 @@ final class Interpreter
         if (auto s = "start"d in env.values)
             evalLambda(cast (AstLambda)*s, null);
         else
-            context.remark (new MissingStartFunction());
+            context.remark (MissingStartFunction(null));
 
         return env;
     }

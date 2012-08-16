@@ -1,3 +1,5 @@
+validate basic parse erros in parser
+
 project file
 
 
@@ -14,12 +16,10 @@ documentation comments
 
 
 PARSER -----------------------------
-parser skraslit
 parser array
 parser struct
 operators
 comments
-validate basic parse erros in parser
 include parent field on ast items
 include trailing or preceding white tokens with exp
 

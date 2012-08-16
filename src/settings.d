@@ -19,7 +19,7 @@ final class LoadSettingsInterpreterContext : IInterpreterContext
 
     void remark (Remark remark)
     {
-        if (cast(MissingStartFunction)remark)
+        if (remark.code == "MissingStartFunction")
             return;
 
         base.remark(remark);

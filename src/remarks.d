@@ -1,49 +1,28 @@
 module remarks;
 
-import common, ast, validation;
+import ast, validation;
 
 
 @safe pure nothrow:
-enum GeanyBug2 { none }
 
 
-final class SelfStandingUnderscore : Remark
+mixin template makeRemark (string name)
 {
-    this (Exp subject) { super (subject); }
+    mixin ("Remark " ~ name ~ " (Exp subject) { return new Remark (\""
+        ~ name ~ "\", subject); }");
 }
 
-
-final class MissingStartFunction : Remark
+mixin template makeGroupRemark (string name)
 {
-    this () { super (null); }
+    mixin ("Remark " ~ name ~ " (Exp subject, Remark[] children) { return new GroupRemark (\""
+        ~ name ~ "\", subject, children); }");
 }
 
+mixin makeRemark!("SelfStandingUnderscore");
+mixin makeRemark!("MissingStartFunction");
 
-final class NumberNotProperlyFormatted : GroupRemark
-{
-    this (Exp subject, Remark[] children) { super (subject, children); }
-}
-
-
-final class NumberStartsWithUnderscore : Remark
-{
-    this (Exp subject) { super (subject); }
-}
-
-
-final class NumberEndsWithUnderscore : Remark
-{
-    this (Exp subject) { super (subject); }
-}
-
-
-final class NumberContainsRepeatedUnderscore : Remark
-{
-    this (Exp subject) { super (subject); }
-}
-
-
-final class NumberStartsWithZero : Remark
-{
-    this (Exp subject) { super (subject); }
-}
+mixin makeGroupRemark!("NumberNotProperlyFormatted");
+mixin makeRemark!("NumberStartsWithUnderscore");
+mixin makeRemark!("NumberEndsWithUnderscore");
+mixin makeRemark!("NumberContainsRepeatedUnderscore");
+mixin makeRemark!("NumberStartsWithZero");
