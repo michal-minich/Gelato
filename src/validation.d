@@ -97,9 +97,9 @@ final class RemarkLevel : IRemarkLevel
         {
             auto d = cast(AstDeclr)e;
             if (d.ident.idents[0] == "name")
-                rl.name = d.value.accept(fv);
+                rl.name = d.value.str(fv);
             else
-                rl.values[d.ident.idents[0]] = d.value.accept(fv).to!RemarkSeverity();
+                rl.values[d.ident.idents[0]] = d.value.str(fv).to!RemarkSeverity();
         }
 
         return rl;
@@ -173,7 +173,7 @@ final class RemarkTranslation : IRemarkTranslation
         foreach (e; exps)
         {
             auto d = cast(AstDeclr)e;
-            vals[d.ident.idents[0]] = d.value.accept(fv);
+            vals[d.ident.idents[0]] = d.value.str(fv);
         }
 
         return vals;
@@ -198,7 +198,7 @@ final class Validator
 
     void validateNum (AstNum n)
     {
-        auto txt = n.accept(fv);
+        auto txt = n.str(fv);
         if (txt.startsWith("_"))
             vctx.remark(NumberStartsWithUnderscore(n));
         else if (txt.endsWith("_"))

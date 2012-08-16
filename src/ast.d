@@ -9,7 +9,7 @@ import common, tokenizer, interpreter, formatter;
 
 mixin template visitImpl ()
 {
-    override dstring accept (FormatVisitor v) { return v.visit(this); }
+    override dstring str (FormatVisitor v) { return v.visit(this); }
 }
 
 
@@ -42,7 +42,7 @@ abstract class Exp
 
     this (Token[] toks) { tokens = toks; }
 
-    abstract dstring accept (FormatVisitor v);
+    abstract dstring str (FormatVisitor v);
 }
 
 

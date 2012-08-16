@@ -110,7 +110,7 @@ final class Interpreter
     {
         foreach (k, v; env.values)
             context.println("."d.replicate(level) ~ k ~ " = " ~
-                    (v is null ? "<null>" : v.accept(fv).splitLines()[0]));
+                    (v is null ? "<null>" : v.str(fv).splitLines()[0]));
 
         if (env.parent)
             printEnv(env.parent, ++level);
@@ -165,7 +165,7 @@ final class Interpreter
             foreach (ea; eas)
             {
                 const txt = cast(AstText)ea;
-                context.print(txt ? txt.value : ea.accept(fv));
+                context.print(txt ? txt.value : ea.str(fv));
             }
             context.println();
             return null;
@@ -198,7 +198,7 @@ final class Interpreter
         auto c = 0;
         while (c < lambda.fn.fnItems.length)
         {
-            const fnItem = lambda.fn.fnItems[c];
+            auto fnItem = lambda.fn.fnItems[c];
             ++c;
 
             auto d = cast (AstDeclr)fnItem;
@@ -229,14 +229,10 @@ final class Interpreter
                 return eval(lambda.env, r.exp);
             }
 
-            auto e = cast (Exp)fnItem;
-            if (e)
-            {
-                if (lambda.fn.fnItems.length == 1)
-                    return eval(lambda.env, e);
-                else
-                    eval(lambda.env, e);
-            }
+            if (lambda.fn.fnItems.length == 1)
+                return eval(lambda.env, fnItem);
+            else
+                eval(lambda.env, fnItem);
         }
 
         return null;

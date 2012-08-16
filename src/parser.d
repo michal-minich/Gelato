@@ -50,12 +50,46 @@ final class Parser
     }
 
 
+    private void nextTok ()
+    {
+        if (!finished) {
+            toks.popFront();
+            if (!finished)
+            current = toks.front;
+        }
+    }
+
+
+    private @property bool finished () { return toks.empty; }
+
+
+    private @property bool isWhite ()
+    {
+        return current.type == TokenType.newLine || current.type == TokenType.white;
+    }
+
+
+    private void nextNonWhiteTok ()
+    {
+        nextTok();
+        while (!finished && isWhite)
+            nextTok();
+    }
+
+
+    private void skipWhite ()
+    {
+        if (!finished && isWhite)
+            nextNonWhiteTok();
+    }
+
+
     private Exp parse ()
     {
-        if (toks.empty)
+        if (finished)
             return null;
 
-        if (current.type == TokenType.newLine || current.type == TokenType.white)
+        if (isWhite)
             nextNonWhiteTok();
 
         switch (current.type)
@@ -89,40 +123,13 @@ final class Parser
     }
 
 
-    private void nextTok ()
-    {
-        if (!toks.empty) {
-            toks.popFront();
-            if (!toks.empty)
-            current = toks.front;
-        }
-    }
-
-
-    private void nextNonWhiteTok ()
-    {
-        nextTok();
-        while (!toks.empty && (current.type == TokenType.white
-                            || current.type == TokenType.newLine))
-            nextTok();
-    }
-
-
-    private void skipWhiteIfWhite ()
-    {
-        if (!toks.empty && (current.type == TokenType.white
-                         || current.type == TokenType.newLine))
-            nextNonWhiteTok();
-    }
-
-
     private AstIf parseIf ()
     {
         Exp[] ts;
         uint startIndex = current.index;
         nextTok();
         auto w = parse ();
-        skipWhiteIfWhite();
+        skipWhite();
 
         if (current.type == TokenType.keyThen)
         {
@@ -131,7 +138,7 @@ final class Parser
             while (current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
             {
                 ts ~= parse();
-                skipWhiteIfWhite();
+                skipWhite();
             }
 
             Exp[] es;
@@ -142,12 +149,12 @@ final class Parser
                 while (current.type != TokenType.keyEnd)
                 {
                     es ~= parse();
-                    skipWhiteIfWhite();
+                    skipWhite();
                 }
             }
 
 //std.stdio.writeln(current.text);
-            if (toks.empty || current.type != TokenType.keyEnd)
+            if (finished || current.type != TokenType.keyEnd)
                 assert (false, "if without end");
 
             nextTok();
@@ -178,14 +185,14 @@ final class Parser
         else
             params = parseFnParameter();
 
-        skipWhiteIfWhite();
+        skipWhite();
         if (current.type == TokenType.braceStart && current.text == "{")
             nextTok();
         else
             assert (false, "no curly brace after fn");
 
         Exp[] items;
-        skipWhiteIfWhite();
+        skipWhite();
         if (current.type == TokenType.braceEnd && current.text == "}")
         {
         }
@@ -194,7 +201,7 @@ final class Parser
             while (current.type != TokenType.braceEnd && current.text != "}")
             {
                 items ~= parse();
-                skipWhiteIfWhite();
+                skipWhite();
             }
         }
 
@@ -217,7 +224,7 @@ final class Parser
             }
             else
             {
-                skipWhiteIfWhite();
+                skipWhite();
                 if (current.type == TokenType.braceEnd && current.text == ")")
                 {
                     params ~= newExp(new AstDeclr(
@@ -287,9 +294,15 @@ final class Parser
 
         auto e = parse();
 
-        if (current.type != TokenType.braceEnd || current.text[0] != oppositeBrace(b))
+        skipWhite();
+
+        if (current.type != TokenType.braceEnd)
         {
             assert (false, "missing closing brace");
+        }
+        else if (current.text[0] != oppositeBrace(b))
+        {
+            assert (false, "closing brace does not matches opening");
         }
         else if (e is null)
         {
@@ -322,14 +335,14 @@ final class Parser
 
         nextTok();
 
-        if (toks.empty)
+        if (finished)
         {
             assert (false, "unclosed empty text");
         }
 
         while (current.type != TokenType.textEnd)
         {
-            if (toks.empty)
+            if (finished)
             {
                 assert (false, "unclosed text");
                 //return newExp(new AstText(ts, txt));
@@ -368,11 +381,9 @@ final class Parser
     private Exp parseIdent ()
     {
         auto i = parseIdentOnly ();
-        if (toks.empty)
-            return i;
-        else if (current.type == TokenType.braceStart && current.text == "(")
+        if (current.text == "(")
             return parseFnApply(i);
-        else if (current.type == TokenType.op && current.text == "=")
+        else if (current.text == "=")
             return parseDeclr(i);
         else
             return i;
@@ -404,12 +415,12 @@ final class Parser
             while (current.type != TokenType.braceEnd && current.text != ")")
             {
                 args ~= parse();
-                skipWhiteIfWhite();
+                skipWhite();
 
                 if (current.type == TokenType.op && current.text == ",")
                 {
                     nextTok();
-                    skipWhiteIfWhite();
+                    skipWhite();
                 }
                 else if (current.type == TokenType.braceEnd && current.text == ")")
                 {
@@ -437,12 +448,10 @@ final class Parser
         {
             idents ~= current.text;
             nextNonWhiteTok();
-            if (toks.empty)
-                break;
-            else if (current.text == ".")
+            if (current.text == ".")
             {
                 nextNonWhiteTok();
-                if (toks.empty || current.type != TokenType.ident)
+                if (finished || current.type != TokenType.ident)
                 {
                     assert (false, "ident expected after dot");
                 }
@@ -450,10 +459,8 @@ final class Parser
             else
                 break;
         }
-        auto endIndex = toks.empty ? toks2.length : current.index ;
+        auto endIndex = finished ? toks2.length : current.index;
 
-        auto i = newExp(new AstIdent (toks2[startIndex .. endIndex], idents));
-
-        return i;
+        return newExp(new AstIdent (toks2[startIndex .. endIndex], idents));
     }
 }

@@ -1,5 +1,3 @@
-validate basic parse erros in parser
-
 project file
 
 
@@ -11,17 +9,36 @@ hex numbers
 hex escapes
 matching braces
 nested comment
-qualified indentifiers
-documentation comments
+document
+ation comments
 
 
 PARSER -----------------------------
-parser array
-parser struct
+validate not recoverable erros
+array
+struct
 operators
 comments
 include parent field on ast items
 include trailing or preceding white tokens with exp
+
+
+INTERPRETER -----------------------------
+struct
+import
+var / mutable variables
+ref
+exceptions /, scope guars
+contracts
+dynamic typing
+  stack trace
+  env
+custom struct functions - construct, destruct, clone, ...
+first-class types
+first base library
+cast
+arrays / mem allocation
+operators priority
 
 
 VALIDATOR -----------------------------
@@ -29,23 +46,6 @@ syntax
 intendation level
 unknown identifiers
 double identifiers
-
-
-INTERPRETER -----------------------------
-interpret qualified names / structs
-operators priority
-struct
-var / mutable variables
-ref
-exceptions /, scope guars
-dynamic typing
-  stack trace
-  env
-custom struct functions - construct, destruct, clone, ...
-type parameters for fn
-cast
-arrays / mem allocation
-import
 
 
 FORMATTER -----------------------------

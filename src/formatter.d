@@ -18,33 +18,34 @@ import common, ast, remarks, parser, validation, interpreter;
 
     dstring visit (AstFile e)
     {
-        return e.declarations.map!(d => d.accept(this))().join(newLine);
+        return e.declarations.map!(d => d.str(this))().join(newLine);
     }
 
     dstring visit (AstDeclr e)
     {
-        if (!e.type && !e.value) return e.ident.accept(this);
-        else if (!e.type)        return dtext (e.ident.accept(this), " = ", e.value.accept(this));
-        else if (!e.value)       return dtext (e.ident.accept(this), " : ", e.type.accept(this));
-        else                     return dtext (e.ident.accept(this), " : ", e.type.accept(this), " = ", e.value.accept(this));
+        if (!e.type && !e.value) return e.ident.str(this);
+        else if (!e.type)        return dtext (e.ident.str(this), " = ", e.value.str(this));
+        else if (!e.value)       return dtext (e.ident.str(this), " : ", e.type.str(this));
+        else                     return dtext (e.ident.str(this), " : ", e.type.str(this), " = ", e.value.str(this));
     }
 
     dstring visit (AstStruct e)
     {
         return dtext("struct", newLine, "{", newLine, "\t",
-            e.declarations.map!(d => d.accept(this))().join(newLine ~ "\t"), newLine ~ "}");
+            e.declarations.map!(d => d.str(this))().join(newLine ~ "\t"), newLine ~ "}");
     }
 
     dstring visit (AstFn e)
     {
-        return dtext("fn (", e.params.map!(p => p.accept(this))().join(", "),
+        return dtext("fn (", e.params.map!(p => p.str(this))().join(", "),
                     ")", newLine, "{", newLine, "\t",
-                    e.fnItems.map!(e => e.accept(this))().join(newLine ~ "\t"),  newLine, "}");
+                    e.fnItems.map!(e => e.str(this))().join(newLine ~ "\t"),  newLine, "}");
     }
 
     dstring visit (AstFnApply e)
     {
-        return dtext(e.accept(this), "(", e.args.map!(a => a.accept(this))().join(", "), ")");
+        return dtext(e.ident.str(this),
+            "(", e.args ? e.args.map!(a => a.str(this))().join(", ") : "", ")");
     }
 
     dstring visit (AstIdent e)
@@ -59,7 +60,7 @@ import common, ast, remarks, parser, validation, interpreter;
 
     dstring visit (AstReturn e)
     {
-        return "return " ~ e.exp.accept(this);
+        return "return " ~ e.exp.str(this);
     }
 
     dstring visit (AstText e)
@@ -74,11 +75,11 @@ import common, ast, remarks, parser, validation, interpreter;
 
     dstring visit (AstIf e)
     {
-        auto t = e.then.map!(th => th.accept(this))().join(newLine ~ "\t");
+        auto t = e.then.map!(th => th.str(this))().join(newLine ~ "\t");
         return e.otherwise.length == 0
-            ? dtext("if ", e.when.accept(this), " then ", t, " end")
-            : dtext("if ", e.when.accept(this), " then ", t, " else ",
-                e.otherwise.map!(o => o.accept(this))().join(newLine ~ "\t"), " end");
+            ? dtext("if ", e.when.str(this), " then ", t, " end")
+            : dtext("if ", e.when.str(this), " then ", t, " else ",
+                e.otherwise.map!(o => o.str(this))().join(newLine ~ "\t"), " end");
     }
 
     dstring visit (AstGoto e)
@@ -88,7 +89,7 @@ import common, ast, remarks, parser, validation, interpreter;
 
     dstring visit (AstLambda e)
     {
-        return e.fn.accept(this);
+        return e.fn.str(this);
     }
 }
 
@@ -109,9 +110,9 @@ final class Formatter
         {
             auto decldstring = cast(AstDeclr)e;
             if (declr.ident.ident == "name")
-                rl.name = declr.value.accept(this);
+                rl.name = declr.value.str(this);
             else
-                rl.values[declr.ident.ident] = declr.value.accept(this).to!RemarkSeverity();
+                rl.values[declr.ident.ident] = declr.value.str(this).to!RemarkSeverity();
         }*/
 
         return f;

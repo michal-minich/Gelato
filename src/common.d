@@ -19,6 +19,12 @@ enum newLine = "\r\n";
 }
 
 
+@trusted debug void dbg(T...) (T a)
+{
+    writeln(a);
+}
+
+
 final class ConsoleInterpreterContext : IInterpreterContext
 {
     void print (dstring str) { write (str); }
@@ -31,7 +37,7 @@ final class ConsoleInterpreterContext : IInterpreterContext
     {
         write (remark.severity, "\t", remark.text);
         if (remark.subject)
-            write ("\t", remark.subject.accept(fv));
+            write ("\t", remark.subject.str(fv));
         writeln();
     }
 }
