@@ -76,16 +76,33 @@ final class Interpreter
             setEnv (env, d);
 
         foreach (d; declarations)
-            env.values[d.ident.ident] = eval (env, d.value);
+            getIdentEnv(env, d.ident.idents).values[d.ident.idents[$ - 1]] = eval (env, d.value);
+
     }
 
 
-    private void setEnv (Env env, AstDeclr declaration)
+    private Env getIdentEnv (Env env, dstring[] idents)
     {
-        auto ident = declaration.ident.ident;
+        if (idents.length == 1)
+            return env;
+        else
+        {
+            auto l = cast(AstLambda)env.get(idents[0]);
+            if (l)
+                return getIdentEnv (l.env, idents[1 .. $]);
+            else
+                assert (false, to!string(idents[0]) ~ " has no members");
+        }
+    }
+
+
+    private void setEnv (Env env, AstDeclr d)
+    {
+        env = getIdentEnv(env, d.ident.idents);
+        auto ident = d.ident.idents[$ - 1];
         if (ident in env.values)
             throw new Exception ("Variable " ~ to!string(ident) ~ " is already declared.");
-        env.values[ident] = declaration.value;
+        env.values[ident] = d.value;
     }
 
 
@@ -108,7 +125,7 @@ final class Interpreter
 
         auto ident = cast (AstIdent)exp;
         if (ident)
-            return env.get(ident.ident);
+            return getIdentEnv(env, ident.idents).get(ident.idents[$ - 1]);
 
         auto fa = cast (AstFnApply)exp;
         if (fa)
@@ -143,7 +160,7 @@ final class Interpreter
         foreach (a; fnApply.args)
             eas ~= eval(env, a);
 
-        if (fnApply.ident.ident == "print")
+        if (fnApply.ident.idents[0] == "print")
         {
             foreach (ea; eas)
             {
@@ -153,14 +170,15 @@ final class Interpreter
             context.println();
             return null;
         }
-        else if (fnApply.ident.ident == "printEnv")
+        else if (fnApply.ident.idents[0] == "printEnv")
         {
             printEnv (env);
             return null;
         }
         else
         {
-            return evalLambda(cast(AstLambda)env.get(fnApply.ident.ident), eas);
+            return evalLambda(cast(AstLambda)getIdentEnv(env, fnApply.ident.idents)
+                .get(fnApply.ident.idents[$ -1]), eas);
         }
     }
 
@@ -172,7 +190,10 @@ final class Interpreter
         int[dstring] labelIndex;
 
         foreach (argIx, a; args)
-            lambda.env.values[lambda.fn.params[argIx].ident.ident] = a;
+        {
+            auto idns = lambda.fn.params[argIx].ident.idents;
+            getIdentEnv(lambda.env, idns).values[idns[$ - 1]] = a;
+        }
 
         auto c = 0;
         while (c < lambda.fn.fnItems.length)

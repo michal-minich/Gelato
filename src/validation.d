@@ -1,7 +1,7 @@
 module validation;
 
 import std.array, std.algorithm, std.conv, std.file, std.utf;
-import common, ast, remarks, parser, interpreter;
+import common, ast, remarks, parser;
 
 
 interface IValidationContext
@@ -95,11 +95,11 @@ final class RemarkLevel : IRemarkLevel
 
         foreach (e; exps)
         {
-            auto declr = cast(AstDeclr)e;
-            if (declr.ident.ident == "name")
-                rl.name = declr.value.accept(fv);
+            auto d = cast(AstDeclr)e;
+            if (d.ident.idents[0] == "name")
+                rl.name = d.value.accept(fv);
             else
-                rl.values[declr.ident.ident] = declr.value.accept(fv).to!RemarkSeverity();
+                rl.values[d.ident.idents[0]] = d.value.accept(fv).to!RemarkSeverity();
         }
 
         return rl;
@@ -142,29 +142,40 @@ final class RemarkTranslation : IRemarkTranslation
 
 
     static RemarkTranslation load (
-        IInterpreterContext icontext, const string rootPath, const string language)
+        IValidationContext vctx, const string rootPath, const string language)
     {
-        auto env = (new Interpreter)
-            .interpret (icontext, rootPath ~ "/lang/" ~ language ~ "/settings.gel");
+        immutable src = toUTF32(readText(rootPath ~ "/lang/" ~ language ~ "/settings.gel"));
+        auto exps = (new Parser(vctx, src)).parseAll();
 
         auto rt = new RemarkTranslation;
         rt.rootPath = rootPath;
 
-        if (auto v = "inherit"d in env.values)
-            rt.inherit = (cast(AstText)*v).value.to!string();
+        foreach (e; exps)
+        {
+            auto d = cast(AstDeclr)e;
+            if (d.ident.idents[0] == "inherit")
+                rt.inherit = (cast(AstText)d.value).value.to!string();
+        }
 
-        rt.values = loadValues (icontext, rootPath ~ "/lang/" ~ language ~ "/remarks.gel");
+        rt.values = loadValues (vctx, rootPath ~ "/lang/" ~ language ~ "/remarks.gel");
 
         return rt;
     }
 
 
-    private static dstring[dstring] loadValues (IInterpreterContext icontext, const string filePath)
+    private static dstring[dstring] loadValues (IValidationContext vctx, const string filePath)
     {
         dstring[dstring] vals;
-        auto env = (new Interpreter).interpret (icontext, filePath);
-        foreach (k, v; env.values)
-            vals[k] = (cast(AstText)v).value;
+
+        immutable src = toUTF32(readText(filePath));
+        auto exps = (new Parser(vctx, src)).parseAll();
+
+        foreach (e; exps)
+        {
+            auto d = cast(AstDeclr)e;
+            vals[d.ident.idents[0]] = d.value.accept(fv);
+        }
+
         return vals;
     }
 }

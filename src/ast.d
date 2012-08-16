@@ -102,12 +102,12 @@ final class AstStruct : Exp
 
 final class AstIdent : Exp
 {
-    dstring ident;
+    dstring[] idents;
 
-    this (Token[] toks, dstring identfier)
+    this (Token[] toks, dstring[] identfiers)
     {
         super(toks);
-        ident = identfier;
+        idents = identfiers;
     }
 
     mixin visitImpl;

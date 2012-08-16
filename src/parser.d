@@ -67,7 +67,7 @@ final class Parser
             case TokenType.braceStart: return parseBrace();
             case TokenType.braceEnd: assert(false, "redudant brace end");
 
-            case TokenType.keyIf: return parserIf();
+            case TokenType.keyIf: return parseIf();
             case TokenType.keyThen: assert(false, "then without if");
             case TokenType.keyElse: assert(false, "else without if");
             case TokenType.keyEnd: assert(false, "end without if");
@@ -116,13 +116,13 @@ final class Parser
     }
 
 
-    private AstIf parserIf ()
+    private AstIf parseIf ()
     {
         Exp[] ts;
         uint startIndex = current.index;
         nextTok();
         auto w = parse ();
-        nextNonWhiteTok();
+        skipWhiteIfWhite();
 
         if (current.type == TokenType.keyThen)
         {
@@ -131,18 +131,24 @@ final class Parser
             while (current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
             {
                 ts ~= parse();
-                nextNonWhiteTok();
+                skipWhiteIfWhite();
             }
 
             Exp[] es;
             if (current.type == TokenType.keyElse)
             {
+                nextNonWhiteTok();
+
                 while (current.type != TokenType.keyEnd)
                 {
                     es ~= parse();
-                    nextNonWhiteTok();
+                    skipWhiteIfWhite();
                 }
             }
+
+//std.stdio.writeln(current.text);
+            if (toks.empty || current.type != TokenType.keyEnd)
+                assert (false, "if without end");
 
             nextTok();
 
@@ -362,7 +368,6 @@ final class Parser
     private Exp parseIdent ()
     {
         auto i = parseIdentOnly ();
-        skipWhiteIfWhite();
         if (toks.empty)
             return i;
         else if (current.type == TokenType.braceStart && current.text == "(")
@@ -414,7 +419,7 @@ final class Parser
                 {
                     assert (false, "missing comma in fn apply");
                 }
-            }
+            }//std.stdio.writeln(i.tokens.length, ",", current.index);
             auto fa = newExp(new AstFnApply (
                 toks2[i.tokens[$ - 1].index .. current.index + 1], i, args));
             nextTok();
@@ -425,8 +430,30 @@ final class Parser
 
     private AstIdent parseIdentOnly ()
     {
-        auto i = newExp(new AstIdent (toks[0 .. 1], current.text));
-        nextTok();
+        dstring[] idents;
+        auto startIndex = current.index;
+
+        while (true)
+        {
+            idents ~= current.text;
+            nextNonWhiteTok();
+            if (toks.empty)
+                break;
+            else if (current.text == ".")
+            {
+                nextNonWhiteTok();
+                if (toks.empty || current.type != TokenType.ident)
+                {
+                    assert (false, "ident expected after dot");
+                }
+            }
+            else
+                break;
+        }
+        auto endIndex = toks.empty ? toks2.length : current.index ;
+
+        auto i = newExp(new AstIdent (toks2[startIndex .. endIndex], idents));
+
         return i;
     }
 }
