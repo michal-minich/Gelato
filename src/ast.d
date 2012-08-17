@@ -90,13 +90,9 @@ final class AstDeclr : Exp
 
 final class AstStruct : Exp
 {
-    AstDeclr[] declarations;
+    Exp[] declarations;
 
-    this (Exp parent, Exp prev, AstDeclr[] declrs)
-    {
-        super(parent, prev);
-        declarations = declrs;
-    }
+    this (Exp parent, Exp prev) { super(parent, prev); }
 
     mixin visitImpl;
 }

@@ -1,13 +1,15 @@
 Point = struct {
     x = 1
-    y = 2
+    y
+    z = 3
 }
 
-s = struct { x, y }
-s2 = struct { q = 1, w = 2 }
+s = struct { x y }
+s2 = struct { q = 1 w = 2 }
 
 f2 = fn (a, b = 1) {
-    x(), y = 2
+    x()
+    y = 2
     if r() then t() else x() end
     label q
     goto q
@@ -16,6 +18,8 @@ f2 = fn (a, b = 1) {
 
 start = fn ()
 {
+    p1 = Point(7, 8)
+    print(p1.x, p1.y, p1.z)
     r5 = retr(5)
     r6 = retr(6)
     i = if v1() then r5() else r6() end
@@ -26,7 +30,9 @@ start = fn ()
     p.r = record()
     p.r.z = 3
     print (p.x, p.y, p.r.z)
+    defarg(4)
 }
+
 
 ch = 'a'
 t = "abc"
@@ -38,6 +44,7 @@ v0 = fn () { 0 }
 v1 = fn () { 1 }
 retr = fn (a) { fn () { printEnv() return a } }
 record = fn () { fn () {} }
+defarg = fn (a, b = second(3,5)) { print (a, b) }
 
 point = fn (x, y)
 {

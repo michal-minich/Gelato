@@ -146,7 +146,7 @@ final class Parser
             case TokenType.keyGoto: return parserGoto(parent);
             case TokenType.keyLabel: return parserLabel(parent);
 
-            //case TokenType.keyStruct: return parserStruct(parent);
+            case TokenType.keyStruct: return parserStruct(parent);
             //case TokenType.keyThrow: return parserThrow(parent);
             //case TokenType.keyVar: return parserVar(parent);
 
@@ -203,45 +203,60 @@ final class Parser
     }
 
 
+    AstStruct parserStruct (Exp parent)
+    {
+        auto s = newExp!AstStruct(parent);
+        s.declarations = parseCurlyBrace(s);
+        return s;
+    }
+
+
     AstFn parserFn (Exp parent)
     {
         uint startIndex = current.index;
 
         nextNonWhiteTok();
-        if (current.type != TokenType.braceStart && current.text != "(")
+        if (current.text != "(")
             assert (false, "no brace after fn");
 
         auto f = newExp!AstFn(parent);
 
         nextNonWhiteTok();
-        if (current.type == TokenType.braceEnd && current.text == ")")
-            nextTok();
-        else
+        if (current.text != ")")
             f.params = parseFnParameter(f);
 
-        skipWhite();
-        if (current.type == TokenType.braceStart && current.text == "{")
-            nextTok();
-        else
-            assert (false, "no curly brace after fn");
+        f.fnItems = parseCurlyBrace (f);
+        return f;
+    }
 
-        skipWhite();
-        if (current.type == TokenType.braceEnd && current.text == "}")
+
+    Exp[] parseCurlyBrace (Exp parent)
+    {
+        nextNonWhiteTok();
+        if (current.text == "{")
+            nextNonWhiteTok();
+        else
+            assert (false, "expected curly brace");
+
+        if (current.text == "}")
         {
+            nextTok();
+            return null;
         }
         else
         {
-            while (current.type != TokenType.braceEnd && current.text != "}")
+            Exp[] items;
+            while (current.text != "}")
             {
-                auto fni = parse(f);
-                if (fni)
-                    f.fnItems ~= fni;
+                auto e = parse(parent);
+                if (!e)
+                    break;
+                items ~= e;
                 skipWhite();
             }
+            nextTok();
+            return items;
         }
-
-        nextTok();
-        return f;
     }
 
 
@@ -251,17 +266,18 @@ final class Parser
         while (true)
         {
             auto e = parse(parent);
-            auto ident = cast(AstIdent)e;
-            if (!ident)
+            auto i = cast(AstIdent)e;
+            auto d = cast(AstDeclr)e;
+            if (!i && !d)
             {
-                assert (false, "fn parameter is not identifier");
+                assert (false, "fn parameter is not identifier or declaration");
             }
             else
             {
                 skipWhite();
                 if (current.type == TokenType.braceEnd && current.text == ")")
                 {
-                    params ~= newExp!AstDeclr(parent, ident);
+                    params ~= d ? d : newExp!AstDeclr(parent, i);
                     nextTok();
                     return params;
                 }
@@ -270,7 +286,7 @@ final class Parser
                     assert (false, "no fn arg coma");
                 }
 
-                params ~= newExp!AstDeclr(parent, ident);
+                params ~= d ? d : newExp!AstDeclr(parent, i);
                 nextTok();
             }
         }

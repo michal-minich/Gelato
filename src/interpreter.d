@@ -151,6 +151,24 @@ final class Interpreter
             }
         }
 
+        auto s = cast(AstStruct)exp;
+        if (s)
+        {
+            auto f = new AstFn(s, s);
+            foreach (e; s.declarations)
+            {
+                auto id = cast(AstIdent)e;
+                auto d = cast(AstDeclr)e;
+                if (!id && !d)
+                    assert (false, "struct can contain only declarations or identifiers");
+                else
+                    f.params ~= d ? d : new AstDeclr(s, s, id);
+            }
+            s.declarations = null;
+            f.fnItems ~= new AstFn (s, s);
+            return new AstLambda(new Env(env), f);
+        }
+
         return exp;
     }
 
@@ -191,9 +209,13 @@ final class Interpreter
         int[dstring] labelIndex;
 
         foreach (argIx, a; args)
+            lambda.env.values[lambda.fn.params[argIx].ident.idents[0]] = a;
+
+        foreach (p; lambda.fn.params[args.length .. $])
         {
-            auto idns = lambda.fn.params[argIx].ident.idents;
-            getIdentEnv(lambda.env, idns).values[idns[$ - 1]] = a;
+            if (!p.value)
+                assert (false, "parameter has not default value so arg must be specified");
+            lambda.env.values[p.ident.idents[0]] = eval(lambda.env, p.value);
         }
 
         auto c = 0;

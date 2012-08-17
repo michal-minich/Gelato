@@ -3,16 +3,16 @@ project file
 
 PARSER -----------------------------
 validate not recoverable erros
+coma separated statements and struct members
+new line separated fn args and params
 comments
 array
-struct
 operators
 parse declaration type
 consider including trailing white after last token in it
 
 INTERPRETER -----------------------------
 visitor style
-struct
 import
 var / mutable variables
 ref
