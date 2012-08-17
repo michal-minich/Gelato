@@ -25,7 +25,9 @@ start = fn ()
     point = record()
     point.x = 1
     point.y = point.x
-    print (point.x, point.y)
+    point.r = record()
+    point.r.z = 2
+    print (point.x, point.y, point.r.z)
 }
 
 ch = 'a'
@@ -37,4 +39,4 @@ second = fn (f, s) { s }
 v0 = fn () { 0 }
 v1 = fn () { 1 }
 retr = fn (a) { fn () { printEnv() return a } }
-record = fn () { fn () { } }
+record = fn () { fn () {} }

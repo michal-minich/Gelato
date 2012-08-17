@@ -12,13 +12,6 @@ FormatVisitor fv;
 enum newLine = "\r\n";
 
 
-@trusted dstring typeName (T) (T a)
-{
-    auto n = typeid(a).name;
-    return to!dstring(n[n.length - n.retro().countUntil('.') .. $]);
-}
-
-
 @trusted debug void dbg(T...) (T a)
 {
     writeln(a);
@@ -75,7 +68,7 @@ struct Position
         case "\\t": t.value = '\t'; break;
         default: t.value = ptChar.capture[0][0];
     }*/
-@safe pure dchar toInvisibleChar (const dchar escape)
+@safe pure nothrow dchar toInvisibleChar (const dchar escape)
 {
     switch (escape)
     {

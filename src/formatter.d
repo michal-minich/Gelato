@@ -4,9 +4,9 @@ import std.stdio, std.algorithm, std.array, std.conv, std.string, std.file, std.
 import common, ast, remarks, parser, validation, interpreter;
 
 
-@trusted final class FormatVisitor : AstVisitor!(dstring)
+@trusted pure final class FormatVisitor : AstVisitor!(dstring)
 {
-    dstring visit (AstNum e)
+    nothrow dstring visit (AstNum e)
     {
         return e.value;
     }
@@ -26,7 +26,8 @@ import common, ast, remarks, parser, validation, interpreter;
         if (!e.type && !e.value) return e.ident.str(this);
         else if (!e.type)        return dtext (e.ident.str(this), " = ", e.value.str(this));
         else if (!e.value)       return dtext (e.ident.str(this), " : ", e.type.str(this));
-        else                     return dtext (e.ident.str(this), " : ", e.type.str(this), " = ", e.value.str(this));
+        else                     return dtext (e.ident.str(this), " : ", e.type.str(this),
+                                    " = ", e.value.str(this));
     }
 
     dstring visit (AstStruct e)
@@ -53,7 +54,7 @@ import common, ast, remarks, parser, validation, interpreter;
         return e.idents.join(".").array();
     }
 
-    dstring visit (AstLabel e)
+    nothrow dstring visit (AstLabel e)
     {
         return "label " ~ e.label;
     }
@@ -82,7 +83,7 @@ import common, ast, remarks, parser, validation, interpreter;
                 e.otherwise.map!(o => o.str(this))().join(newLine ~ "\t"), " end");
     }
 
-    dstring visit (AstGoto e)
+    nothrow dstring visit (AstGoto e)
     {
         return "goto " ~ e.label;
     }

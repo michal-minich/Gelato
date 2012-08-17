@@ -4,6 +4,8 @@ import std.array, std.algorithm, std.conv;
 import common;
 
 
+@safe:
+
 
 struct Token
 {
@@ -14,12 +16,12 @@ struct Token
     uint pos;
     bool isError;
 
-    const @safe @property size_t endColumn ()
+    const @property nothrow size_t endColumn ()
     {
         return start.column + text.length - 1;
     }
 
-    const dstring toDebugString ()
+    @trusted const dstring toDebugString ()
     {
         return dtext(index, "\t", type, "\t\t", start.line, ":", start.column, "-", endColumn,
                "(", text.length, ")", pos, "\t", isError ? "Error" : "",
@@ -50,6 +52,8 @@ enum ParseContext { any, text, character, comment }
 
 immutable struct TokenResult
 {
+    nothrow:
+
     TokenType type;
     size_t length;
     ParseContext contextAfter;
@@ -57,14 +61,14 @@ immutable struct TokenResult
 
     static enum TokenResult empty = TokenResult();
 
-    @safe pure static TokenResult ok (TokenType tokenType,
+    pure static TokenResult ok (TokenType tokenType,
         size_t length,
         ParseContext contextAfter = ParseContext.any)
     {
         return TokenResult(tokenType, length, contextAfter);
     }
 
-    @safe pure static TokenResult error (TokenType tokenType,
+    pure static TokenResult error (TokenType tokenType,
         size_t length,
         ParseContext contextAfter = ParseContext.any)
     {
@@ -73,8 +77,10 @@ immutable struct TokenResult
 }
 
 
-@safe final class Tokenizer
+final class Tokenizer
 {
+    nothrow:
+
     private dstring src;
     private ParseContext context;
     Token front;
@@ -104,9 +110,9 @@ immutable struct TokenResult
             tr.type,
             front.type == TokenType.newLine
                 ? Position (front.start.line + 1, 0)
-                : Position (front.start.line, front.start.column + to!uint(front.text.length)),
+                : Position (front.start.line, front.start.column + cast(uint)front.text.length),
             src[0 .. tr.length],
-            front.pos + to!uint(front.text.length),
+            front.pos + cast(uint)front.text.length,
             tr.isError);
 
         src = src[tr.length .. $];
@@ -146,7 +152,7 @@ immutable struct TokenResult
 }
 
 
-@safe pure:
+@safe pure nothrow:
 
 
 TokenResult parseCharStart (const dstring src)

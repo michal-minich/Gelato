@@ -1,29 +1,20 @@
 project file
 
 
-TOKENIZER -----------------------------
-cancel unclosed text after escape on first line
-cancel unclosed comment on first line
-decimal numbers
-hex numbers
-hex escapes
-matching braces
-nested comment
-document
-ation comments
-
-
 PARSER -----------------------------
+pass tokens to exp contructor new newExp func
+include trailing or preceding white tokens with exp
+include parent field on ast items
+
 validate not recoverable erros
+comments
 array
 struct
 operators
-comments
-include parent field on ast items
-include trailing or preceding white tokens with exp
 
 
 INTERPRETER -----------------------------
+visitor style
 struct
 import
 var / mutable variables
@@ -39,6 +30,17 @@ first base library
 cast
 arrays / mem allocation
 operators priority
+
+
+TOKENIZER -----------------------------
+cancel unclosed text after escape on first line
+cancel unclosed comment on first line
+decimal numbers
+hex numbers
+hex decimals
+hex escapes
+nested comment
+documentation comments
 
 
 VALIDATOR -----------------------------

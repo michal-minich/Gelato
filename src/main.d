@@ -27,13 +27,19 @@ void process (InterpretTask task)
     {
         immutable src = toUTF32(readText!string(f));
 
-        auto toks = new Tokenizer (src);
-        foreach (t; toks)
-            writeln(t.toDebugString());
+        //auto toks = new Tokenizer (src);
+        //foreach (t; toks)
+        //    writeln(t.toDebugString());
 
         auto ast = new Parser(sett.icontext, src);
-        foreach (item; ast.parseAll())
-            writeln(item.str(fv));
+        auto exps = ast.parseAll();
+        foreach (e; exps)
+        {
+            writeln(e.str(fv));
+
+            foreach (t; e.tokens)
+                writeln(t);
+        }
 
         auto i = new Interpreter;
         auto env = i.interpret (sett.icontext, f);

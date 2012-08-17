@@ -10,7 +10,7 @@ interface IValidationContext
 }
 
 
-interface IExpValidation
+@safe pure nothrow interface IExpValidation
 {
     void validate (Exp);
 }
