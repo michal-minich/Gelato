@@ -1,7 +1,7 @@
 module parser;
 
 
-import std.stdio, std.algorithm, std.array, std.conv;
+import std.algorithm, std.array, std.conv;
 import common, remarks, validation, tokenizer, ast;
 
 
@@ -57,15 +57,12 @@ final class Parser
     }
 
 
-    E newExp (E, A...) (Exp parent, A args)
+    E newExp (E, A...) (Exp parent, A args) if (is (E : Exp))
     {
-        auto ts = toks2[prevEndIndex .. current.index];
-        prevEndIndex = current.index;
-
-        auto exp = new E(ts, parent, prev, args);
+        auto e = new E(parent, prev, args);
         if (prev)
-            prev.next = exp;
-        return exp;
+            prev.next = e;
+        return e;
     }
 
 
@@ -112,6 +109,16 @@ final class Parser
 
 
     Exp parse (Exp parent)
+    {
+        auto startIndex = current.index;
+        auto e = parse2(parent);
+        if (e)
+            e.tokens = toks2[startIndex .. current.index];
+        return e;
+    }
+
+
+    Exp parse2 (Exp parent)
     {
         if (finished)
             return null;
@@ -371,8 +378,8 @@ final class Parser
                 //return newExp(new AstText(ts, txt));
             }
 
-            immutable t = current;
-            ts ~= t;
+            alias current t;
+            ts ~= current;
             txt ~= t.type == TokenType.textEscape ? t.text.toInvisibleCharsText() : t.text;
 
             nextTok();
@@ -380,8 +387,10 @@ final class Parser
 
         nextTok();
 
-        return newExp(txt.length == 1 && ts[0].text == "'"
-            ? new AstChar(ts, parent, null, txt[0]) : new AstText(ts, parent, null, txt));
+        auto t = newExp(txt.length == 1 && ts[0].text == "'"
+            ? new AstChar(parent, null, txt[0]) : new AstText(parent, null, txt));
+        t.tokens = ts;
+        return t;
     }
 
 

@@ -12,9 +12,17 @@ FormatVisitor fv;
 enum newLine = "\r\n";
 
 
+int dbgCounter;
 @trusted debug void dbg(T...) (T a)
 {
-    writeln(a);
+    static if (!T.length)
+    {
+        writeln("DEBUG ", ++dbgCounter);
+    }
+    else
+    {
+        writeln(a);
+    }
 }
 
 

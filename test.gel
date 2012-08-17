@@ -1,3 +1,4 @@
+
 start = fn ()
 {
     r5 = retr(5)
@@ -6,12 +7,10 @@ start = fn ()
     if v0() then r5() end
     if v1() then r6() end
     print (1, "str", a)
-    point = record()
-    point.x = 1
-    point.y = point.x
-    point.r = record()
-    point.r.z = 2
-    print (point.x, point.y, point.r.z)
+    p = point(1, 2)
+    p.r = record()
+    p.r.z = 3
+    print (p.x, p.y, p.r.z)
 }
 
 ch = 'a'
@@ -24,3 +23,11 @@ v0 = fn () { 0 }
 v1 = fn () { 1 }
 retr = fn (a) { fn () { printEnv() return a } }
 record = fn () { fn () {} }
+
+point = fn (x, y)
+{
+    p = record()
+    p.x = x
+    p.y = y
+    return p
+}

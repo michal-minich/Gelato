@@ -2,16 +2,13 @@ project file
 
 
 PARSER -----------------------------
-pass tokens to exp contructor new newExp func
-include trailing or preceding white tokens with exp
-
 validate not recoverable erros
 comments
 array
 struct
 operators
 parse declaration type
-
+consider including trailing white after last token in it
 
 INTERPRETER -----------------------------
 visitor style

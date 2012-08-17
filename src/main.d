@@ -31,7 +31,7 @@ void process (InterpretTask task)
         //foreach (t; toks)
         //    writeln(t.toDebugString());
 
-        auto ast = new Parser(sett.icontext, src);
+        /*auto ast = new Parser(sett.icontext, src);
         auto exps = ast.parseAll();
         foreach (e; exps)
         {
@@ -39,7 +39,7 @@ void process (InterpretTask task)
 
             foreach (t; e.tokens)
                 writeln(t);
-        }
+        }*/
 
         auto i = new Interpreter;
         auto env = i.interpret (sett.icontext, f);

@@ -1,7 +1,7 @@
 module formatter;
 
-import std.stdio, std.algorithm, std.array, std.conv, std.string, std.file, std.utf;
-import common, ast, remarks, parser, validation, interpreter;
+import std.algorithm, std.array, std.conv, std.file, std.utf;
+import common, ast, parser, validation;
 
 
 @trusted pure final class FormatVisitor : AstVisitor!(dstring)
@@ -11,15 +11,18 @@ import common, ast, remarks, parser, validation, interpreter;
         return e.value;
     }
 
+
     dstring visit (AstUnknown e)
     {
         return e.tokens.map!(t => t.text)().join();
     }
 
+
     dstring visit (AstFile e)
     {
         return e.declarations.map!(d => d.str(this))().join(newLine);
     }
+
 
     dstring visit (AstDeclr e)
     {
@@ -30,11 +33,13 @@ import common, ast, remarks, parser, validation, interpreter;
                                     " = ", e.value.str(this));
     }
 
+
     dstring visit (AstStruct e)
     {
         return dtext("struct", newLine, "{", newLine, "\t",
             e.declarations.map!(d => d.str(this))().join(newLine ~ "\t"), newLine ~ "}");
     }
+
 
     dstring visit (AstFn e)
     {
@@ -43,36 +48,43 @@ import common, ast, remarks, parser, validation, interpreter;
                     e.fnItems.map!(e => e.str(this))().join(newLine ~ "\t"), newLine, "}");
     }
 
+
     dstring visit (AstFnApply e)
     {
         return dtext(e.ident.str(this),
             "(", e.args ? e.args.map!(a => a.str(this))().join(", ") : "", ")");
     }
 
+
     dstring visit (AstIdent e)
     {
         return e.idents.join(".").array();
     }
+
 
     nothrow dstring visit (AstLabel e)
     {
         return "label " ~ e.label;
     }
 
+
     dstring visit (AstReturn e)
     {
         return e.exp ? "return " ~ e.exp.str(this) : "return";
     }
+
 
     dstring visit (AstText e)
     {
         return dtext("\"", e.value.toVisibleCharsText(), "\"");
     }
 
+
     dstring visit (AstChar e)
     {
         return dtext("'", e.value.to!dstring().toVisibleCharsChar(), "'");
     }
+
 
     dstring visit (AstIf e)
     {
@@ -83,10 +95,12 @@ import common, ast, remarks, parser, validation, interpreter;
                 e.otherwise.map!(o => o.str(this))().join(newLine ~ "\t"), " end");
     }
 
+
     nothrow dstring visit (AstGoto e)
     {
         return "goto " ~ e.label;
     }
+
 
     dstring visit (AstLambda e)
     {
