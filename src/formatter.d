@@ -40,7 +40,7 @@ import common, ast, remarks, parser, validation, interpreter;
     {
         return dtext("fn (", e.params.map!(p => p.str(this))().join(", "),
                     ")", newLine, "{", newLine, "\t",
-                    e.fnItems.map!(e => e.str(this))().join(newLine ~ "\t"),  newLine, "}");
+                    e.fnItems.map!(e => e.str(this))().join(newLine ~ "\t"), newLine, "}");
     }
 
     dstring visit (AstFnApply e)
@@ -61,7 +61,7 @@ import common, ast, remarks, parser, validation, interpreter;
 
     dstring visit (AstReturn e)
     {
-        return "return " ~ e.exp.str(this);
+        return e.exp ? "return " ~ e.exp.str(this) : "return";
     }
 
     dstring visit (AstText e)

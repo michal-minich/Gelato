@@ -40,7 +40,12 @@ abstract class Exp
     Exp prev;
     Exp next;
 
-    this (Token[] toks) { tokens = toks; }
+    this (Token[] toks, Exp parent, Exp prev)
+    {
+        tokens = toks;
+        this.parent = parent;
+        this.prev = prev;
+    }
 
     abstract dstring str (FormatVisitor v);
 }
@@ -48,7 +53,7 @@ abstract class Exp
 
 final class AstUnknown : Exp
 {
-    this (Token[] toks) { super(toks); }
+    this (Token[] toks, Exp parent, Exp prev) { super(toks, parent, prev); }
 
     mixin visitImpl;
 }
@@ -58,9 +63,9 @@ final class AstFile : Exp
 {
     AstDeclr[] declarations;
 
-    this (Token[] toks, AstDeclr[] declrs)
+    this (Token[] toks, Exp parent, Exp prev, AstDeclr[] declrs)
     {
-        super(toks);
+        super(toks, parent, prev);
         declarations = declrs;
     }
 
@@ -74,12 +79,10 @@ final class AstDeclr : Exp
     Exp type;
     Exp value;
 
-    this (Token[] toks, AstIdent identifier, Exp t, Exp val)
+    this (Token[] toks, Exp parent, Exp prev, AstIdent identifier)
     {
-        super(toks);
+        super(toks, parent, prev);
         ident = identifier;
-        type = t;
-        value = val;
     }
 
     mixin visitImpl;
@@ -90,9 +93,9 @@ final class AstStruct : Exp
 {
     AstDeclr[] declarations;
 
-    this (Token[] toks, AstDeclr[] declrs)
+    this (Token[] toks, Exp parent, Exp prev, AstDeclr[] declrs)
     {
-        super(toks);
+        super(toks, parent, prev);
         declarations = declrs;
     }
 
@@ -104,9 +107,9 @@ final class AstIdent : Exp
 {
     dstring[] idents;
 
-    this (Token[] toks, dstring[] identfiers)
+    this (Token[] toks, Exp parent, Exp prev, dstring[] identfiers)
     {
-        super(toks);
+        super(toks, parent, prev);
         idents = identfiers;
     }
 
@@ -118,9 +121,9 @@ final class AstNum : Exp
 {
     dstring value;
 
-    this (Token[] toks, dstring val)
+    this (Token[] toks, Exp parent, Exp prev, dstring val)
     {
-        super(toks);
+        super(toks, parent, prev);
         value = val;
     }
 
@@ -132,9 +135,9 @@ final class AstText : Exp
 {
     dstring value;
 
-    this (Token[] toks, dstring val)
+    this (Token[] toks, Exp parent, Exp prev, dstring val)
     {
-        super(toks);
+        super(toks, parent, prev);
         value = val;
     }
 
@@ -146,9 +149,9 @@ final class AstChar : Exp
 {
     dchar value;
 
-    this (Token[] toks, dchar val)
+    this (Token[] toks, Exp parent, Exp prev, dchar val)
     {
-        super(toks);
+        super(toks, parent, prev);
         value = val;
     }
 
@@ -161,7 +164,7 @@ final class AstLambda : Exp
     Interpreter.Env env;
     AstFn fn;
 
-    this (Interpreter.Env e, AstFn f) { super (null); env = e; fn = f; }
+    this (Interpreter.Env e, AstFn f) { super (null, null, null); env = e; fn = f; }
 
     mixin visitImpl;
 }
@@ -172,11 +175,9 @@ final class AstFn : Exp
     AstDeclr[] params;
     Exp[] fnItems;
 
-    this (Token[] toks, AstDeclr[] parameters, Exp[] funcItems)
+    this (Token[] toks, Exp parent, Exp prev)
     {
-        super(toks);
-        params = parameters;
-        fnItems = funcItems;
+        super(toks, parent, prev);
     }
 
     mixin visitImpl;
@@ -188,11 +189,10 @@ final class AstFnApply : Exp
     AstIdent ident;
     Exp[] args;
 
-    this (Token[] toks, AstIdent identifier, Exp[] arguments)
+    this (Token[] toks, Exp parent, Exp prev, AstIdent identifier)
     {
-        super(toks);
+        super(toks, parent, prev);
         ident = identifier;
-        args = arguments;
     }
 
     mixin visitImpl;
@@ -205,12 +205,9 @@ final class AstIf : Exp
     Exp[] then;
     Exp[] otherwise;
 
-    this (Token[] toks, Exp w, Exp[] t, Exp[] o)
+    this (Token[] toks, Exp parent, Exp prev)
     {
-        super(toks);
-        when = w;
-        then = t;
-        otherwise = o;
+        super(toks, parent, prev);
     }
 
     mixin visitImpl;
@@ -221,9 +218,9 @@ final class AstLabel : Exp
 {
     dstring label;
 
-    this (Token[] toks, dstring lbl)
+    this (Token[] toks, Exp parent, Exp prev, dstring lbl)
     {
-        super(toks);
+        super(toks, parent, prev);
         label = lbl;
     }
 
@@ -235,9 +232,9 @@ final class AstGoto : Exp
 {
     dstring label;
 
-    this (Token[] toks, dstring lbl)
+    this (Token[] toks, Exp parent, Exp prev, dstring lbl)
     {
-        super(toks);
+        super(toks, parent, prev);
         label = lbl;
     }
 
@@ -249,10 +246,9 @@ final class AstReturn : Exp
 {
     Exp exp;
 
-    this (Token[] toks, Exp e)
+    this (Token[] toks, Exp parent, Exp prev)
     {
-        super(toks);
-        exp = e;
+        super(toks, parent, prev);
     }
 
     mixin visitImpl;

@@ -48,7 +48,7 @@ final class Interpreter
     Env interpret (IInterpreterContext icontext, dstring src)
     {
         auto ast = (new Parser(icontext, src)).parseAll();
-        auto astFile = new AstFile(null, ast.map!(e => cast(AstDeclr)e)().array());
+        auto astFile = new AstFile(null, null, null, ast.map!(e => cast(AstDeclr)e)().array());
         auto v = new Validator(icontext);
         v.validate(astFile);
         return interpret(icontext, astFile);
@@ -144,7 +144,8 @@ final class Interpreter
             }
             else
             {
-                auto f = new AstFn (null, null, when.value == "0" ? i.otherwise : i.then);
+                auto f = new AstFn (null, null, null);
+                f.fnItems = when.value == "0" ? i.otherwise : i.then;
                 auto l = new AstLambda (new Env(env), f);
                 return evalLambda (l, null);
             }

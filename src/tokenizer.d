@@ -5,6 +5,7 @@ import common;
 
 
 @safe:
+enum Geany { Bug }
 
 
 struct Token

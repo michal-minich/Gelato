@@ -4,13 +4,13 @@ project file
 PARSER -----------------------------
 pass tokens to exp contructor new newExp func
 include trailing or preceding white tokens with exp
-include parent field on ast items
 
 validate not recoverable erros
 comments
 array
 struct
 operators
+parse declaration type
 
 
 INTERPRETER -----------------------------

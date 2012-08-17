@@ -37,7 +37,7 @@ final class Parser
     {
         Exp[] res;
         Exp e;
-        while ((e = parse()) !is null)
+        while ((e = parse(e ? e.parent : null)) !is null)
             res ~= e;
         return res;
     }
@@ -56,13 +56,13 @@ final class Parser
         return exp;
     }
 
-    E newExp (E, A...) (A args)
+
+    E newExp (E, A...) (Exp parent, A args)
     {
         auto ts = toks2[prevEndIndex .. current.index];
         prevEndIndex = current.index;
 
-        auto exp = new E(ts, args);
-        exp.prev = prev;
+        auto exp = new E(ts, parent, prev, args);
         if (prev)
             prev.next = exp;
         return exp;
@@ -103,7 +103,15 @@ final class Parser
     }
 
 
-    Exp parse ()
+    Exp parseSkipWhiteAfter (Exp parent)
+    {
+        auto e = parse(parent);
+        skipWhite();
+        return e;
+    }
+
+
+    Exp parse (Exp parent)
     {
         if (finished)
             return null;
@@ -113,61 +121,62 @@ final class Parser
 
         switch (current.type)
         {
-            case TokenType.num: return parseNum();
-            case TokenType.ident: return parseIdent();
-            case TokenType.textStart: return parseText();
+            case TokenType.num: return parseNum(parent);
+            case TokenType.ident: return parseIdent(parent);
+            case TokenType.textStart: return parseText(parent);
 
-            case TokenType.braceStart: return parseBrace();
+            case TokenType.braceStart: return parseBrace(parent);
             case TokenType.braceEnd: assert(false, "redudant brace end");
 
-            case TokenType.keyIf: return parseIf();
+            case TokenType.keyIf: return parseIf(parent);
             case TokenType.keyThen: assert(false, "then without if");
             case TokenType.keyElse: assert(false, "else without if");
             case TokenType.keyEnd: assert(false, "end without if");
 
-            case TokenType.keyFn: return parserFn();
-            case TokenType.keyReturn: return parserReturn();
+            case TokenType.keyFn: return parserFn(parent);
+            case TokenType.keyReturn: return parserReturn(parent);
 
-            case TokenType.keyGoto: return parserGoto();
-            case TokenType.keyLabel: return parserLabel();
+            case TokenType.keyGoto: return parserGoto(parent);
+            case TokenType.keyLabel: return parserLabel(parent);
 
-            //case TokenType.keyStruct: return parserStruct();
-            //case TokenType.keyThrow: return parserThrow();
-            //case TokenType.keyVar: return parserVar();
+            //case TokenType.keyStruct: return parserStruct(parent);
+            //case TokenType.keyThrow: return parserThrow(parent);
+            //case TokenType.keyVar: return parserVar(parent);
 
-            case TokenType.unknown: return parseUnknown();
+            case TokenType.unknown: return parseUnknown(parent);
             case TokenType.empty: assert (false, "empty token");
             default: return null;
         }
     }
 
 
-    AstIf parseIf ()
+    AstIf parseIf (Exp parent)
     {
-        Exp[] ts;
         uint startIndex = current.index;
         nextTok();
-        auto w = parse ();
+
+        auto i = newExp!AstIf(parent);
+        i.when = parse(i);
         skipWhite();
 
         if (current.type == TokenType.keyThen)
         {
             nextNonWhiteTok();
 
+
             while (current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
             {
-                ts ~= parse();
+                i.then ~= parse(i);
                 skipWhite();
             }
 
-            Exp[] es;
             if (current.type == TokenType.keyElse)
             {
                 nextNonWhiteTok();
 
                 while (current.type != TokenType.keyEnd)
                 {
-                    es ~= parse();
+                    i.otherwise ~= parse(i);
                     skipWhite();
                 }
             }
@@ -175,10 +184,9 @@ final class Parser
             if (finished || current.type != TokenType.keyEnd)
                 assert (false, "if without end");
 
-            const last = es is null ? ts : es;
-            auto e = newExp!AstIf(w, ts, es);
+            const last = i.otherwise is null ? i.then : i.otherwise;
             nextTok();
-            return e;
+            return i;
 
         }
         else
@@ -188,20 +196,21 @@ final class Parser
     }
 
 
-    AstFn parserFn ()
+    AstFn parserFn (Exp parent)
     {
         uint startIndex = current.index;
-        AstDeclr[] params;
 
         nextNonWhiteTok();
         if (current.type != TokenType.braceStart && current.text != "(")
             assert (false, "no brace after fn");
 
+        auto f = newExp!AstFn(parent);
+
         nextNonWhiteTok();
         if (current.type == TokenType.braceEnd && current.text == ")")
             nextTok();
         else
-            params = parseFnParameter();
+            f.params = parseFnParameter(f);
 
         skipWhite();
         if (current.type == TokenType.braceStart && current.text == "{")
@@ -209,7 +218,6 @@ final class Parser
         else
             assert (false, "no curly brace after fn");
 
-        Exp[] items;
         skipWhite();
         if (current.type == TokenType.braceEnd && current.text == "}")
         {
@@ -218,23 +226,24 @@ final class Parser
         {
             while (current.type != TokenType.braceEnd && current.text != "}")
             {
-                items ~= parse();
+                auto fni = parse(f);
+                if (fni)
+                    f.fnItems ~= fni;
                 skipWhite();
             }
         }
 
-        auto f = newExp!AstFn(params, items);
         nextTok();
         return f;
     }
 
 
-    AstDeclr[] parseFnParameter ()
+    AstDeclr[] parseFnParameter (Exp parent)
     {
         AstDeclr[] params;
         while (true)
         {
-            auto e = parse();
+            auto e = parse(parent);
             auto ident = cast(AstIdent)e;
             if (!ident)
             {
@@ -245,7 +254,7 @@ final class Parser
                 skipWhite();
                 if (current.type == TokenType.braceEnd && current.text == ")")
                 {
-                    params ~= newExp!AstDeclr(ident, null, null);
+                    params ~= newExp!AstDeclr(parent, ident);
                     nextTok();
                     return params;
                 }
@@ -254,46 +263,47 @@ final class Parser
                     assert (false, "no fn arg coma");
                 }
 
-                params ~= newExp!AstDeclr(ident, null, null);
+                params ~= newExp!AstDeclr(parent, ident);
                 nextTok();
             }
         }
     }
 
 
-    AstReturn parserReturn ()
+    AstReturn parserReturn (Exp parent)
     {
         nextNonWhiteTok();
-        auto e = parse();
-        if (!e)
+        auto r = newExp!AstReturn(parent);
+        r.exp = parse(r);
+        if (!r.exp)
             assert (false, "return without expression");
-        return newExp!AstReturn(e);
+        return r;
     }
 
 
-    AstGoto parserGoto ()
+    AstGoto parserGoto (Exp parent)
     {
         nextNonWhiteTok();
         if (current.type != TokenType.ident)
             assert (false, "goto without identifier");
-        auto g = newExp!AstGoto(current.text);
+        auto g = newExp!AstGoto(parent, current.text);
         nextTok();
         return g;
     }
 
 
-    AstLabel parserLabel ()
+    AstLabel parserLabel (Exp parent)
     {
         nextNonWhiteTok();
         if (current.type != TokenType.ident)
             assert (false, "label without identifier");
-        auto l = newExp!AstLabel (current.text);
+        auto l = newExp!AstLabel (parent, current.text);
         nextTok();
         return l;
     }
 
 
-    Exp parseBrace ()
+    Exp parseBrace (Exp parent)
     {
         auto b = current.text[0];
 
@@ -305,7 +315,7 @@ final class Parser
         if (current.type == TokenType.braceEnd)
             assert (false, "empty braces");
 
-        auto e = parse();
+        auto e = parse(parent);
 
         skipWhite();
 
@@ -341,7 +351,7 @@ final class Parser
     }
 
 
-    Exp parseText ()
+    Exp parseText (Exp parent)
     {
         Token[] ts;
         dstring txt;
@@ -371,60 +381,62 @@ final class Parser
         nextTok();
 
         return newExp(txt.length == 1 && ts[0].text == "'"
-            ? new AstChar(ts, txt[0]) : new AstText(ts, txt));
+            ? new AstChar(ts, parent, null, txt[0]) : new AstText(ts, parent, null, txt));
     }
 
 
-    AstUnknown parseUnknown ()
+    AstUnknown parseUnknown (Exp parent)
     {
-        auto u = newExp!AstUnknown();
+        auto u = newExp!AstUnknown(parent);
         nextTok();
         return u;
     }
 
 
-    AstNum parseNum ()
+    AstNum parseNum (Exp parent)
     {
-        auto n = newExp!AstNum(current.text);
+        auto n = newExp!AstNum(parent, current.text);
         nextTok();
         return n;
     }
 
 
-    Exp parseIdent ()
+    Exp parseIdent (Exp parent)
     {
-        auto i = parseIdentOnly ();
+        auto i = parseIdentOnly (parent);
         if (current.text == "(")
-            return parseFnApply(i);
+            return parseFnApply(parent, i);
         else if (current.text == "=")
-            return parseDeclr(i);
+            return parseDeclr(parent, i);
         else
             return i;
     }
 
 
-    AstDeclr parseDeclr (AstIdent i)
+    AstDeclr parseDeclr (Exp parent, AstIdent i)
     {
         nextTok();
-        auto val = parse();
-        return newExp!AstDeclr(i, null, val);
+        auto d = newExp!AstDeclr(parent, i);
+        d.value = parse(d);
+        return d;
     }
 
 
-    AstFnApply parseFnApply (AstIdent i)
+    AstFnApply parseFnApply (Exp parent, AstIdent i)
     {
         nextNonWhiteTok();
         if (current.type == TokenType.braceEnd && current.text == ")")
         {
             nextTok();
-            return newExp!AstFnApply(i, null);
+            return newExp!AstFnApply(parent, i);
         }
         else
         {
-            Exp[] args;
+            auto fa = newExp!AstFnApply(parent, i);
+
             while (current.text != ")")
             {
-                args ~= parse();
+                fa.args ~= parse(fa);
                 skipWhite();
 
                 if (current.text == ",")
@@ -441,14 +453,13 @@ final class Parser
                 }
             }
 
-            auto fa = newExp!AstFnApply(i, args);
             nextTok();
             return fa;
         }
     }
 
 
-    AstIdent parseIdentOnly ()
+    AstIdent parseIdentOnly (Exp parent)
     {
         dstring[] idents;
 
@@ -470,6 +481,6 @@ final class Parser
             }
         }
 
-        return newExp!AstIdent(idents);
+        return newExp!AstIdent(parent, idents);
     }
 }
