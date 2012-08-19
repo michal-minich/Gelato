@@ -6,7 +6,7 @@ import common, parse.ast, parse.parser, validate.remarks;
 
 @trusted final class Validator : IAstVisitor!(void)
 {
-    IValidationContext vctx;
+    private IValidationContext vctx;
 
     this (IValidationContext validationContex) { vctx = validationContex; }
 
@@ -135,4 +135,19 @@ import common, parse.ast, parse.parser, validate.remarks;
         foreach (o; i.otherwise)
             o.validate(this);
     }
+
+
+    void visit (TypeAny) { }
+
+    void visit (TypeVoid) { }
+
+    void visit (TypeOr) { }
+
+    void visit (TypeFn) { }
+
+    void visit (TypeNum) { }
+
+    void visit (TypeText) { }
+
+    void visit (TypeChar) { }
 }

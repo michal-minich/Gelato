@@ -3,7 +3,8 @@ module cmdint;
 
 import std.stdio, std.algorithm, std.conv, std.file, std.path;
 import common, settings, formatter, validate.remarks, validate.validation,
-    parse.tokenizer, parse.parser, parse.ast, interpret.evaluator, interpret.preparer;
+    parse.tokenizer, parse.parser, parse.ast, interpret.evaluator, interpret.preparer,
+    validate.inferer;
 
 
 final class ConsoleInterpreterContext : IInterpreterContext
@@ -81,6 +82,16 @@ final class ConsoleInterpreter
             if (context.hasBlocker)
                 return 1;
 
+
+            debug writeln("TYPE INFER");
+            auto inf = new TypeInferer(context);
+            inf.visit(astFile);
+
+            fv.useInferredTypes = true;
+            writeln(fv.visit(astFile));
+
+            if (context.hasBlocker)
+                return 1;
 
             debug writeln("EVALUATE");
             auto ev = new Evaluator(context);

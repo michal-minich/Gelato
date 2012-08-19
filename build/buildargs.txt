@@ -9,6 +9,7 @@ parse/ast.d
 parse/parser.d
 parse/tokenizer.d
 
+validate/inferer.d
 validate/remarks.d
 validate/validation.d
 

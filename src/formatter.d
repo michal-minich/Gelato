@@ -6,6 +6,11 @@ import common, parse.ast;
 
 @trusted pure final class FormatVisitor : IAstVisitor!(dstring)
 {
+    bool useInferredTypes;
+
+    private enum tab = "    ";
+
+
     nothrow dstring visit (AstNum e)
     {
         return e.value;
@@ -26,26 +31,28 @@ import common, parse.ast;
 
     dstring visit (AstDeclr e)
     {
-        if (!e.type && !e.value) return e.ident.str(this);
-        else if (!e.type)        return dtext (e.ident.str(this), " = ", e.value.str(this));
-        else if (!e.value)       return dtext (e.ident.str(this), " : ", e.type.str(this));
-        else                     return dtext (e.ident.str(this), " : ", e.type.str(this),
+        auto t = useInferredTypes ? e.infType : e.type;
+
+        if (!t && !e.value) return e.ident.str(this);
+        else if (!t)        return dtext (e.ident.str(this), " = ", e.value.str(this));
+        else if (!e.value)  return dtext (e.ident.str(this), " : ", t.str(this));
+        else                return dtext (e.ident.str(this), " : ", t.str(this),
                                     " = ", e.value.str(this));
     }
 
 
     dstring visit (AstStruct e)
     {
-        return dtext("struct", newLine, "{", newLine, "\t",
-            e.exps.map!(d => d.str(this))().join(newLine ~ "\t"), newLine ~ "}");
+        return dtext("struct", newLine, "{", newLine, tab,
+            e.exps.map!(d => d.str(this))().join(newLine ~ tab), newLine ~ "}");
     }
 
 
     dstring visit (AstFn e)
     {
         return dtext("fn (", e.params.map!(p => p.str(this))().join(", "),
-                    ")", newLine, "{", newLine, "\t",
-                    e.exps.map!(e => e.str(this))().join(newLine ~ "\t"), newLine, "}");
+                    ")", newLine, "{", newLine, tab,
+                    e.exps.map!(e => e.str(this))().join(newLine ~ tab), newLine, "}");
     }
 
 
@@ -88,11 +95,11 @@ import common, parse.ast;
 
     dstring visit (AstIf e)
     {
-        auto t = e.then.map!(th => th.str(this))().join(newLine ~ "\t");
+        auto t = e.then.map!(th => th.str(this))().join(newLine ~ tab);
         return e.otherwise.length == 0
             ? dtext("if ", e.when.str(this), " then ", t, " end")
             : dtext("if ", e.when.str(this), " then ", t, " else ",
-                e.otherwise.map!(o => o.str(this))().join(newLine ~ "\t"), " end");
+                e.otherwise.map!(o => o.str(this))().join(newLine ~ tab), " end");
     }
 
 
@@ -105,6 +112,29 @@ import common, parse.ast;
     dstring visit (AstLambda e)
     {
         return e.fn.str(this);
+    }
+
+
+    dstring visit (TypeAny) { return "Any"; }
+
+    dstring visit (TypeVoid) { return "Void"; }
+
+    dstring visit (TypeNum) { return "Num"; }
+
+    dstring visit (TypeText) { return "Text"; }
+
+    dstring visit (TypeChar) { return "Char"; }
+
+
+    dstring visit (TypeOr or)
+    {
+        return dtext("AnyOf(", or.types.map!(o => o.str(this))().join(", "), ")");
+    }
+
+
+    dstring visit (TypeFn tfn)
+    {
+        return dtext("Fn(", (tfn.types ~ tfn.retType).map!(t => t.str(this))().join(", "), ")");
     }
 }
 

@@ -263,4 +263,18 @@ import common, parse.ast, validate.remarks;
     void visit (AstNum) { }
 
     void visit (AstUnknown) { }
+
+    void visit (TypeAny) { }
+
+    void visit (TypeVoid) { }
+
+    void visit (TypeOr) { }
+
+    void visit (TypeFn) { }
+
+    void visit (TypeNum) { }
+
+    void visit (TypeText) { }
+
+    void visit (TypeChar) { }
 }

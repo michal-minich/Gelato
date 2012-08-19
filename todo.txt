@@ -1,12 +1,13 @@
 parse validate not recoverable erros
 remark undefined symbols
 prepare functions on firs call
-
+typed builtin funtions
 dynamic typing
+static typing
 
 parse dot op apply
 interpret dot op apply
-typed builtin funtions
+
 
 PARSER -----------------------------
 parse array / brace op apply

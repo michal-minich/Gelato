@@ -169,4 +169,18 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     Exp visit (AstStruct s) { return s; }
 
     Exp visit (AstLabel) { return null; }
+
+    Exp visit (TypeAny) { return null; }
+
+    Exp visit (TypeVoid) { return null; }
+
+    Exp visit (TypeOr) { return null; }
+
+    Exp visit (TypeFn) { return null; }
+
+    Exp visit (TypeNum) { return null; }
+
+    Exp visit (TypeText) { return null; }
+
+    Exp visit (TypeChar) { return null; }
 }

@@ -1,8 +1,12 @@
 start = fn ()
 {
-    print(1)
-    goto
-    print(2)
-    label
-    print(3)
+    t = "a"
+    ch = 'c'
+    n = 1
+    f = fn () {}
 }
+
+x = fn () { 1 }
+y = fn (a = 1) { if a then "t" else 'c' end }
+z = fn (b = 1) { return 1 return fn () { b } }
+q = fn (u, v) { return fn () {} }

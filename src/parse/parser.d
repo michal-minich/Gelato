@@ -401,6 +401,8 @@ final class Parser
         Token[] ts;
         dstring txt;
 
+        ts ~= current;
+
         nextTok();
 
         if (finished)

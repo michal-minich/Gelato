@@ -2,7 +2,7 @@ module parse.ast;
 
 import std.stdio, std.algorithm, std.array, std.conv;
 import common;
-import formatter, validate.validation, interpret.preparer, interpret.evaluator;
+import formatter, validate.validation, validate.inferer, interpret.preparer, interpret.evaluator;
 
 
 @safe:
@@ -56,18 +56,6 @@ enum TokenType
 }
 
 
-mixin template visitImpl ()
-{
-    override dstring str (FormatVisitor v) { return v.visit(this); }
-
-    override Exp eval (Evaluator v) { return v.visit(this); }
-
-    override void prepare (PreparerForEvaluator v) { return v.visit(this); }
-
-    override void validate (Validator v) { return v.visit(this); }
-}
-
-
 interface IAstVisitor (R)
 {
     R visit (AstUnknown);
@@ -90,11 +78,34 @@ interface IAstVisitor (R)
     R visit (AstGoto);
     R visit (AstReturn);
     R visit (AstIf);
+
+    R visit (TypeAny);
+    R visit (TypeVoid);
+    R visit (TypeOr);
+    R visit (TypeFn);
+    R visit (TypeNum);
+    R visit (TypeText);
+    R visit (TypeChar);
+}
+
+
+mixin template visitImpl ()
+{
+    override dstring str (FormatVisitor v) { return v.visit(this); }
+
+    override Exp eval (Evaluator v) { return v.visit(this); }
+
+    override void prepare (PreparerForEvaluator v) { return v.visit(this); }
+
+    override void validate (Validator v) { return v.visit(this); }
+
+    override Exp infer (TypeInferer v) { return v.visit(this); }
 }
 
 
 abstract class Exp
 {
+    Exp infType;
     Token[] tokens;
     Exp parent;
     Exp prev;
@@ -113,6 +124,74 @@ abstract class Exp
     abstract void prepare (PreparerForEvaluator);
 
     abstract void validate (Validator);
+
+    abstract Exp infer (TypeInferer);
+}
+
+
+final class TypeAny : Exp
+{
+    this () { super(null, null); }
+
+    mixin visitImpl;
+}
+
+
+final class TypeVoid : Exp
+{
+    this () { super(null, null); }
+
+    mixin visitImpl;
+}
+
+
+final class TypeOr : Exp
+{
+    Exp[] types;
+
+    this (Exp[] types) { super(null, null); this.types = types; }
+
+    mixin visitImpl;
+}
+
+
+final class TypeFn : Exp
+{
+    Exp[] types;
+    Exp retType;
+
+    this (Exp[] types, Exp retType)
+    {
+        super(null, null);
+        this.types = types;
+        this.retType = retType;
+    }
+
+    mixin visitImpl;
+}
+
+
+final class TypeNum : Exp
+{
+    this () { super(null, null); }
+
+    mixin visitImpl;
+}
+
+
+final class TypeText : Exp
+{
+    this () { super(null, null); }
+
+    mixin visitImpl;
+}
+
+
+final class TypeChar: Exp
+{
+    this () { super(null, null); }
+
+    mixin visitImpl;
 }
 
 
