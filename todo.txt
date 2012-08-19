@@ -1,18 +1,23 @@
+parse array / brace op apply
 project file
-
 
 PARSER -----------------------------
 validate not recoverable erros
 coma separated statements and struct members
 new line separated fn args and params
 comments
-array
 operators
 parse declaration type
 consider including trailing white after last token in it
 
+
 INTERPRETER -----------------------------
 visitor style
+pluggable custom functions to interpreter (with qualified name)
+primitive operations on numbers
+array object (empty first rest)
+variable length fn params
+text is array
 import
 var / mutable variables
 ref
@@ -27,6 +32,7 @@ first base library
 cast
 arrays / mem allocation
 operators priority
+forbid using fn as struct
 
 
 TOKENIZER -----------------------------

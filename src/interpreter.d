@@ -4,16 +4,6 @@ import std.algorithm, std.array, std.conv, std.string, std.file, std.utf;
 import common, ast, remarks, parser, validation;
 
 
-interface IInterpreterContext : IValidationContext
-{
-    void print (dstring);
-
-    void println ();
-
-    void println (dstring);
-}
-
-
 final class Interpreter
 {
     IInterpreterContext context;
@@ -47,11 +37,10 @@ final class Interpreter
 
     Env interpret (IInterpreterContext icontext, dstring src)
     {
-        auto ast = (new Parser(icontext, src)).parseAll();
-        auto astFile = new AstFile(null, null, ast.map!(e => cast(AstDeclr)e)().array());
+        auto f = (new Parser(icontext, src)).parseAll();
         auto v = new Validator(icontext);
-        v.validate(astFile);
-        return interpret(icontext, astFile);
+        v.validate(f);
+        return interpret(icontext, f);
     }
 
 
@@ -59,7 +48,7 @@ final class Interpreter
     {
         context = icontext;
         auto env = new Env;
-        initEnv (env, file.declarations);
+        initEnv (env, file.exps);
 
         if (auto s = "start"d in env.values)
             evalLambda(cast (AstLambda)*s, null);
@@ -70,13 +59,22 @@ final class Interpreter
     }
 
 
-    private void initEnv (Env env, AstDeclr[] declarations)
+    private void initEnv (Env env, Exp[] exps)
     {
-        foreach (d; declarations)
-            setEnv (env, d);
+        foreach (e; exps)
+        {
+            auto d = cast(AstDeclr)e;
+            if (d)
+                setEnv (env, d);
+        }
 
-        foreach (d; declarations)
-            getIdentEnv(env, d.ident.idents).values[d.ident.idents[$ - 1]] = eval (env, d.value);
+        foreach (e; exps)
+        {
+            auto d = cast(AstDeclr)e;
+            if (d)
+                getIdentEnv(env, d.ident.idents).values[d.ident.idents[$ - 1]]
+                    = eval (env, d.value);
+        }
 
     }
 
@@ -145,7 +143,7 @@ final class Interpreter
             else
             {
                 auto f = new AstFn (null, null);
-                f.fnItems = when.value == "0" ? i.otherwise : i.then;
+                f.exps = when.value == "0" ? i.otherwise : i.then;
                 auto l = new AstLambda (new Env(env), f);
                 return evalLambda (l, null);
             }
@@ -155,7 +153,7 @@ final class Interpreter
         if (s)
         {
             auto f = new AstFn(s, s);
-            foreach (e; s.declarations)
+            foreach (e; s.exps)
             {
                 auto id = cast(AstIdent)e;
                 auto d = cast(AstDeclr)e;
@@ -164,8 +162,8 @@ final class Interpreter
                 else
                     f.params ~= d ? d : new AstDeclr(s, s, id);
             }
-            s.declarations = null;
-            f.fnItems ~= new AstFn (s, s);
+            s.exps = null;
+            f.exps ~= new AstFn (s, s);
             return new AstLambda(new Env(env), f);
         }
 
@@ -219,9 +217,9 @@ final class Interpreter
         }
 
         auto c = 0;
-        while (c < lambda.fn.fnItems.length)
+        while (c < lambda.fn.exps.length)
         {
-            auto fnItem = lambda.fn.fnItems[c];
+            auto fnItem = lambda.fn.exps[c];
             ++c;
 
             auto d = cast (AstDeclr)fnItem;
@@ -252,7 +250,7 @@ final class Interpreter
                 return eval(lambda.env, r.exp);
             }
 
-            if (lambda.fn.fnItems.length == 1)
+            if (lambda.fn.exps.length == 1)
                 return eval(lambda.env, fnItem);
             else
                 eval(lambda.env, fnItem);

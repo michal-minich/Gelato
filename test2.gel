@@ -25,7 +25,7 @@ start = fn ()
     i = if v1() then r5() else r6() end
     if v0() then r5() end
     if v1() then r6() end
-    print (1, "str", a)
+    print (1, "str", a, i)
     p = point(1, 2)
     p.r = record()
     p.r.z = 3

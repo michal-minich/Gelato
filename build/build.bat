@@ -1,4 +1,5 @@
 @echo off
+cls
 pushd src > NUL
 dmd -debug -gs -g -ofgelato.exe @..\build\buildargs.txt | ddemangle
 del gelato.obj

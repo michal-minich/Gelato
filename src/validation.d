@@ -89,11 +89,11 @@ final class RemarkLevel : IRemarkLevel
     {
         immutable src = toUTF32(readText!string(rootPath ~ "/validation/" ~ name ~ ".gel"));
 
-        auto exps = (new Parser(vctx, src)).parseAll();
+        auto f = (new Parser(vctx, src)).parseAll();
 
         auto rl = new RemarkLevel;
 
-        foreach (e; exps)
+        foreach (e; f.exps)
         {
             auto d = cast(AstDeclr)e;
             if (d.ident.idents[0] == "name")
@@ -145,12 +145,12 @@ final class RemarkTranslation : IRemarkTranslation
         IValidationContext vctx, const string rootPath, const string language)
     {
         immutable src = toUTF32(readText(rootPath ~ "/lang/" ~ language ~ "/settings.gel"));
-        auto exps = (new Parser(vctx, src)).parseAll();
+        auto f = (new Parser(vctx, src)).parseAll();
 
         auto rt = new RemarkTranslation;
         rt.rootPath = rootPath;
 
-        foreach (e; exps)
+        foreach (e; f.exps)
         {
             auto d = cast(AstDeclr)e;
             if (d.ident.idents[0] == "inherit")
@@ -168,9 +168,9 @@ final class RemarkTranslation : IRemarkTranslation
         dstring[dstring] vals;
 
         immutable src = toUTF32(readText(filePath));
-        auto exps = (new Parser(vctx, src)).parseAll();
+        auto f = (new Parser(vctx, src)).parseAll();
 
-        foreach (e; exps)
+        foreach (e; f.exps)
         {
             auto d = cast(AstDeclr)e;
             vals[d.ident.idents[0]] = d.value.str(fv);

@@ -1,6 +1,10 @@
 -property
 -w
 
+interpret/builtins.d
+interpret/evaluator.d
+interpret/preparer.d
+
 ast.d
 common.d
 formatter.d

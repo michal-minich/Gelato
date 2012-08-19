@@ -33,13 +33,13 @@ final class Parser
     }
 
 
-    Exp[] parseAll ()
+    AstFile parseAll ()
     {
-        Exp[] res;
+        auto f = new AstFile;
         Exp e;
-        while ((e = parse(e ? e.parent : null)) !is null)
-            res ~= e;
-        return res;
+        while ((e = parse(f)) !is null)
+            f.exps ~= e;
+        return f;
     }
 
 
@@ -206,7 +206,7 @@ final class Parser
     AstStruct parserStruct (Exp parent)
     {
         auto s = newExp!AstStruct(parent);
-        s.declarations = parseCurlyBrace(s);
+        s.exps = parseCurlyBrace(s);
         return s;
     }
 
@@ -225,7 +225,7 @@ final class Parser
         if (current.text != ")")
             f.params = parseFnParameter(f);
 
-        f.fnItems = parseCurlyBrace (f);
+        f.exps = parseCurlyBrace (f);
         return f;
     }
 

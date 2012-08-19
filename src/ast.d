@@ -1,7 +1,7 @@
 module ast;
 
 import std.stdio, std.algorithm, std.array, std.conv;
-import common, tokenizer, interpreter, formatter;
+import common, tokenizer, interpreter, formatter, interpret.preparer, interpret.evaluator;
 
 
 @safe:
@@ -10,26 +10,35 @@ import common, tokenizer, interpreter, formatter;
 mixin template visitImpl ()
 {
     override dstring str (FormatVisitor v) { return v.visit(this); }
+
+    override Exp eval (Evaluator v) { return v.visit(this); }
+
+    override void prepare (PreparerForEvaluator v) { return v.visit(this); }
 }
 
 
 interface AstVisitor (R)
 {
-    R visit (AstNum);
     R visit (AstUnknown);
-    R visit (AstFile);
-    R visit (AstDeclr);
-    R visit (AstStruct);
-    R visit (AstFn);
-    R visit (AstFnApply);
-    R visit (AstIdent);
-    R visit (AstLabel);
-    R visit (AstReturn);
+
+    R visit (AstNum);
     R visit (AstText);
     R visit (AstChar);
-    R visit (AstIf);
-    R visit (AstGoto);
+    R visit (AstFn);
+
+    R visit (AstFnApply);
     R visit (AstLambda);
+
+    R visit (AstIdent);
+    R visit (AstDeclr);
+
+    R visit (AstFile);
+    R visit (AstStruct);
+
+    R visit (AstLabel);
+    R visit (AstGoto);
+    R visit (AstReturn);
+    R visit (AstIf);
 }
 
 
@@ -46,7 +55,11 @@ abstract class Exp
         this.prev = prev;
     }
 
-    abstract dstring str (FormatVisitor v);
+    abstract dstring str (FormatVisitor);
+
+    abstract Exp eval (Evaluator);
+
+    abstract void prepare (PreparerForEvaluator);
 }
 
 
@@ -60,13 +73,9 @@ final class AstUnknown : Exp
 
 final class AstFile : Exp
 {
-    AstDeclr[] declarations;
+    Exp[] exps;
 
-    this (Exp parent, Exp prev, AstDeclr[] declrs)
-    {
-        super(parent, prev);
-        declarations = declrs;
-    }
+    this () { super(null, null); }
 
     mixin visitImpl;
 }
@@ -77,6 +86,7 @@ final class AstDeclr : Exp
     AstIdent ident;
     Exp type;
     Exp value;
+    size_t paramIndex = typeof(paramIndex).max;
 
     this (Exp parent, Exp prev, AstIdent identifier)
     {
@@ -90,7 +100,8 @@ final class AstDeclr : Exp
 
 final class AstStruct : Exp
 {
-    Exp[] declarations;
+    Exp[] exps;
+    AstFn constructor;
 
     this (Exp parent, Exp prev) { super(parent, prev); }
 
@@ -101,6 +112,7 @@ final class AstStruct : Exp
 final class AstIdent : Exp
 {
     dstring[] idents;
+    AstDeclr declaredBy;
 
     this (Exp parent, Exp prev, dstring[] identfiers)
     {
@@ -158,6 +170,9 @@ final class AstLambda : Exp
 {
     Interpreter.Env env;
     AstFn fn;
+    AstLambda parentLambda;
+    uint currentExpIndex;
+    AstDeclr[] evaledArgs;
 
     this (Interpreter.Env e, AstFn f) { super (null, null); env = e; fn = f; }
 
@@ -168,7 +183,8 @@ final class AstLambda : Exp
 final class AstFn : Exp
 {
     AstDeclr[] params;
-    Exp[] fnItems;
+    Exp[] exps;
+    bool isPrepared;
 
     this (Exp parent, Exp prev) { super(parent, prev); }
 
@@ -206,6 +222,7 @@ final class AstIf : Exp
 final class AstLabel : Exp
 {
     dstring label;
+    uint expIndex;
 
     this (Exp parent, Exp prev, dstring lbl)
     {
@@ -220,6 +237,7 @@ final class AstLabel : Exp
 final class AstGoto : Exp
 {
     dstring label;
+    uint labelExpIndex;
 
     this (Exp parent, Exp prev, dstring lbl)
     {

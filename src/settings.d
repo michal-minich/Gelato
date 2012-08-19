@@ -52,17 +52,17 @@ final class Settings
     {
         auto s = new Settings;
 
-        auto env = (new Interpreter).interpret (icontext, rootPath ~ "/settings.gel");
-
         s.rootPath = rootPath;
         s.icontext = icontext;
+/*
+        auto env = (new Interpreter).interpret (icontext, rootPath ~ "/settings.gel");
 
         s.language = env.get("language").txtval;
         s.remarkLevelName = env.get("remarkLevelName").txtval;
 
         s.remarkTranslation = RemarkTranslation.load (icontext, rootPath, to!string(s.language));
         s.remarkLevel = RemarkLevel.load (icontext, rootPath, to!string(s.remarkLevelName));
-
+*/
         return s;
     }
 }

@@ -26,6 +26,16 @@ int dbgCounter;
 }
 
 
+interface IInterpreterContext : IValidationContext
+{
+    void print (dstring);
+
+    void println ();
+
+    void println (dstring);
+}
+
+
 final class ConsoleInterpreterContext : IInterpreterContext
 {
     void print (dstring str) { write (str); }

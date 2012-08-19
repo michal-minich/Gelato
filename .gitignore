@@ -1,8 +1,5 @@
+Debug/
 gelato
 gelato.exe
 gelato.d.deps
-gg
-gg.exe
-gg.d.deps
-gel.d
-geldrop.d
+*.suo

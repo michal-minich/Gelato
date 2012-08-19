@@ -2,7 +2,7 @@
 
 
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file, std.path;
-import common, settings, tokenizer, parser, ast, interpreter, formatter;
+import common, settings, tokenizer, parser, ast, interpreter, formatter, interpret.evaluator;
 
 
 int main (string[] args)
@@ -27,13 +27,13 @@ void process (InterpretTask task)
     {
         immutable src = toUTF32(readText!string(f));
 
-        //auto toks = new Tokenizer (src);
+        auto toks = new Tokenizer (src);
         //foreach (t; toks)
         //    writeln(t.toDebugString());
 
-        /*auto ast = new Parser(sett.icontext, src);
-        auto exps = ast.parseAll();
-        foreach (e; exps)
+        auto ast = new Parser(sett.icontext, src);
+        auto astFile = ast.parseAll();
+        /*foreach (e; f.exps)
         {
             writeln(e.str(fv));
 
@@ -41,8 +41,16 @@ void process (InterpretTask task)
                 writeln(t);
         }*/
 
-        auto i = new Interpreter;
-        auto env = i.interpret (sett.icontext, f);
+        //auto i = new Interpreter;
+       //auto env = i.interpret (sett.icontext, f);
+
+        //auto p = new PreparerForEvaluator;
+        //astFile.prepare(p);
+
+        auto ev = new Evaluator;
+        ev.interpret (sett.icontext, astFile);
+
+       // writeln(astFile.str(fv));
     }
 }
 
@@ -59,7 +67,7 @@ struct InterpretTask
         {
             if (a.endsWith(".gel"))
             {
-                immutable f = a.absolutePath();
+                immutable f = a.buildNormalizedPath();
                 if (f.exists())
                 {
                     if (f.isFile())

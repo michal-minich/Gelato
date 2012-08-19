@@ -14,13 +14,13 @@ import common, ast, parser, validation;
 
     dstring visit (AstUnknown e)
     {
-        return e.tokens.map!(t => t.text)().join();
+        return e.tokens ? e.tokens.map!(t => t.text)().join() : "<unknown>";
     }
 
 
     dstring visit (AstFile e)
     {
-        return e.declarations.map!(d => d.str(this))().join(newLine);
+        return e.exps.map!(d => d.str(this))().join(newLine);
     }
 
 
@@ -37,7 +37,7 @@ import common, ast, parser, validation;
     dstring visit (AstStruct e)
     {
         return dtext("struct", newLine, "{", newLine, "\t",
-            e.declarations.map!(d => d.str(this))().join(newLine ~ "\t"), newLine ~ "}");
+            e.exps.map!(d => d.str(this))().join(newLine ~ "\t"), newLine ~ "}");
     }
 
 
@@ -45,7 +45,7 @@ import common, ast, parser, validation;
     {
         return dtext("fn (", e.params.map!(p => p.str(this))().join(", "),
                     ")", newLine, "{", newLine, "\t",
-                    e.fnItems.map!(e => e.str(this))().join(newLine ~ "\t"), newLine, "}");
+                    e.exps.map!(e => e.str(this))().join(newLine ~ "\t"), newLine, "}");
     }
 
 

@@ -1,3 +1,4 @@
+clear
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" # full path to current script file
 pushd $DIR/../src/ > /dev/null
 dmd -m64 -debug -gs -g -of../rel/gelato @../build/buildargs.txt
