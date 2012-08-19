@@ -187,20 +187,25 @@ del Debug\Gelato.obj</preBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="Gelato">
-  <File path="src\ast.d" />
-  <File path="src\interpret\builtins.d" />
+  <Folder name="validate">
+   <File path="src\validate\remarks.d" />
+   <File path="src\validate\validation.d" />
+  </Folder>
+  <Folder name="parse">
+   <File path="src\parse\ast.d" />
+   <File path="src\parse\parser.d" />
+   <File path="src\parse\tokenizer.d" />
+  </Folder>
+  <Folder name="interpert">
+   <File path="src\interpret\builtins.d" />
+   <File path="src\interpret\evaluator.d" />
+   <File path="src\interpret\interpreter.d" />
+   <File path="src\interpret\preparer.d" />
+  </Folder>
   <File path="src\common.d" />
-  <File path="src\interpret\evaluator.d" />
   <File path="src\formatter.d" />
-  <File path="src\interpreter.d" />
   <File path="src\localization.d" />
   <File path="src\main.d" />
-  <File path="src\parser.d" />
-  <File path="src\interpret\preparer.d" />
-  <File path="src\remarks.d" />
   <File path="src\settings.d" />
-  <File path="test.gel" />
-  <File path="src\tokenizer.d" />
-  <File path="src\validation.d" />
  </Folder>
 </DProject>

@@ -1,8 +1,8 @@
-module parser;
+module parse.parser;
 
 
 import std.algorithm, std.array, std.conv;
-import common, remarks, validation, tokenizer, ast;
+import common, validate.remarks, validate.validation, parse.tokenizer, parse.ast;
 
 
 struct ParseResult

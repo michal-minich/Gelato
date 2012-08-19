@@ -3,16 +3,18 @@
 
 interpret/builtins.d
 interpret/evaluator.d
+interpret/interpreter.d
 interpret/preparer.d
 
-ast.d
+parse/ast.d
+parse/parser.d
+parse/tokenizer.d
+
+validate/remarks.d
+validate/validation.d
+
 common.d
 formatter.d
-interpreter.d
 localization.d
 main.d
-parser.d
-remarks.d
 settings.d
-tokenizer.d
-validation.d

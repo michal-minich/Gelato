@@ -2,7 +2,8 @@
 
 
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file, std.path;
-import common, settings, tokenizer, parser, ast, interpreter, formatter, interpret.evaluator;
+import common, settings, formatter, parse.tokenizer, parse.parser, parse.ast, 
+    interpret.interpreter, interpret.evaluator;
 
 
 int main (string[] args)

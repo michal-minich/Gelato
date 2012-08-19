@@ -1,7 +1,7 @@
-module interpreter;
+module interpret.interpreter;
 
 import std.algorithm, std.array, std.conv, std.string, std.file, std.utf;
-import common, ast, remarks, parser, validation;
+import common, validate.remarks, validate.validation, parse.ast, parse.parser;
 
 
 final class Interpreter

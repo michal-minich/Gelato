@@ -1,7 +1,7 @@
 module interpret.preparer;
 
 import std.algorithm, std.array, std.conv, std.string, std.file, std.utf;
-import common, ast, remarks, parser, validation;
+import common, parse.ast, parse.parser, validate.remarks, validate.validation;
 
 
 @safe nothrow private AstLabel findLabel (Exp[] exps, dstring label)

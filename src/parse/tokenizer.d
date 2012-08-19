@@ -1,4 +1,4 @@
-module tokenizer;
+module parse.tokenizer;
 
 import std.array, std.algorithm, std.conv;
 import common;

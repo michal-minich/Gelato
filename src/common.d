@@ -2,7 +2,7 @@ module common;
 
 
 import std.stdio, std.array, std.range, std.algorithm, std.conv;
-import settings, validation, interpreter, formatter;
+import settings, validate.validation, interpret.interpreter, formatter;
 
 
 Settings sett;

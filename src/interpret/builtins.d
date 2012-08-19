@@ -1,7 +1,7 @@
 module interpret.builtins;
 
 import std.algorithm, std.array, std.conv, std.string;
-import common, ast, remarks;
+import common, parse.ast, validate.remarks;
 
 
 immutable Exp function (IInterpreterContext, Exp[])[dstring] customFns;

@@ -1,7 +1,7 @@
-module validation;
+module validate.validation;
 
 import std.array, std.algorithm, std.conv, std.file, std.utf;
-import common, ast, remarks, parser;
+import common, parse.ast, parse.parser, validate.remarks;
 
 
 interface IValidationContext

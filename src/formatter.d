@@ -1,7 +1,7 @@
 module formatter;
 
 import std.algorithm, std.array, std.conv, std.file, std.utf;
-import common, ast, parser, validation;
+import common, parse.ast, parse.parser, validate.validation;
 
 
 @trusted pure final class FormatVisitor : AstVisitor!(dstring)

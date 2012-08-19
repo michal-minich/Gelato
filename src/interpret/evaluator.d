@@ -1,7 +1,7 @@
 module interpret.evaluator;
 
 import std.algorithm, std.array, std.conv, std.string, std.file, std.utf;
-import common, ast, remarks, parser, validation, interpret.preparer, interpret.builtins;
+import common, parse.ast, parse.parser, validate.remarks, validate.validation, interpret.preparer, interpret.builtins;
 
 
 

@@ -1,6 +1,6 @@
-module remarks;
+module validate.remarks;
 
-import ast, validation;
+import parse.ast, validate.validation;
 
 
 @safe pure nothrow:

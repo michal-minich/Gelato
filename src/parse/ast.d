@@ -1,7 +1,7 @@
-module ast;
+module parse.ast;
 
 import std.stdio, std.algorithm, std.array, std.conv;
-import common, tokenizer, interpreter, formatter, interpret.preparer, interpret.evaluator;
+import common, formatter, parse.tokenizer, interpret.interpreter, interpret.preparer, interpret.evaluator;
 
 
 @safe:
