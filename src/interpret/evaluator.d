@@ -98,8 +98,7 @@ import common, parse.ast, parse.parser, validate.remarks, validate.validation, i
 
         assert (fn, "cannot apply undefined fn");
 
-        auto lambda = new AstLambda(null, fn);
-        lambda.parentLambda = currentLambda;
+        auto lambda = new AstLambda(currentLambda, fn);
 
         if (fn.params)
         {
@@ -143,9 +142,7 @@ import common, parse.ast, parse.parser, validate.remarks, validate.validation, i
         {
             auto fn = new AstFn (i, i);
             fn.exps = when.value == "0" ? i.otherwise : i.then;
-            auto l = new AstLambda(null, fn);
-            l.parentLambda = currentLambda;
-            return visit(l);
+            return visit(new AstLambda(currentLambda, fn));
         }
     }
 

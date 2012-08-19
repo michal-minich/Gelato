@@ -212,10 +212,7 @@ import common, parse.ast, parse.parser, validate.remarks, validate.validation;
     }
 
 
-    void visit (AstIdent ident)
-    {
-        ident.declaredBy = getIdentDeclaredBy(ident);
-    }
+    void visit (AstIdent ident) { ident.declaredBy = getIdentDeclaredBy(ident); }
 
     void visit (AstReturn r) { r.exp.prepare(this);}
 

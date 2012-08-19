@@ -1,8 +1,15 @@
-parse array / brace op apply
-project file
+parse validate not recoverable erros
+remark undefined symbols
+prepare functions on firs call
+
+dynamic typing
+
+parse dot op apply
+interpret dot op apply
+typed builtin funtions
 
 PARSER -----------------------------
-validate not recoverable erros
+parse array / brace op apply
 coma separated statements and struct members
 new line separated fn args and params
 comments
@@ -11,28 +18,35 @@ parse declaration type
 consider including trailing white after last token in it
 
 
+VALIDATOR -----------------------------
+syntax
+intendation level
+unknown identifiers
+double identifiers
+
+
 INTERPRETER -----------------------------
-visitor style
-pluggable custom functions to interpreter (with qualified name)
+dynamic typing
+forbid using fn as struct
 primitive operations on numbers
-array object (empty first rest)
-variable length fn params
-text is array
-import
+builtins with qualified name
+array object (empty, first, rest)
+    variable length fn params
+    text is array
+project file
+multi file support
 var / mutable variables
 ref
 exceptions /, scope guars
 contracts
-dynamic typing
-  stack trace
-  env
-custom struct functions - construct, destruct, clone, ...
+builtin for stack trace
+builtin in for env
+user overridable struct functions - construct, destruct, clone, ...
 first-class types
 first base library
 cast
 arrays / mem allocation
 operators priority
-forbid using fn as struct
 
 
 TOKENIZER -----------------------------
@@ -44,13 +58,6 @@ hex decimals
 hex escapes
 nested comment
 documentation comments
-
-
-VALIDATOR -----------------------------
-syntax
-intendation level
-unknown identifiers
-double identifiers
 
 
 FORMATTER -----------------------------

@@ -3,7 +3,6 @@
 
 interpret/builtins.d
 interpret/evaluator.d
-interpret/interpreter.d
 interpret/preparer.d
 
 parse/ast.d

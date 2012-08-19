@@ -1,7 +1,7 @@
 module parse.ast;
 
 import std.stdio, std.algorithm, std.array, std.conv;
-import common, formatter, parse.tokenizer, interpret.interpreter, interpret.preparer, interpret.evaluator;
+import common, formatter, parse.tokenizer, interpret.preparer, interpret.evaluator;
 
 
 @safe:
@@ -168,13 +168,12 @@ final class AstChar : Exp
 
 final class AstLambda : Exp
 {
-    Interpreter.Env env;
     AstFn fn;
     AstLambda parentLambda;
     uint currentExpIndex;
     AstDeclr[] evaledArgs;
 
-    this (Interpreter.Env e, AstFn f) { super (null, null); env = e; fn = f; }
+    this (AstLambda pl, AstFn f) { super (null, null); parentLambda = pl; fn = f; }
 
     mixin visitImpl;
 }

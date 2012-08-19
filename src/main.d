@@ -2,8 +2,8 @@
 
 
 import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file, std.path;
-import common, settings, formatter, parse.tokenizer, parse.parser, parse.ast, 
-    interpret.interpreter, interpret.evaluator;
+import common, settings, formatter, parse.tokenizer, parse.parser, parse.ast,
+    interpret.evaluator;
 
 
 int main (string[] args)
@@ -41,9 +41,6 @@ void process (InterpretTask task)
             foreach (t; e.tokens)
                 writeln(t);
         }*/
-
-        //auto i = new Interpreter;
-       //auto env = i.interpret (sett.icontext, f);
 
         //auto p = new PreparerForEvaluator;
         //astFile.prepare(p);

@@ -1,7 +1,8 @@
 module settings;
 
-import std.conv;
-import common, localization, parse.ast, validate.remarks, validate.validation, interpret.interpreter;
+import std.array, std.conv, std.file, std.utf;
+import common, localization, parse.ast, validate.remarks,
+    validate.validation, parse.parser;
 
 
 
@@ -54,15 +55,22 @@ final class Settings
 
         s.rootPath = rootPath;
         s.icontext = icontext;
-/*
-        auto env = (new Interpreter).interpret (icontext, rootPath ~ "/settings.gel");
 
-        s.language = env.get("language").txtval;
-        s.remarkLevelName = env.get("remarkLevelName").txtval;
+        immutable src = toUTF32(readText(rootPath ~ "/settings.gel"));
+        auto f = (new Parser(icontext, src)).parseAll();
+
+        foreach (e; f.exps)
+        {
+            auto d = cast(AstDeclr)e;
+            if (d.ident.idents[0] == "language")
+                s.language = (cast(AstText)d.value).value;
+            if (d.ident.idents[0] == "remarkLevelName")
+                s.remarkLevelName = (cast(AstText)d.value).value;
+        }
 
         s.remarkTranslation = RemarkTranslation.load (icontext, rootPath, to!string(s.language));
         s.remarkLevel = RemarkLevel.load (icontext, rootPath, to!string(s.remarkLevelName));
-*/
+
         return s;
     }
 }
