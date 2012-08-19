@@ -6,17 +6,11 @@ import common, localization, parse.ast, validate.remarks,
 
 
 
-final class LoadSettingsInterpreterContext : IInterpreterContext
+final class LoadSettingsValidationContext : IValidationContext
 {
-    private IInterpreterContext base;
+    private IValidationContext base;
 
-    this (IInterpreterContext base) { this.base = base; }
-
-    void print (dstring str) { base.print (str); }
-
-    void println () { base.println (); }
-
-    void println (dstring str) { base.println (str); }
+    this (IValidationContext base) { this.base = base; }
 
     void remark (Remark remark)
     {
@@ -56,7 +50,9 @@ final class Settings
         s.rootPath = rootPath;
         s.icontext = icontext;
 
-        auto f = parseFile(icontext, rootPath ~ "/settings.gel");
+        auto loadContext = new LoadSettingsValidationContext(icontext);
+
+        auto f = parseFile(loadContext, rootPath ~ "/settings.gel");
 
         foreach (e; f.exps)
         {
@@ -67,8 +63,8 @@ final class Settings
                 s.remarkLevelName = (cast(AstText)d.value).value;
         }
 
-        s.remarkTranslation = RemarkTranslation.load (icontext, rootPath, to!string(s.language));
-        s.remarkLevel = RemarkLevel.load (icontext, rootPath, to!string(s.remarkLevelName));
+        s.remarkTranslation = RemarkTranslation.load (loadContext, rootPath, to!string(s.language));
+        s.remarkLevel = RemarkLevel.load (loadContext, rootPath, to!string(s.remarkLevelName));
 
         return s;
     }

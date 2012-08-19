@@ -199,9 +199,9 @@ del Debug\Gelato.obj</preBuildCommand>
   <Folder name="interpert">
    <File path="src\interpret\builtins.d" />
    <File path="src\interpret\evaluator.d" />
-   <File path="src\interpret\interpreter.d" />
    <File path="src\interpret\preparer.d" />
   </Folder>
+  <File path="src\cmdint.d" />
   <File path="src\common.d" />
   <File path="src\formatter.d" />
   <File path="src\localization.d" />

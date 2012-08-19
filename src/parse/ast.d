@@ -2,7 +2,7 @@ module parse.ast;
 
 import std.stdio, std.algorithm, std.array, std.conv;
 import common;
-import formatter, interpret.preparer, interpret.evaluator;
+import formatter, validate.validation, interpret.preparer, interpret.evaluator;
 
 
 @safe:
@@ -32,6 +32,13 @@ struct Token
 }
 
 
+struct Position
+{
+    uint line;
+    uint column;
+}
+
+
 enum TokenType
 {
     empty, unknown,
@@ -56,10 +63,12 @@ mixin template visitImpl ()
     override Exp eval (Evaluator v) { return v.visit(this); }
 
     override void prepare (PreparerForEvaluator v) { return v.visit(this); }
+
+    override void validate (Validator v) { return v.visit(this); }
 }
 
 
-interface AstVisitor (R)
+interface IAstVisitor (R)
 {
     R visit (AstUnknown);
 
@@ -102,6 +111,8 @@ abstract class Exp
     abstract Exp eval (Evaluator);
 
     abstract void prepare (PreparerForEvaluator);
+
+    abstract void validate (Validator);
 }
 
 
@@ -263,7 +274,6 @@ final class AstIf : Exp
 final class AstLabel : Exp
 {
     dstring label;
-    uint expIndex;
 
     this (Exp parent, Exp prev, dstring lbl)
     {
@@ -278,7 +288,7 @@ final class AstLabel : Exp
 final class AstGoto : Exp
 {
     dstring label;
-    uint labelExpIndex;
+    uint labelExpIndex = uint.max;
 
     this (Exp parent, Exp prev, dstring lbl)
     {

@@ -5,7 +5,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 
 
 
-@safe final class Evaluator : AstVisitor!(Exp)
+@safe final class Evaluator : IAstVisitor!(Exp)
 {
     private
     {
@@ -15,39 +15,18 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    this ()
-    {
-        prep = new PreparerForEvaluator;
-    }
-
-
-    void interpret (IInterpreterContext icontext, AstFile file)
+    this (IInterpreterContext icontext)
     {
         context = icontext;
-        prep.context = context;
-        visit(file);
+        prep = new PreparerForEvaluator(icontext);
     }
 
 
     @trusted Exp visit (AstFile file)
     {
-        prep.visit(file);
-        Exp s;
         auto start = findDeclr(file.exps, "start");
-
-        if (start)
-        {
-            auto fn = cast(AstFn)start.value;
-            s = fn ? new AstLambda(null, fn) : start.value;
-        }
-        else
-        {
-            auto fn = new AstFn(file, file);
-            fn.exps = file.exps;
-            s = new AstLambda(null, fn);
-        }
-
-        s.prepare(prep);
+        auto fn = cast(AstFn)start.value;
+        auto s = fn ? new AstLambda(null, fn) : start.value;
         return s.eval(this);
     }
 
@@ -166,9 +145,13 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    Exp visit (AstGoto gt)
+    @trusted Exp visit (AstGoto gt)
     {
-        currentLambda.currentExpIndex = gt.labelExpIndex;
+        if (gt.labelExpIndex == typeof(gt.labelExpIndex).max)
+            context.except("goto skiped because it has no matching label");
+        else
+            currentLambda.currentExpIndex = gt.labelExpIndex;
+
         return null;
     }
 

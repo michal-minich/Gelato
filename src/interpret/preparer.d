@@ -4,18 +4,6 @@ import std.algorithm, std.array, std.conv, std.string;
 import common, parse.ast, validate.remarks;
 
 
-@safe nothrow private AstLabel findLabel (Exp[] exps, dstring label)
-{
-    foreach (e; exps)
-    {
-        auto l = cast(AstLabel)e;
-        if (l && l.label == label)
-            return l;
-    }
-    return null;
-}
-
-
 @safe AstDeclr findDeclr (Exp[] exps, dstring name)
 {
     foreach (e; exps)
@@ -28,11 +16,14 @@ import common, parse.ast, validate.remarks;
 }
 
 
-@safe final class PreparerForEvaluator : AstVisitor!(void)
+@safe final class PreparerForEvaluator : IAstVisitor!(void)
 {
-    IInterpreterContext context;
+    IValidationContext vctx;
     private AstFn currentFn;
     private uint currentExpIndex;
+
+
+    this (IValidationContext validationContex) { vctx = validationContex; }
 
 
     private AstDeclr getIdentDeclaredBy (AstIdent ident)
@@ -163,14 +154,46 @@ import common, parse.ast, validate.remarks;
     }
 
 
-    void visit (AstGoto gt)
+    @trusted void visit (AstGoto gt)
     {
-        auto l = findLabel(currentFn.exps, gt.label);
+        uint expIndex;
+        auto l = findLabelOrLast(currentFn.exps, gt.label, expIndex);
 
-        if (!l)
-            assert (false, "no label");
+        if (l)
+        {
+            gt.labelExpIndex = expIndex;
 
-        gt.labelExpIndex = l.expIndex;
+            if (!gt.label || gt.label != l.label)
+            {
+                if (l.label)
+                    vctx.remark(textRemark("goto will go to last label in function", l));
+                else
+                    vctx.remark(textRemark("goto will go to first unamed label", l));
+            }
+        }
+        else
+        {
+            vctx.remark(GotoWithNoMatchingLabel(gt));
+        }
+    }
+
+
+    static nothrow private AstLabel findLabelOrLast (Exp[] exps, dstring label, out uint expIndex)
+    {
+        AstLabel lbl;
+        foreach (ix, e; exps)
+        {
+            auto l = cast(AstLabel)e;
+            if (l)
+            {
+                lbl = l;
+                expIndex = cast(uint)ix;
+
+                if (l.label == label)
+                    return l;
+            }
+        }
+        return lbl;
     }
 
 
@@ -195,8 +218,21 @@ import common, parse.ast, validate.remarks;
     }
 
 
-    void visit (AstFile file)
+    @trusted void visit (AstFile file)
     {
+        auto start = findDeclr(file.exps, "start");
+
+        if (!start)
+        {
+            vctx.remark(MissingStartFunction(null));
+            auto i = new AstIdent(file, file, ["start"]);
+            auto d = new AstDeclr(file, file, i);
+            auto fn = new AstFn(file, file);
+            fn.exps = file.exps;
+            d.value = fn;
+            file.exps = [d];
+        }
+
         foreach (e; file.exps)
             e.prepare(this);
     }
@@ -216,9 +252,9 @@ import common, parse.ast, validate.remarks;
 
     void visit (AstReturn r) { r.exp.prepare(this);}
 
-    void visit (AstLabel label) { label.expIndex = currentExpIndex; }
-
     void visit (AstLambda l) { visit(l.fn); }
+
+    void visit (AstLabel) { }
 
     void visit (AstText) { }
 

@@ -93,6 +93,14 @@ final class Parser
     }
 
 
+    void nextNonWhiteTokOnSameLine ()
+    {
+        nextTok();
+        while (!finished && current.type == TokenType.white)
+            nextTok();
+    }
+
+
     void skipWhite ()
     {
         if (!finished && isWhite)
@@ -295,7 +303,7 @@ final class Parser
 
     AstReturn parserReturn (Exp parent)
     {
-        nextNonWhiteTok();
+        nextNonWhiteTokOnSameLine();
         auto r = newExp!AstReturn(parent);
         r.exp = parse(r);
         if (!r.exp)
@@ -306,23 +314,37 @@ final class Parser
 
     AstGoto parserGoto (Exp parent)
     {
-        nextNonWhiteTok();
-        if (current.type != TokenType.ident)
-            assert (false, "goto without identifier");
-        auto g = newExp!AstGoto(parent, current.text);
-        nextTok();
-        return g;
+        nextNonWhiteTokOnSameLine();
+        if (current.type == TokenType.ident)
+        {
+            auto g = newExp!AstGoto(parent, current.text);
+            nextTok();
+            return g;
+        }
+        else
+        {
+            auto gt = newExp!AstGoto(parent, null);
+            vctx.remark(GotoWithoutIdentifier(gt));
+            return gt;
+        }
     }
 
 
     AstLabel parserLabel (Exp parent)
     {
-        nextNonWhiteTok();
-        if (current.type != TokenType.ident)
-            assert (false, "label without identifier");
-        auto l = newExp!AstLabel (parent, current.text);
-        nextTok();
-        return l;
+        nextNonWhiteTokOnSameLine();
+        if (current.type == TokenType.ident)
+        {
+            auto l = newExp!AstLabel (parent, current.text);
+            nextTok();
+            return l;
+        }
+        else
+        {
+            auto l = newExp!AstLabel (parent, null);
+            vctx.remark(LabelWithoutIdentifier(l));
+            return l;
+        }
     }
 
 

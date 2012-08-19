@@ -8,3 +8,30 @@ NumberContainsRepeatedUnderscore = suggestion
 NumberStartsWithZero = error
 
 MissingStartFunction = error
+
+ThenWithoutIf = error
+ElseWithoutIf = error
+EndWithoutIf = error
+IfWithoutEnd = error
+
+NoStartCurlyBraceAfterFn = error
+FnParamIsNotIdentifierOrDeclaration = blocker
+FnParamIsNotSeparatedByComa = error
+
+ReturnWithoutExpression = error
+
+GotoWithoutIdentifier = error
+LabelWithoutIdentifier = error
+GotoWithNoMatchingLabel = error
+LabelWithNoMatchingGoto = warning
+
+EmtyBraces = error
+NoClosingBrace = error
+RedudantBraceClose = error
+ClosingBraceDoesNotMatchOpening = error
+EmptyUnclosedOpeningBrace = error
+
+NoEndTextQoute = error
+FnArgumentIsNotSeparatedByComa = error
+
+NoIdentifierAfterDot = error

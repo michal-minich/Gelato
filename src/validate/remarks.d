@@ -161,6 +161,7 @@ final class RemarkTranslation : IRemarkTranslation
     }
 }
 
+
 private mixin template r (string name)
 {
     mixin ("Remark " ~ name ~ " (Exp subject) { return new Remark (\""
@@ -173,11 +174,41 @@ private mixin template gr (string name)
         ~ name ~ "\", subject, children); }");
 }
 
+
+Remark textRemark(dstring text, Exp subject = null)
+{
+    return new Remark (text, subject);
+}
+
+
 mixin r!("SelfStandingUnderscore");
-mixin r!("MissingStartFunction");
 
 mixin gr!("NumberNotProperlyFormatted");
 mixin r!("NumberStartsWithUnderscore");
 mixin r!("NumberEndsWithUnderscore");
 mixin r!("NumberContainsRepeatedUnderscore");
 mixin r!("NumberStartsWithZero");
+
+mixin r!("MissingStartFunction");
+
+mixin r!("NoStartCurlyBraceAfterFn");
+mixin r!("FnParamIsNotIdentifierOrDeclaration");
+mixin r!("FnParamIsNotSeparatedByComa");
+
+mixin r!("ReturnWithoutExpression");
+
+mixin r!("GotoWithoutIdentifier");
+mixin r!("LabelWithoutIdentifier");
+mixin r!("GotoWithNoMatchingLabel");
+mixin r!("LabelWithNoMatchingGoto");
+
+mixin r!("EmtyBraces");
+mixin r!("NoClosingBrace");
+mixin r!("RedudantBraceClose");
+mixin r!("ClosingBraceDoesNotMatchOpening");
+mixin r!("EmptyUnclosedOpeningBrace");
+
+mixin r!("NoEndTextQoute");
+mixin r!("FnArgumentIsNotSeparatedByComa");
+
+mixin r!("NoIdentifierAfterDot");

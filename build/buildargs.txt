@@ -12,6 +12,7 @@ parse/tokenizer.d
 validate/remarks.d
 validate/validation.d
 
+cmdint.d
 common.d
 formatter.d
 localization.d

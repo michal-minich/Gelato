@@ -7,3 +7,30 @@ NumberContainsRepeatedUnderscore = "Number countains repeated underscore"
 NumberStartsWithZero = "Number starts with zero"
 
 MissingStartFunction = "Missing start function"
+
+ThenWithoutIf = "ThenWithoutIf"
+ElseWithoutIf = "ElseWithoutIf"
+EndWithoutIf = "EndWithoutIf"
+IfWithoutEnd = "IfWithoutEnd"
+
+NoStartCurlyBraceAfterFn = "NoStartCurlyBraceAfterFn"
+FnParamIsNotIdentifierOrDeclaration = "FnParamIsNotIdentifierOrDeclaration"
+FnParamIsNotSeparatedByComa = "FnParamIsNotSeparatedByComa"
+
+ReturnWithoutExpression = "FnParamIsNotSeparatedByComa"
+
+GotoWithoutIdentifier = "GotoWithoutIdentifier"
+LabelWithoutIdentifier = "LabelWithoutIdentifier"
+GotoWithNoMatchingLabel = "GotoWithNoMatchingLabel"
+LabelWithNoMatchingGoto = "LabelWithNoMatchingGoto"
+
+EmtyBraces = "EmtyBraces"
+NoClosingBrace = "NoClosingBrace"
+RedudantBraceClose = "RedudantBraceClose"
+ClosingBraceDoesNotMatchOpening = "ClosingBraceDoesNotMatchOpening"
+EmptyUnclosedOpeningBrace = "EmptyUnclosedOpeningBrace"
+
+NoEndTextQoute = "NoEndTextQoute"
+FnArgumentIsNotSeparatedByComa = "FnArgumentIsNotSeparatedByComa"
+
+NoIdentifierAfterDot = "NoIdentifierAfterDot"

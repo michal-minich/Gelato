@@ -1,7 +1,8 @@
 module common;
 
 
-import std.stdio, std.array, std.range, std.algorithm, std.conv, std.string, std.file, std.utf;
+import std.stdio, std.array, std.range, std.algorithm, std.conv,
+    std.string, std.file, std.utf, std.path;
 import settings, formatter, parse.ast, parse.parser, parse.tokenizer, validate.remarks,
     interpret.evaluator;
 
@@ -47,19 +48,19 @@ AstFile parseFile (IValidationContext vctx, string filePath)
 
 void interpretFile (IInterpreterContext icontext, string filePath)
 {
-    (new Evaluator).interpret(icontext, parseFile(icontext, filePath));
+    (new Evaluator(icontext)).visit(parseFile(icontext, filePath));
 }
 
 
 void interpretString (IInterpreterContext icontext, dstring src)
 {
-    return (new Evaluator).interpret(icontext, parseString(icontext, src));
+    (new Evaluator(icontext)).visit(parseString(icontext, src));
 }
 
 
 void interpretTokens (IInterpreterContext icontext, Token[] toks)
 {
-    return (new Evaluator).interpret(icontext, (new Parser(icontext, toks)).parseAll());
+    (new Evaluator(icontext)).visit((new Parser(icontext, toks)).parseAll());
 }
 
 
@@ -76,31 +77,66 @@ interface IInterpreterContext : IValidationContext
     void println ();
 
     void println (dstring);
+
+    void except (dstring ex);
 }
 
 
-final class ConsoleInterpreterContext : IInterpreterContext
+struct InterpretTask
 {
-    void print (dstring str) { write (str); }
+    string[] files;
 
-    void println () { writeln (); }
-
-    void println (dstring str) { writeln (str); }
-
-    void remark (Remark remark)
+    static InterpretTask parse (string[] args)
     {
-        std.stdio.write (remark.severity, "\t", remark.text);
-        if (remark.subject)
-            std.stdio.write ("\t", remark.subject.str(fv));
-        writeln();
+        InterpretTask task;
+
+        foreach (a; args[1..$])
+        {
+            if (a.endsWith(".gel"))
+            {
+                immutable f = a.buildNormalizedPath();
+                if (f.exists())
+                {
+                    if (f.isFile())
+                    {
+                        task.files ~= f;
+                    }
+                    else
+                    {
+                        cmdError ("Path \"", a, "\" not a file. It is folder or block device.",
+                                  " Full path is \"", f, "\".");
+                    }
+                }
+                else
+                {
+                    cmdError ("File \"", a, "\" could not be found. Full path is \"", f, "\".");
+                }
+            }
+            else
+            {
+                if (a[0] == '-' || a[0] == '/')
+                {
+                    cmdError ("Unknown command line parameter \"", a, "\".");
+                }
+                else
+                {
+                    cmdError ("Olny \"*.gel\" files are supported as input.",
+                              " Parameters can be prefixed with \"-\", \"--\" or \"/\".");
+                }
+            }
+        }
+
+        return task;
     }
 }
 
 
-struct Position
+void cmdError (string[] text ...)
 {
-    uint line;
-    uint column;
+    foreach (t; text)
+        write (t);
+
+    writeln();
 }
 
 
