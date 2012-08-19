@@ -2,7 +2,7 @@ module parse.parser;
 
 
 import std.algorithm, std.array, std.conv;
-import common, validate.remarks, validate.validation, parse.tokenizer, parse.ast;
+import common, validate.remarks, parse.ast;
 
 
 struct ParseResult
@@ -24,11 +24,11 @@ final class Parser
     }
 
 
-    this (IValidationContext valContext, const dstring src)
+    this (IValidationContext valContext, Token[] tokens)
     {
         vctx = valContext;
-        toks = (new Tokenizer(src)).array();
-        toks2 = toks;
+        toks = tokens;
+        toks2 = tokens;
         current = toks.front;
     }
 

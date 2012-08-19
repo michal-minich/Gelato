@@ -1,10 +1,52 @@
 module parse.ast;
 
 import std.stdio, std.algorithm, std.array, std.conv;
-import common, formatter, parse.tokenizer, interpret.preparer, interpret.evaluator;
+import common;
+import formatter, interpret.preparer, interpret.evaluator;
 
 
 @safe:
+enum Geany { Bug }
+
+
+struct Token
+{
+    uint index;
+    TokenType type;
+    Position start;
+    dstring text;
+    uint pos;
+    bool isError;
+
+    const @property nothrow size_t endColumn ()
+    {
+        return start.column + text.length - 1;
+    }
+
+    @trusted const dstring toDebugString ()
+    {
+        return dtext(index, "\t", type, "\t\t", start.line, ":", start.column, "-", endColumn,
+               "(", text.length, ")", pos, "\t", isError ? "Error" : "",
+               "\t\"", text.toVisibleCharsText(), "\"");
+    }
+}
+
+
+enum TokenType
+{
+    empty, unknown,
+    white, newLine,
+    num, ident, op,
+    textStart, text, textEscape, textEnd,
+    braceStart, braceEnd,
+    commentLine, commentMultiStart, commentMulti, commentMultiEnd,
+    keyIf, keyThen, keyElse, keyEnd,
+    keyFn, keyReturn,
+    keyGoto, keyLabel,
+    keyStruct,
+    keyThrow,
+    keyVar,
+}
 
 
 mixin template visitImpl ()

@@ -1,7 +1,7 @@
 ﻿module main;
 
 
-import std.stdio, std.array, std.algorithm, std.conv, std.utf, std.file, std.path;
+import std.stdio, std.algorithm, std.conv, std.file, std.path;
 import common, settings, formatter, parse.tokenizer, parse.parser, parse.ast,
     interpret.evaluator;
 
@@ -26,14 +26,12 @@ void process (InterpretTask task)
 {
     foreach (f; task.files)
     {
-        immutable src = toUTF32(readText!string(f));
+        auto toks = tokenizeFile(f);
 
-        auto toks = new Tokenizer (src);
         //foreach (t; toks)
         //    writeln(t.toDebugString());
 
-        auto ast = new Parser(sett.icontext, src);
-        auto astFile = ast.parseAll();
+        auto astFile = (new Parser(sett.icontext, toks)).parseAll();
         /*foreach (e; f.exps)
         {
             writeln(e.str(fv));
@@ -42,13 +40,8 @@ void process (InterpretTask task)
                 writeln(t);
         }*/
 
-        //auto p = new PreparerForEvaluator;
-        //astFile.prepare(p);
-
         auto ev = new Evaluator;
-        ev.interpret (sett.icontext, astFile);
-
-       // writeln(astFile.str(fv));
+        ev.interpret(sett.icontext, astFile);
     }
 }
 

@@ -1,10 +1,165 @@
 module validate.remarks;
 
-import parse.ast, validate.validation;
+import std.conv;
+import common, parse.ast, validate.validation;
 
 
-@safe pure nothrow:
+class Remark
+{
+    const dstring code;
+    Exp subject;
 
+    @safe nothrow this (dstring c, Exp s) { code = c; subject = s; }
+
+    @property RemarkSeverity severity () { return sett.remarkLevel.severityOf(this); }
+
+    @property dstring text () { return sett.remarkTranslation.textOf(this); }
+}
+
+
+final class GroupRemark : Remark
+{
+    Remark[] children;
+
+    @safe nothrow this (dstring c, Exp s, Remark[] ch) { super(c, s); children = ch; }
+}
+
+interface IRemarkTranslation
+{
+    dstring textOf (const Remark);
+}
+
+
+interface IRemarkLevel
+{
+    RemarkSeverity severityOf (const Remark);
+}
+
+
+enum RemarkSeverity
+{
+    none,
+    notice,
+    hint,
+    suggestion,
+    warning,
+    error,
+    blocker
+}
+
+
+
+final class NoRemarkLevel : IRemarkLevel
+{
+    RemarkSeverity severityOf (const Remark remark)
+    {
+        return RemarkSeverity.none;
+    }
+}
+
+
+final class RemarkLevel : IRemarkLevel
+{
+    dstring name;
+    RemarkSeverity[dstring] values;
+
+
+    RemarkSeverity severityOf (const Remark remark)
+    {
+        if (auto v = remark.code in values)
+            return *v;
+
+        else return RemarkSeverity.none;
+    }
+
+
+    static RemarkLevel load (IValidationContext vctx, const string rootPath, const string name)
+    {
+        auto f = parseFile(vctx, rootPath ~ "/validation/" ~ name ~ ".gel");
+        auto rl = new RemarkLevel;
+
+        foreach (e; f.exps)
+        {
+            auto d = cast(AstDeclr)e;
+            if (d.ident.idents[0] == "name")
+                rl.name = d.value.str(fv);
+            else
+                rl.values[d.ident.idents[0]] = d.value.str(fv).to!RemarkSeverity();
+        }
+
+        return rl;
+    }
+}
+
+
+final class NoRemarkTranslation : IRemarkTranslation
+{
+    dstring textOf (const Remark remark)
+    {
+        return remark.code;
+    }
+}
+
+
+final class RemarkTranslation : IRemarkTranslation
+{
+    private dstring[dstring] values;
+    private string rootPath;
+    private string inherit;
+    private RemarkTranslation inherited;
+
+
+    dstring textOf (const Remark remark)
+    {
+        immutable key = remark.code;
+
+        if (auto v = key in values)
+            return *v;
+
+        if (!inherited && inherit)
+            inherited = load (sett.icontext, rootPath, inherit);
+
+        if (inherited)
+            return inherited.textOf (remark);
+
+        return "[" ~ to!dstring(remark.code) ~ "]";
+    }
+
+
+    static RemarkTranslation load (
+        IValidationContext vctx, const string rootPath, const string language)
+    {
+        auto f = parseFile(vctx, rootPath ~ "/lang/" ~ language ~ "/settings.gel");
+        auto rt = new RemarkTranslation;
+        rt.rootPath = rootPath;
+
+        foreach (e; f.exps)
+        {
+            auto d = cast(AstDeclr)e;
+            if (d.ident.idents[0] == "inherit")
+                rt.inherit = (cast(AstText)d.value).value.to!string();
+        }
+
+        rt.values = loadValues (vctx, rootPath ~ "/lang/" ~ language ~ "/remarks.gel");
+
+        return rt;
+    }
+
+
+    private static dstring[dstring] loadValues (IValidationContext vctx, const string filePath)
+    {
+        dstring[dstring] vals;
+        auto f = parseFile(vctx, filePath);
+
+        foreach (e; f.exps)
+        {
+            auto d = cast(AstDeclr)e;
+            vals[d.ident.idents[0]] = d.value.str(fv);
+        }
+
+        return vals;
+    }
+}
 
 private mixin template r (string name)
 {

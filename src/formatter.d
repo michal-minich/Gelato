@@ -1,7 +1,7 @@
 module formatter;
 
-import std.algorithm, std.array, std.conv, std.file, std.utf;
-import common, parse.ast, parse.parser, validate.validation;
+import std.algorithm, std.array, std.conv;
+import common, parse.ast;
 
 
 @trusted pure final class FormatVisitor : AstVisitor!(dstring)
@@ -115,10 +115,7 @@ final class Formatter
     static Formatter load (
         IValidationContext vctx, const string rootPath, const string name)
     {
-        immutable src = toUTF32(readText!string(rootPath ~ "/format/" ~ name ~ ".gel"));
-
-        auto exps = (new Parser(vctx, src)).parseAll();
-
+        auto exps = parseFile(vctx, rootPath ~ "/format/" ~ name ~ ".gel");
         auto f = new Formatter;
 
         /*foreach (e; exps)

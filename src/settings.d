@@ -1,6 +1,6 @@
 module settings;
 
-import std.array, std.conv, std.file, std.utf;
+import std.conv;
 import common, localization, parse.ast, validate.remarks,
     validate.validation, parse.parser;
 
@@ -56,8 +56,7 @@ final class Settings
         s.rootPath = rootPath;
         s.icontext = icontext;
 
-        immutable src = toUTF32(readText(rootPath ~ "/settings.gel"));
-        auto f = (new Parser(icontext, src)).parseAll();
+        auto f = parseFile(icontext, rootPath ~ "/settings.gel");
 
         foreach (e; f.exps)
         {

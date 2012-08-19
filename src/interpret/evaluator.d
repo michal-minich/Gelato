@@ -1,7 +1,7 @@
 module interpret.evaluator;
 
-import std.algorithm, std.array, std.conv, std.string, std.file, std.utf;
-import common, parse.ast, parse.parser, validate.remarks, validate.validation, interpret.preparer, interpret.builtins;
+import std.algorithm, std.array, std.conv;
+import common, parse.ast, validate.remarks, interpret.preparer, interpret.builtins;
 
 
 
@@ -18,22 +18,6 @@ import common, parse.ast, parse.parser, validate.remarks, validate.validation, i
     this ()
     {
         prep = new PreparerForEvaluator;
-    }
-
-
-    @trusted void interpret (IInterpreterContext icontext, string filePath)
-    {
-        immutable src = toUTF32(readText!string(filePath));
-        interpret(icontext, src);
-    }
-
-
-    @trusted void interpret (IInterpreterContext icontext, dstring src)
-    {
-        auto f = (new Parser(icontext, src)).parseAll();
-        auto v = new Validator(icontext);
-        v.validate(f);
-        interpret(icontext, f);
     }
 
 

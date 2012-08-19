@@ -1,8 +1,9 @@
 module common;
 
 
-import std.stdio, std.array, std.range, std.algorithm, std.conv;
-import settings, validate.validation, formatter;
+import std.stdio, std.array, std.range, std.algorithm, std.conv, std.string, std.file, std.utf;
+import settings, formatter, parse.ast, parse.parser, parse.tokenizer, validate.remarks,
+    interpret.evaluator;
 
 
 Settings sett;
@@ -26,6 +27,48 @@ int dbgCounter;
 }
 
 
+Token[] tokenizeFile (string filePath)
+{
+    return (new Tokenizer(toUTF32(readText!string(filePath)))).array();
+}
+
+
+AstFile parseString (IValidationContext vctx, const dstring src)
+{
+    return (new Parser(vctx, (new Tokenizer(src)).array())).parseAll();
+}
+
+
+AstFile parseFile (IValidationContext vctx, string filePath)
+{
+    return (new Parser(vctx, tokenizeFile(filePath))).parseAll();
+}
+
+
+void interpretFile (IInterpreterContext icontext, string filePath)
+{
+    (new Evaluator).interpret(icontext, parseFile(icontext, filePath));
+}
+
+
+void interpretString (IInterpreterContext icontext, dstring src)
+{
+    return (new Evaluator).interpret(icontext, parseString(icontext, src));
+}
+
+
+void interpretTokens (IInterpreterContext icontext, Token[] toks)
+{
+    return (new Evaluator).interpret(icontext, (new Parser(icontext, toks)).parseAll());
+}
+
+
+interface IValidationContext
+{
+    void remark (Remark);
+}
+
+
 interface IInterpreterContext : IValidationContext
 {
     void print (dstring);
@@ -46,9 +89,9 @@ final class ConsoleInterpreterContext : IInterpreterContext
 
     void remark (Remark remark)
     {
-        write (remark.severity, "\t", remark.text);
+        std.stdio.write (remark.severity, "\t", remark.text);
         if (remark.subject)
-            write ("\t", remark.subject.str(fv));
+            std.stdio.write ("\t", remark.subject.str(fv));
         writeln();
     }
 }
