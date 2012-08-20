@@ -48,16 +48,18 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 
     @trusted Exp visit (AstFnApply fna)
     {
-        foreach (cfnName, cfn; customFns)
-            if (cfnName == fna.ident.idents[0])
-            {
-                Exp[] ea;
-                foreach (a; fna.args)
-                    ea ~= a.eval(this);
-                return cfn(context, ea);
-            }
+        auto f = fna.ident.declaredBy.value.eval(this);
 
-        auto fn = cast(AstFn)fna.ident.declaredBy.value.eval(this);
+        auto bfn = cast(BuiltinFn)f;
+        if (bfn)
+        {
+            Exp[] ea;
+            foreach (a; fna.args)
+                ea ~= a.eval(this);
+            return bfn.func(context, ea);
+        }
+
+        auto fn = cast(AstFn)f;
 
         assert (fn, "cannot apply undefined fn");
 
@@ -163,6 +165,8 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     Exp visit (AstChar ch) { return ch; }
 
     Exp visit (AstNum num) { return num; }
+
+    Exp visit (BuiltinFn bfn) { return bfn; }
 
     Exp visit (AstUnknown un) { return un; }
 

@@ -150,4 +150,6 @@ import common, parse.ast, parse.parser, validate.remarks;
     void visit (TypeText) { }
 
     void visit (TypeChar) { }
+
+    void visit (BuiltinFn) { }
 }

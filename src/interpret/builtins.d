@@ -4,14 +4,15 @@ import std.algorithm, std.array, std.conv, std.string;
 import common, parse.ast, validate.remarks;
 
 
-immutable Exp function (IInterpreterContext, Exp[])[dstring] customFns;
+BuiltinFn[dstring] builtinFns;
 
 
 static this ()
 {
-    customFns = [
-        "print" : &customPrint
-        ];
+    builtinFns = [
+        "print"d : new BuiltinFn("print"d, &customPrint, new TypeFn([new TypeAny], new TypeVoid))
+       ,"inc"d : new BuiltinFn("inc"d, &incNum, new TypeFn([new TypeNum], new TypeNum))
+    ];
 }
 
 
@@ -27,4 +28,12 @@ Exp customPrint (IInterpreterContext context, Exp[] exps)
     }
     context.println();
     return null;
+}
+
+
+Exp incNum (IInterpreterContext context, Exp[] exps)
+{
+    auto n = cast(AstNum)exps[0];
+    auto i = n.value.to!int();
+    return new AstNum(null, null, (++i).to!dstring());
 }

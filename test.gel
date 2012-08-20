@@ -4,7 +4,11 @@ start = fn ()
     ch = 'c'
     n = 1
     f = fn () {}
+    print (t, ch, inc(n), ",", myInc(inc3(myInc(inc(n)))), f)
 }
+
+inc3 = inc2 = inc1 = inc
+myInc = fn (n) { inc(n) }
 
 x = fn () { 1 }
 y = fn (a = 1) { if a then "t" else 'c' end }

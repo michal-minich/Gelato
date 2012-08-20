@@ -1,7 +1,7 @@
 module interpret.preparer;
 
 import std.algorithm, std.array, std.conv, std.string;
-import common, parse.ast, validate.remarks;
+import common, parse.ast, validate.remarks, interpret.builtins;
 
 
 @safe AstDeclr findDeclr (Exp[] exps, dstring name)
@@ -30,6 +30,14 @@ import common, parse.ast, validate.remarks;
     {
         if (ident.declaredBy)
             return ident.declaredBy;
+
+        auto bfn = ident.idents[0] in builtinFns;
+        if (bfn && ident.idents.length == 1)
+        {
+            auto d = new AstDeclr(null, null, null);
+            d.value = *bfn;
+            return d;
+        }
 
         auto d = findIdentDelr (ident, ident.parent);
         if (!d)
@@ -261,6 +269,8 @@ import common, parse.ast, validate.remarks;
     void visit (AstChar) { }
 
     void visit (AstNum) { }
+
+    void visit (BuiltinFn) { }
 
     void visit (AstUnknown) { }
 

@@ -125,6 +125,8 @@ import common, parse.ast;
 
     dstring visit (TypeChar) { return "Char"; }
 
+    dstring visit (BuiltinFn) { assert (false, "built in fn has no textual representation"); }
+
 
     dstring visit (TypeOr or)
     {

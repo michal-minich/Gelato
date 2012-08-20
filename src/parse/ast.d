@@ -65,6 +65,8 @@ interface IAstVisitor (R)
     R visit (AstChar);
     R visit (AstFn);
 
+    R visit (BuiltinFn);
+
     R visit (AstFnApply);
     R visit (AstLambda);
 
@@ -126,6 +128,27 @@ abstract class Exp
     abstract void validate (Validator);
 
     abstract Exp infer (TypeInferer);
+}
+
+
+@system alias Exp function (IInterpreterContext, Exp[]) BuiltinFunc;
+
+
+final class BuiltinFn : Exp
+{
+    dstring name;
+    TypeFn signature;
+    BuiltinFunc func;
+
+    this (dstring name, BuiltinFunc func, TypeFn signature)
+    {
+        super (null, null);
+        this.name = name;
+        this.func = func;
+        this.signature = signature;
+    }
+
+    mixin visitImpl;
 }
 
 

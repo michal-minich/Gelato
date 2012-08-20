@@ -78,6 +78,13 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
+    Exp visit (BuiltinFn bfn)
+    {
+        bfn.infType = bfn.signature;
+        return bfn.signature;
+    }
+
+
     Exp visit (AstFn fn)
     {
         Exp[] paramTypes;
@@ -103,6 +110,9 @@ final class TypeInferer : IAstVisitor!(Exp)
     {
         foreach (e; fna.args)
             e.infer(this);
+
+        fna.infType = (cast(TypeFn)fna.ident.declaredBy.infer(this)).retType;
+
         return fna.infType;
     }
 
