@@ -1,16 +1,9 @@
 start = fn ()
 {
-    t = "a"
-    ch = 'c'
-    n = 1
-    f = fn () {}
-    print (t, ch, inc(n), ",", myInc(inc3(myInc(inc(n)))), f)
+    n : Num = 1
+    MyNum = Num
+    MyNum2 = MyNum
+    MyNum3 : MyNum2
+    x : Type(Fn(Any, Num)) = n
+    print(x)
 }
-
-inc3 = inc2 = inc1 = inc
-myInc = fn (n) { inc(n) }
-
-x = fn () { 1 }
-y = fn (a = 1) { if a then "t" else 'c' end }
-z = fn (b = 1) { return 1 return fn () { b } }
-q = fn (u, v) { return fn () {} }

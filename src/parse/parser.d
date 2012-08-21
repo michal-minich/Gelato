@@ -20,7 +20,6 @@ final class Parser
         Token[] toks;
         IValidationContext vctx;
         Token current;
-        int prevEndIndex;
     }
 
 
@@ -44,26 +43,6 @@ final class Parser
 
 
     private:
-
-
-    Exp prev;
-    T newExp (T) (T exp) if (is (T : Exp))
-    {
-        if (prev)
-            prev.next = exp;
-        exp.prev = prev;
-        prev = exp;
-        return exp;
-    }
-
-
-    E newExp (E, A...) (Exp parent, A args) if (is (E : Exp))
-    {
-        auto e = new E(parent, prev, args);
-        if (prev)
-            prev.next = e;
-        return e;
-    }
 
 
     void nextTok ()
@@ -160,8 +139,85 @@ final class Parser
 
             case TokenType.unknown: return parseUnknown(parent);
             case TokenType.empty: assert (false, "empty token");
+
+            case TokenType.typeType: return parseTypeType(parent);
+            case TokenType.typeAny: return parseTypeAny(parent);
+            case TokenType.typeVoid: return parseTypeVoid(parent);
+            case TokenType.typeOr: return parseTypeOr(parent);
+            case TokenType.typeFn: return parseTypeFn(parent);
+            case TokenType.typeNum: return parseTypeNum(parent);
+            case TokenType.typeText: return parseTypeText(parent);
+            case TokenType.typeChar: return parseTypeChar(parent);
+
             default: return null;
         }
+    }
+
+
+    TypeType  parseTypeType (Exp parent)
+    {
+        auto tt = new TypeType(parent, null);
+
+        nextNonWhiteTok();
+        if (current.text != "(")
+            assert (false, " type type (");
+
+        tt.type = parse(tt);
+
+        return tt;
+    }
+
+
+    TypeAny  parseTypeAny (Exp parent)
+    {
+        nextTok();
+        return new TypeAny(parent);
+    }
+
+
+    TypeVoid parseTypeVoid (Exp parent)
+    {
+        nextTok();
+        return new TypeVoid(parent);
+    }
+
+
+    TypeOr parseTypeOr (Exp parent)
+    {
+        nextNonWhiteTok();
+        auto fna = parseFnApply(parent, null);
+        return new TypeOr(parent, fna.args);
+    }
+
+
+    TypeFn parseTypeFn (Exp parent)
+    {
+        nextNonWhiteTok();
+        auto fna = parseFnApply(parent, null);
+        return new TypeFn(parent, fna.args[0.. $ - 1], fna.args[0]);
+    }
+
+
+    TypeNum parseTypeNum (Exp parent)
+    {
+        nextTok();
+        return new TypeNum(parent);
+    }
+
+
+    TypeText parseTypeText (Exp parent)
+    {
+        nextTok();
+        auto t = new TypeText(parent);
+        nextTok();
+        return t;
+    }
+
+
+    TypeChar parseTypeChar (Exp parent)
+    {
+        nextTok();
+        return new TypeChar(parent);
     }
 
 
@@ -170,7 +226,7 @@ final class Parser
         uint startIndex = current.index;
         nextTok();
 
-        auto i = newExp!AstIf(parent);
+        auto i = new AstIf(parent);
         i.when = parse(i);
         skipWhite();
 
@@ -213,7 +269,7 @@ final class Parser
 
     AstStruct parserStruct (Exp parent)
     {
-        auto s = newExp!AstStruct(parent);
+        auto s = new AstStruct(parent);
         s.exps = parseCurlyBrace(s);
         return s;
     }
@@ -227,7 +283,7 @@ final class Parser
         if (current.text != "(")
             assert (false, "no brace after fn");
 
-        auto f = newExp!AstFn(parent);
+        auto f = new AstFn(parent);
 
         nextNonWhiteTok();
         if (current.text != ")")
@@ -285,7 +341,7 @@ final class Parser
                 skipWhite();
                 if (current.type == TokenType.braceEnd && current.text == ")")
                 {
-                    params ~= d ? d : newExp!AstDeclr(parent, i);
+                    params ~= d ? d : new AstDeclr(parent, i);
                     nextTok();
                     return params;
                 }
@@ -294,7 +350,7 @@ final class Parser
                     assert (false, "no fn arg coma");
                 }
 
-                params ~= d ? d : newExp!AstDeclr(parent, i);
+                params ~= d ? d : new AstDeclr(parent, i);
                 nextTok();
             }
         }
@@ -304,7 +360,7 @@ final class Parser
     AstReturn parserReturn (Exp parent)
     {
         nextNonWhiteTokOnSameLine();
-        auto r = newExp!AstReturn(parent);
+        auto r = new AstReturn(parent);
         r.exp = parse(r);
         if (!r.exp)
             assert (false, "return without expression");
@@ -317,13 +373,13 @@ final class Parser
         nextNonWhiteTokOnSameLine();
         if (current.type == TokenType.ident)
         {
-            auto g = newExp!AstGoto(parent, current.text);
+            auto g = new AstGoto(parent, current.text);
             nextTok();
             return g;
         }
         else
         {
-            auto gt = newExp!AstGoto(parent, null);
+            auto gt = new AstGoto(parent, null);
             vctx.remark(GotoWithoutIdentifier(gt));
             return gt;
         }
@@ -335,13 +391,13 @@ final class Parser
         nextNonWhiteTokOnSameLine();
         if (current.type == TokenType.ident)
         {
-            auto l = newExp!AstLabel (parent, current.text);
+            auto l = new AstLabel (parent, current.text);
             nextTok();
             return l;
         }
         else
         {
-            auto l = newExp!AstLabel (parent, null);
+            auto l = new AstLabel (parent, null);
             vctx.remark(LabelWithoutIdentifier(l));
             return l;
         }
@@ -415,7 +471,7 @@ final class Parser
             if (finished)
             {
                 assert (false, "unclosed text");
-                //return newExp(new AstText(ts, txt));
+                //return new AstText(ts, txt);
             }
 
             alias current t;
@@ -427,8 +483,8 @@ final class Parser
 
         nextTok();
 
-        auto t = newExp(txt.length == 1 && ts[0].text == "'"
-            ? new AstChar(parent, null, txt[0]) : new AstText(parent, null, txt));
+        auto t = txt.length == 1 && ts[0].text == "'"
+            ? new AstChar(parent, txt[0]) : new AstText(parent, txt);
         t.tokens = ts;
         return t;
     }
@@ -436,7 +492,7 @@ final class Parser
 
     AstUnknown parseUnknown (Exp parent)
     {
-        auto u = newExp!AstUnknown(parent);
+        auto u = new AstUnknown(parent);
         nextTok();
         return u;
     }
@@ -444,7 +500,7 @@ final class Parser
 
     AstNum parseNum (Exp parent)
     {
-        auto n = newExp!AstNum(parent, current.text);
+        auto n = new AstNum(parent, current.text);
         nextTok();
         return n;
     }
@@ -453,21 +509,32 @@ final class Parser
     Exp parseIdent (Exp parent)
     {
         auto i = parseIdentOnly (parent);
+        AstDeclr d;
+
         if (current.text == "(")
+        {
             return parseFnApply(parent, i);
-        else if (current.text == "=")
-            return parseDeclr(parent, i);
-        else
-            return i;
-    }
+        }
+        else if (current.text == ":")
+        {
+            d = new AstDeclr(parent, i);
+            i.parent = d;
+            nextTok();
+            d.type = parse(d);
+        }
 
+        skipWhite();
+        if (current.text == "=")
+        {
+            if (!d)
+                d = new AstDeclr(parent, i);
+            i.parent = d;
+            nextTok();
+            d.value = parse(d);
+            return d;
+        }
 
-    AstDeclr parseDeclr (Exp parent, AstIdent i)
-    {
-        nextTok();
-        auto d = newExp!AstDeclr(parent, i);
-        d.value = parse(d);
-        return d;
+        return d ? d: i;
     }
 
 
@@ -477,11 +544,11 @@ final class Parser
         if (current.type == TokenType.braceEnd && current.text == ")")
         {
             nextTok();
-            return newExp!AstFnApply(parent, i);
+            return new AstFnApply(parent, i);
         }
         else
         {
-            auto fa = newExp!AstFnApply(parent, i);
+            auto fa = new AstFnApply(parent, i);
 
             while (current.text != ")")
             {
@@ -530,6 +597,6 @@ final class Parser
             }
         }
 
-        return newExp!AstIdent(parent, idents);
+        return new AstIdent(parent, idents);
     }
 }

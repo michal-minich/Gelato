@@ -58,6 +58,7 @@ final class ConsoleInterpreter
             debug writeln("TOKENIZE");
             auto toks = tokenizeFile(f);
 
+            //foreach (t; toks) dbg (t.toDebugString());
 
             debug writeln("PARSE");
             auto par = new Parser(context, toks);

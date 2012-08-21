@@ -128,7 +128,7 @@ final class TypeInferer : IAstVisitor!(Exp)
     {
         i.infType = i.declaredBy.value
             ? i.declaredBy.value.infer(this)
-            : new AstUnknown(null, null);
+            : new TypeAny;
         return i.infType;
     }
 
@@ -194,51 +194,19 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (TypeAny ta)
-    {
-        ta.infType = new AstUnknown(null, null);
-        return ta.infType;
-    }
+    Exp visit (TypeType tt) { return new TypeType(null, tt); }
 
+    Exp visit (TypeAny ta) { return new TypeType(null, ta); }
 
-    Exp visit (TypeVoid tv)
-    {
-        tv.infType = new AstUnknown(null, null);
-        return tv.infType;
-    }
+    Exp visit (TypeVoid tv) { return new TypeType(null, tv); }
 
+    Exp visit (TypeOr tor) { return new TypeType(null, tor); }
 
-    Exp visit (TypeOr tor)
-    {
-        tor.infType = new AstUnknown(null, null);
-        return tor.infType;
-    }
+    Exp visit (TypeFn tfn) { return new TypeType(null, tfn); }
 
+    Exp visit (TypeNum tn) { return new TypeType(null, tn); }
 
-    Exp visit (TypeFn tfn)
-    {
-        tfn.infType = new AstUnknown(null, null);
-        return tfn.infType;
-    }
+    Exp visit (TypeText tt) { return new TypeType(null, tt); }
 
-
-    Exp visit (TypeNum tn)
-    {
-        tn.infType = new AstUnknown(null, null);
-        return tn.infType;
-    }
-
-
-    Exp visit (TypeText tt)
-    {
-        tt.infType = new AstUnknown(null, null);
-        return tt.infType;
-    }
-
-
-    Exp visit (TypeChar tch)
-    {
-        tch.infType = new AstUnknown(null, null);
-        return tch.infType;
-    }
+    Exp visit (TypeChar tch) { return new TypeType(null, tch); }
 }

@@ -137,6 +137,8 @@ import common, parse.ast, parse.parser, validate.remarks;
     }
 
 
+    void visit (TypeType) { }
+
     void visit (TypeAny) { }
 
     void visit (TypeVoid) { }

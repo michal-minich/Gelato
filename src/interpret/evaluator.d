@@ -69,7 +69,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         {
             foreach (argIx, a; fna.args)
             {
-                auto d = new AstDeclr(fna, fna, fn.params[argIx].ident);
+                auto d = new AstDeclr(fna, fn.params[argIx].ident);
                 d.value = a.eval(this);
                 lambda.evaledArgs ~= d;
             }
@@ -79,7 +79,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
                 if (!p.value)
                     assert (false, "parameter has not default value so arg must be specified");
 
-                auto d = new AstDeclr(fna, fna, p.ident);
+                auto d = new AstDeclr(fna, p.ident);
                 d.value = p.eval(this);
                 lambda.evaledArgs ~= d;
             }
@@ -105,7 +105,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         }
         else
         {
-            auto fn = new AstFn (i, i);
+            auto fn = new AstFn (i);
             fn.exps = when.value == "0" ? i.otherwise : i.then;
             return visit(new AstLambda(currentLambda, fn));
         }
@@ -158,7 +158,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    Exp visit (AstDeclr declr) { return declr.value.eval(this); }
+    Exp visit (AstDeclr d) { return d.value ? d.value.eval(this) : null; }
 
     Exp visit (AstText text) { return text; }
 
@@ -173,6 +173,8 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     Exp visit (AstStruct s) { return s; }
 
     Exp visit (AstLabel) { return null; }
+
+    Exp visit (TypeType) { return null; }
 
     Exp visit (TypeAny) { return null; }
 

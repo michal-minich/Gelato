@@ -53,6 +53,7 @@ enum TokenType
     keyStruct,
     keyThrow,
     keyVar,
+    typeType, typeAny, typeVoid, typeOr, typeFn, typeNum, typeText, typeChar,
 }
 
 
@@ -81,6 +82,7 @@ interface IAstVisitor (R)
     R visit (AstReturn);
     R visit (AstIf);
 
+    R visit (TypeType);
     R visit (TypeAny);
     R visit (TypeVoid);
     R visit (TypeOr);
@@ -110,14 +112,8 @@ abstract class Exp
     Exp infType;
     Token[] tokens;
     Exp parent;
-    Exp prev;
-    Exp next;
 
-    this (Exp parent, Exp prev)
-    {
-        this.parent = parent;
-        this.prev = prev;
-    }
+    this (Exp parent) { this.parent = parent; }
 
     abstract dstring str (FormatVisitor);
 
@@ -142,7 +138,7 @@ final class BuiltinFn : Exp
 
     this (dstring name, BuiltinFunc func, TypeFn signature)
     {
-        super (null, null);
+        super (null);
         this.name = name;
         this.func = func;
         this.signature = signature;
@@ -152,9 +148,21 @@ final class BuiltinFn : Exp
 }
 
 
+final class TypeType : Exp
+{
+    Exp type;
+
+    this (Exp parent, Exp type) { super(parent); this.type = type; }
+
+    mixin visitImpl;
+}
+
+
 final class TypeAny : Exp
 {
-    this () { super(null, null); }
+    this () { super(null); }
+
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -162,7 +170,9 @@ final class TypeAny : Exp
 
 final class TypeVoid : Exp
 {
-    this () { super(null, null); }
+    this () { super(null); }
+
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -172,7 +182,9 @@ final class TypeOr : Exp
 {
     Exp[] types;
 
-    this (Exp[] types) { super(null, null); this.types = types; }
+    this (Exp[] types) { this(null, types);  }
+
+    this (Exp parent, Exp[] types) { super(parent); this.types = types; }
 
     mixin visitImpl;
 }
@@ -183,9 +195,13 @@ final class TypeFn : Exp
     Exp[] types;
     Exp retType;
 
-    this (Exp[] types, Exp retType)
+    this (Exp[] types) { this(null, types, null);  }
+
+    this (Exp[] types, Exp retType) { this(null, types, retType); }
+
+    this (Exp parent, Exp[] types, Exp retType)
     {
-        super(null, null);
+        super(parent);
         this.types = types;
         this.retType = retType;
     }
@@ -196,7 +212,9 @@ final class TypeFn : Exp
 
 final class TypeNum : Exp
 {
-    this () { super(null, null); }
+    this () { super(null); }
+
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -204,7 +222,9 @@ final class TypeNum : Exp
 
 final class TypeText : Exp
 {
-    this () { super(null, null); }
+    this () { super(null); }
+
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -212,7 +232,9 @@ final class TypeText : Exp
 
 final class TypeChar: Exp
 {
-    this () { super(null, null); }
+    this () { super(null); }
+
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -220,7 +242,7 @@ final class TypeChar: Exp
 
 final class AstUnknown : Exp
 {
-    this (Exp parent, Exp prev) { super(parent, prev); }
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -230,7 +252,7 @@ final class AstFile : Exp
 {
     Exp[] exps;
 
-    this () { super(null, null); }
+    this () { super(null); }
 
     mixin visitImpl;
 }
@@ -243,9 +265,9 @@ final class AstDeclr : Exp
     Exp value;
     size_t paramIndex = typeof(paramIndex).max;
 
-    this (Exp parent, Exp prev, AstIdent identifier)
+    this (Exp parent, AstIdent identifier)
     {
-        super(parent, prev);
+        super(parent);
         ident = identifier;
     }
 
@@ -258,7 +280,7 @@ final class AstStruct : Exp
     Exp[] exps;
     AstFn constructor;
 
-    this (Exp parent, Exp prev) { super(parent, prev); }
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -269,9 +291,9 @@ final class AstIdent : Exp
     dstring[] idents;
     AstDeclr declaredBy;
 
-    this (Exp parent, Exp prev, dstring[] identfiers)
+    this (Exp parent, dstring[] identfiers)
     {
-        super(parent, prev);
+        super(parent);
         idents = identfiers;
     }
 
@@ -283,9 +305,9 @@ final class AstNum : Exp
 {
     dstring value;
 
-    this (Exp parent, Exp prev, dstring val)
+    this (Exp parent, dstring val)
     {
-        super(parent, prev);
+        super(parent);
         value = val;
     }
 
@@ -297,9 +319,9 @@ final class AstText : Exp
 {
     dstring value;
 
-    this (Exp parent, Exp prev, dstring val)
+    this (Exp parent, dstring val)
     {
-        super(parent, prev);
+        super(parent);
         value = val;
     }
 
@@ -311,9 +333,9 @@ final class AstChar : Exp
 {
     dchar value;
 
-    this (Exp parent, Exp prev, dchar val)
+    this (Exp parent, dchar val)
     {
-        super(parent, prev);
+        super(parent);
         value = val;
     }
 
@@ -328,7 +350,7 @@ final class AstLambda : Exp
     uint currentExpIndex;
     AstDeclr[] evaledArgs;
 
-    this (AstLambda pl, AstFn f) { super (null, null); parentLambda = pl; fn = f; }
+    this (AstLambda pl, AstFn f) { super (null); parentLambda = pl; fn = f; }
 
     mixin visitImpl;
 }
@@ -340,7 +362,7 @@ final class AstFn : Exp
     Exp[] exps;
     bool isPrepared;
 
-    this (Exp parent, Exp prev) { super(parent, prev); }
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -351,9 +373,9 @@ final class AstFnApply : Exp
     AstIdent ident;
     Exp[] args;
 
-    this (Exp parent, Exp prev, AstIdent identifier)
+    this (Exp parent, AstIdent identifier)
     {
-        super(parent, prev);
+        super(parent);
         ident = identifier;
     }
 
@@ -367,7 +389,7 @@ final class AstIf : Exp
     Exp[] then;
     Exp[] otherwise;
 
-    this (Exp parent, Exp prev) { super(parent, prev); }
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -377,9 +399,9 @@ final class AstLabel : Exp
 {
     dstring label;
 
-    this (Exp parent, Exp prev, dstring lbl)
+    this (Exp parent, dstring lbl)
     {
-        super(parent, prev);
+        super(parent);
         label = lbl;
     }
 
@@ -392,9 +414,9 @@ final class AstGoto : Exp
     dstring label;
     uint labelExpIndex = uint.max;
 
-    this (Exp parent, Exp prev, dstring lbl)
+    this (Exp parent, dstring lbl)
     {
-        super(parent, prev);
+        super(parent);
         label = lbl;
     }
 
@@ -406,7 +428,7 @@ final class AstReturn : Exp
 {
     Exp exp;
 
-    this (Exp parent, Exp prev) { super(parent, prev); }
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }

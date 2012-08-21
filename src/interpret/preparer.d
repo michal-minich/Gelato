@@ -34,7 +34,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         auto bfn = ident.idents[0] in builtinFns;
         if (bfn && ident.idents.length == 1)
         {
-            auto d = new AstDeclr(null, null, null);
+            auto d = new AstDeclr(null, null);
             d.value = *bfn;
             return d;
         }
@@ -42,8 +42,8 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         auto d = findIdentDelr (ident, ident.parent);
         if (!d)
         {
-            d = new AstDeclr(ident.parent, ident.parent, ident);
-            d.value = new AstUnknown(ident, ident);
+            d = new AstDeclr(ident.parent, ident);
+            d.value = new AstUnknown(ident);
         }
 
         return d;
@@ -128,7 +128,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
 
     void visit (AstStruct s)
     {
-        auto f = new AstFn(s, s);
+        auto f = new AstFn(s);
         foreach (e; s.exps)
         {
             auto id = cast(AstIdent)e;
@@ -136,10 +136,10 @@ import common, parse.ast, validate.remarks, interpret.builtins;
             if (!id && !d)
                 assert (false, "struct can contain only declarations or identifiers");
             else
-                f.params ~= d ? d : new AstDeclr(s, s, id);
+                f.params ~= d ? d : new AstDeclr(s, id);
         }
         s.exps = null;
-        f.exps ~= new AstFn (s, s);
+        f.exps ~= new AstFn (s);
         s.constructor = f;
     }
 
@@ -233,9 +233,9 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         if (!start)
         {
             vctx.remark(MissingStartFunction(null));
-            auto i = new AstIdent(file, file, ["start"]);
-            auto d = new AstDeclr(file, file, i);
-            auto fn = new AstFn(file, file);
+            auto i = new AstIdent(file, ["start"]);
+            auto d = new AstDeclr(file, i);
+            auto fn = new AstFn(file);
             fn.exps = file.exps;
             d.value = fn;
             file.exps = [d];
@@ -263,6 +263,8 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     void visit (AstLambda l) { visit(l.fn); }
 
     void visit (AstLabel) { }
+
+    void visit (TypeType) { }
 
     void visit (AstText) { }
 

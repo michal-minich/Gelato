@@ -35,5 +35,5 @@ Exp incNum (IInterpreterContext context, Exp[] exps)
 {
     auto n = cast(AstNum)exps[0];
     auto i = n.value.to!int();
-    return new AstNum(null, null, (++i).to!dstring());
+    return new AstNum(null, (++i).to!dstring());
 }

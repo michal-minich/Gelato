@@ -115,6 +115,8 @@ import common, parse.ast;
     }
 
 
+    dstring visit (TypeType tt) { return dtext("Type(", tt.type.str(this) ,")"); }
+
     dstring visit (TypeAny) { return "Any"; }
 
     dstring visit (TypeVoid) { return "Void"; }

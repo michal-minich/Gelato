@@ -237,6 +237,15 @@ TokenResult parseIdent (const dstring src)
         case "struct": return TokenResult.ok(TokenType.keyStruct, tr.length);
         case "throw":  return TokenResult.ok(TokenType.keyThrow,  tr.length);
         case "var":    return TokenResult.ok(TokenType.keyVar,    tr.length);
+
+        case "Type":   return TokenResult.ok(TokenType.typeType,  tr.length);
+        case "Any":    return TokenResult.ok(TokenType.typeAny,   tr.length);
+        case "Void":   return TokenResult.ok(TokenType.typeVoid,  tr.length);
+        case "Or":     return TokenResult.ok(TokenType.typeOr,    tr.length);
+        case "Fn":     return TokenResult.ok(TokenType.typeFn,    tr.length);
+        case "Num":    return TokenResult.ok(TokenType.typeNum,   tr.length);
+        case "Text":   return TokenResult.ok(TokenType.typeText,  tr.length);
+        case "Char":   return TokenResult.ok(TokenType.typeChar,  tr.length);
         default:       return tr;
     }
 }
