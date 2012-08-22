@@ -300,9 +300,9 @@ final class ExpIdent : Exp
 
 final class ValueNum : Exp
 {
-    dstring value;
+    long value;
 
-    this (Exp parent, dstring val)
+    this (Exp parent, long val)
     {
         super(parent);
         value = val;

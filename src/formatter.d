@@ -11,10 +11,7 @@ import common, parse.ast;
     private enum tab = "    ";
 
 
-    nothrow dstring visit (ValueNum e)
-    {
-        return e.value;
-    }
+    dstring visit (ValueNum e) { return e.value.to!dstring(); }
 
 
     dstring visit (AstUnknown e)

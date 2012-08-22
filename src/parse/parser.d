@@ -500,7 +500,7 @@ final class Parser
 
     ValueNum parseNum (Exp parent)
     {
-        auto n = new ValueNum(parent, current.text);
+        auto n = new ValueNum(parent, current.text.to!long());
         nextTok();
         return n;
     }

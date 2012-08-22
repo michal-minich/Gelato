@@ -28,6 +28,9 @@ int dbgCounter;
 }
 
 
+B sureCast (B, A) (A obj) { return cast(B)cast(void*)obj; }
+
+
 Token[] tokenizeFile (string filePath)
 {
     return (new Tokenizer(toUTF32(readText!string(filePath)))).array();

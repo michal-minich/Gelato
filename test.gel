@@ -5,5 +5,5 @@ start = fn ()
     MyNum2 = MyNum
     MyNum3 : MyNum2
     x : Type(Fn(Any, Num)) = n
-    print(x)
+    print(inc(x))
 }

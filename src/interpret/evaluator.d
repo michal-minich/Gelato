@@ -99,14 +99,14 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         if (!when)
             throw new Exception ("if test expression must evalute to number.");
 
-        if (when.value == "0" && i.otherwise is null)
+        if (!when.value && !i.otherwise)
         {
             return null;
         }
         else
         {
             auto fn = new ValueFn (i);
-            fn.exps = when.value == "0" ? i.otherwise : i.then;
+            fn.exps = when.value ? i.then : i.otherwise;
             return visit(new ExpLambda(currentLambda, fn));
         }
     }

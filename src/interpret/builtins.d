@@ -33,7 +33,6 @@ Exp customPrint (IInterpreterContext context, Exp[] exps)
 
 Exp incNum (IInterpreterContext context, Exp[] exps)
 {
-    auto n = cast(ValueNum)exps[0];
-    auto i = n.value.to!int();
-    return new ValueNum(null, (++i).to!dstring());
+    auto n = exps[0].sureCast!ValueNum();
+    return new ValueNum(null, n.value + 1);
 }
