@@ -212,6 +212,9 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         foreach (t; i.then)
             t.prepare(this);
 
+        if (!i.otherwise)
+            i.otherwise = [new AstUnknown(i)];
+
         foreach (o; i.otherwise)
             o.prepare(this);
     }

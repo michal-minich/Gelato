@@ -127,19 +127,10 @@ abstract class Exp
 @system alias Exp function (IInterpreterContext, Exp[]) BuiltinFunc;
 
 
-final class BuiltinFn : Exp
-{
-    dstring name;
-    TypeFn signature;
-    BuiltinFunc func;
 
-    this (dstring name, BuiltinFunc func, TypeFn signature)
-    {
-        super (null);
-        this.name = name;
-        this.func = func;
-        this.signature = signature;
-    }
+final class AstUnknown : Exp
+{
+    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -237,36 +228,11 @@ final class TypeChar: Exp
 }
 
 
-final class AstUnknown : Exp
-{
-    this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
-}
-
-
 final class ValueFile : Exp
 {
     Exp[] exps;
 
     this () { super(null); }
-
-    mixin visitImpl;
-}
-
-
-final class StmDeclr : Exp
-{
-    ExpIdent ident;
-    Exp type;
-    Exp value;
-    size_t paramIndex = typeof(paramIndex).max;
-
-    this (Exp parent, ExpIdent identifier)
-    {
-        super(parent);
-        ident = identifier;
-    }
 
     mixin visitImpl;
 }
@@ -278,21 +244,6 @@ final class ValueStruct : Exp
     ValueFn constructor;
 
     this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
-}
-
-
-final class ExpIdent : Exp
-{
-    dstring[] idents;
-    StmDeclr declaredBy;
-
-    this (Exp parent, dstring[] identfiers)
-    {
-        super(parent);
-        idents = identfiers;
-    }
 
     mixin visitImpl;
 }
@@ -340,6 +291,34 @@ final class ValueChar : Exp
 }
 
 
+final class ValueFn : Exp
+{
+    StmDeclr[] params;
+    Exp[] exps;
+    bool isPrepared;
+
+    this (Exp parent) { super(parent); }
+
+    mixin visitImpl;
+}
+
+
+final class BuiltinFn : Exp
+{
+    TypeFn signature;
+    BuiltinFunc func;
+
+    this (BuiltinFunc func, TypeFn signature)
+    {
+        super (null);
+        this.func = func;
+        this.signature = signature;
+    }
+
+    mixin visitImpl;
+}
+
+
 final class ExpLambda : Exp
 {
     ValueFn fn;
@@ -348,18 +327,6 @@ final class ExpLambda : Exp
     StmDeclr[] evaledArgs;
 
     this (ExpLambda pl, ValueFn f) { super (null); parentLambda = pl; fn = f; }
-
-    mixin visitImpl;
-}
-
-
-final class ValueFn : Exp
-{
-    StmDeclr[] params;
-    Exp[] exps;
-    bool isPrepared;
-
-    this (Exp parent) { super(parent); }
 
     mixin visitImpl;
 }
@@ -374,6 +341,21 @@ final class ExpFnApply : Exp
     {
         super(parent);
         ident = identifier;
+    }
+
+    mixin visitImpl;
+}
+
+
+final class ExpIdent : Exp
+{
+    dstring[] idents;
+    StmDeclr declaredBy;
+
+    this (Exp parent, dstring[] identfiers)
+    {
+        super(parent);
+        idents = identfiers;
     }
 
     mixin visitImpl;
@@ -426,6 +408,23 @@ final class StmReturn : Exp
     Exp exp;
 
     this (Exp parent) { super(parent); }
+
+    mixin visitImpl;
+}
+
+
+final class StmDeclr : Exp
+{
+    ExpIdent ident;
+    Exp type;
+    Exp value;
+    size_t paramIndex = typeof(paramIndex).max;
+
+    this (Exp parent, ExpIdent identifier)
+    {
+        super(parent);
+        ident = identifier;
+    }
 
     mixin visitImpl;
 }

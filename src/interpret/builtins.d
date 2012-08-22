@@ -10,8 +10,8 @@ BuiltinFn[dstring] builtinFns;
 static this ()
 {
     builtinFns = [
-        "print"d : new BuiltinFn("print"d, &customPrint, new TypeFn([new TypeAny], new TypeVoid))
-       ,"inc"d : new BuiltinFn("inc"d, &incNum, new TypeFn([new TypeNum], new TypeNum))
+    "print"   : new BuiltinFn(&customPrint, new TypeFn([new TypeAny], new TypeVoid))
+   ,"inc"     : new BuiltinFn(&incNum, new TypeFn([new TypeNum], new TypeNum))
     ];
 }
 

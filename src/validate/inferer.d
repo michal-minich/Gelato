@@ -5,19 +5,13 @@ import std.algorithm, std.array;
 import common, parse.ast, parse.parser, validate.remarks;
 
 
-Exp mergeTypesToSingle (Exp[] types...)
-{
-    auto ts = mergeTypes(types);
-    return (ts.length == 1 && !cast(TypeOr)ts[0]) ? ts[0] : new TypeOr(ts);
-}
-
-
-Exp[] mergeTypes (Exp[] types...)
+Exp mergeTypes (Exp[] types...)
 {
     Exp[] possible;
     foreach (t; types)
         possible ~= flatternType(t);
-    return possible.sort!typeIdLess().uniq!typeIdEq().array();
+    auto ts = possible.sort!typeIdLess().uniq!typeIdEq().array();
+    return ts.length == 1 ? ts[0] : new TypeOr(ts);
 }
 
 
@@ -87,6 +81,9 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (ValueFn fn)
     {
+        if (fn.infType)
+            return fn.infType;
+
         Exp[] paramTypes;
         foreach (e; fn.params)
             paramTypes ~= e.infer(this);
@@ -126,6 +123,9 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (ExpIdent i)
     {
+        if (i.infType)
+            return i.infType;
+
         i.infType = i.declaredBy.value
             ? i.declaredBy.value.infer(this)
             : new TypeAny;
@@ -135,6 +135,9 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (StmDeclr d)
     {
+        if (d.infType)
+            return d.infType;
+
         d.infType = d.value ? d.value.infer(this) : new TypeAny;
         return d.infType;
     }
@@ -177,7 +180,7 @@ final class TypeInferer : IAstVisitor!(Exp)
 
         *fnRetType = cast(TypeVoid)*fnRetType
              ? infType
-             : mergeTypesToSingle(*fnRetType, infType);
+             : mergeTypes(*fnRetType, infType);
 
         r.infType = new TypeVoid;
         return r.infType;
@@ -186,8 +189,8 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     @trusted Exp visit (ExpIf i)
     {
-        i.infType = i.then.length == 1 && i.otherwise.length <= 1
-            ? mergeTypesToSingle(i.then[0].infer(this), i.otherwise[0].infer(this))
+        i.infType = i.then.length == 1 && i.otherwise.length == 1
+            ? mergeTypes(i.then[0].infer(this), i.otherwise[0].infer(this))
             : new TypeVoid;
 
         return i.infType;

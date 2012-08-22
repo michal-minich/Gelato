@@ -7,8 +7,12 @@ import common, parse.ast;
 @trusted pure final class FormatVisitor : IAstVisitor!(dstring)
 {
     bool useInferredTypes;
+    private uint level;
 
-    private enum tab = "    ";
+
+    private @property tab() { return "    "d.replicate(level); }
+
+    private @property tab1() { return "    "d.replicate(level - 1); }
 
 
     dstring visit (ValueNum e) { return e.value.to!dstring(); }
@@ -40,16 +44,22 @@ import common, parse.ast;
 
     dstring visit (ValueStruct e)
     {
-        return dtext("struct", newLine, "{", newLine, tab,
-            e.exps.map!(d => d.str(this))().join(newLine ~ tab), newLine ~ "}");
+        ++level;
+        auto txt = dtext("struct", newLine, tab1, "{", newLine, tab,
+            e.exps.map!(d => d.str(this))().join(newLine ~ tab), newLine, tab1, "}");
+        --level;
+        return txt;
     }
 
 
     dstring visit (ValueFn e)
     {
-        return dtext("fn (", e.params.map!(p => p.str(this))().join(", "),
-                    ")", newLine, "{", newLine, tab,
-                    e.exps.map!(e => e.str(this))().join(newLine ~ tab), newLine, "}");
+        ++level;
+        auto txt = dtext("fn (", e.params.map!(p => p.str(this))().join(", "),
+                    ")", newLine, tab1, "{", newLine, tab,
+                    e.exps.map!(e => e.str(this))().join(newLine ~ tab), newLine, tab1, "}");
+        --level;
+        return txt;
     }
 
 
@@ -92,11 +102,29 @@ import common, parse.ast;
 
     dstring visit (ExpIf e)
     {
-        auto t = e.then.map!(th => th.str(this))().join(newLine ~ tab);
-        return e.otherwise.length == 0
-            ? dtext("if ", e.when.str(this), " then ", t, " end")
-            : dtext("if ", e.when.str(this), " then ", t, " else ",
-                e.otherwise.map!(o => o.str(this))().join(newLine ~ tab), " end");
+        ++level;
+        auto txt = e.otherwise.length == 1 && cast(AstUnknown)e.otherwise[0]
+            ? dtext("if ", e.when.str(this), " then", dtextExps(e.then), "end")
+            : dtext("if ", e.when.str(this), " then", dtextExps(e.then), "else",
+                dtextExps(e.otherwise), "end");
+        --level;
+        return txt;
+    }
+
+
+    private dstring dtextExps(Exp[] exps)
+    {
+        if (exps.length == 1)
+        {
+            return " " ~ exps[0].str(this) ~ " ";
+        }
+        else
+        {
+            dstring res;
+            foreach (e; exps)
+                res ~= newLine ~ tab ~ e.str(this);
+            return res ~ newLine ~ tab1;
+        }
     }
 
 

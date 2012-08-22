@@ -15,7 +15,7 @@ enum newLine = "\r\n";
 
 
 int dbgCounter;
-@trusted debug void dbg(T...) (T a)
+@trusted debug void dbg(T...) (T as)
 {
     static if (!T.length)
     {
@@ -23,7 +23,16 @@ int dbgCounter;
     }
     else
     {
-        writeln(a);
+        foreach (a; as)
+        {
+            auto e = cast(Exp)a;
+            if (e && fv)
+                write(e.str(fv));
+            else
+                write(a);
+            write(" | ");
+        }
+        writeln();
     }
 }
 
