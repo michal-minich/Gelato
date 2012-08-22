@@ -16,7 +16,7 @@ import common, parse.ast, parse.parser, validate.remarks;
     }
 
 
-    void visit (AstNum n)
+    void visit (ValueNum n)
     {
         Remark[] rs;
         auto txt = n.str(fv);
@@ -40,17 +40,17 @@ import common, parse.ast, parse.parser, validate.remarks;
     }
 
 
-    void visit (AstText t)
+    void visit (ValueText t)
     {
     }
 
 
-    void visit (AstChar ch)
+    void visit (ValueChar ch)
     {
     }
 
 
-    void visit (AstFn fn)
+    void visit (ValueFn fn)
     {
         foreach (p; fn.params)
             p.validate(this);
@@ -61,7 +61,7 @@ import common, parse.ast, parse.parser, validate.remarks;
 
 
 
-    void visit (AstFnApply fna)
+    void visit (ExpFnApply fna)
     {
         fna.ident.validate(this);
 
@@ -70,19 +70,19 @@ import common, parse.ast, parse.parser, validate.remarks;
     }
 
 
-    void visit (AstLambda l)
+    void visit (ExpLambda l)
     {
         assert (false, "validate lambda");
     }
 
 
 
-    void visit (AstIdent i)
+    void visit (ExpIdent i)
     {
     }
 
 
-    void visit (AstDeclr d)
+    void visit (StmDeclr d)
     {
         visit(d.ident);
 
@@ -95,37 +95,37 @@ import common, parse.ast, parse.parser, validate.remarks;
 
 
 
-    void visit (AstFile f)
+    void visit (ValueFile f)
     {
         foreach (e; f.exps)
             e.validate(this);
     }
 
 
-    void visit (AstStruct s)
+    void visit (ValueStruct s)
     {
         foreach (e; s.exps)
             e.validate(this);
     }
 
 
-    void visit (AstLabel l)
+    void visit (StmLabel l)
     {
     }
 
 
-    void visit (AstGoto gt)
+    void visit (StmGoto gt)
     {
     }
 
 
-    void visit (AstReturn r)
+    void visit (StmReturn r)
     {
         r.exp.validate(this);
     }
 
 
-    void visit (AstIf i)
+    void visit (ExpIf i)
     {
         i.when.validate(this);
 

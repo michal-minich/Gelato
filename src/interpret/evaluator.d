@@ -11,7 +11,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     {
         IInterpreterContext context;
         PreparerForEvaluator prep;
-        AstLambda currentLambda;
+        ExpLambda currentLambda;
     }
 
 
@@ -22,16 +22,16 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    @trusted Exp visit (AstFile file)
+    @trusted Exp visit (ValueFile file)
     {
         auto start = findDeclr(file.exps, "start");
-        auto fn = cast(AstFn)start.value;
-        auto s = fn ? new AstLambda(null, fn) : start.value;
+        auto fn = cast(ValueFn)start.value;
+        auto s = fn ? new ExpLambda(null, fn) : start.value;
         return s.eval(this);
     }
 
 
-    Exp visit (AstLambda lambda)
+    Exp visit (ExpLambda lambda)
     {
         auto exps = lambda.fn.exps;
         lambda.currentExpIndex = 0;
@@ -46,7 +46,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    @trusted Exp visit (AstFnApply fna)
+    @trusted Exp visit (ExpFnApply fna)
     {
         auto f = fna.ident.declaredBy.value.eval(this);
 
@@ -59,17 +59,17 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
             return bfn.func(context, ea);
         }
 
-        auto fn = cast(AstFn)f;
+        auto fn = cast(ValueFn)f;
 
         assert (fn, "cannot apply undefined fn");
 
-        auto lambda = new AstLambda(currentLambda, fn);
+        auto lambda = new ExpLambda(currentLambda, fn);
 
         if (fn.params)
         {
             foreach (argIx, a; fna.args)
             {
-                auto d = new AstDeclr(fna, fn.params[argIx].ident);
+                auto d = new StmDeclr(fna, fn.params[argIx].ident);
                 d.value = a.eval(this);
                 lambda.evaledArgs ~= d;
             }
@@ -79,7 +79,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
                 if (!p.value)
                     assert (false, "parameter has not default value so arg must be specified");
 
-                auto d = new AstDeclr(fna, p.ident);
+                auto d = new StmDeclr(fna, p.ident);
                 d.value = p.eval(this);
                 lambda.evaledArgs ~= d;
             }
@@ -89,13 +89,13 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    Exp visit (AstIf i)
+    Exp visit (ExpIf i)
     {
         auto e = i.when.eval(this);
         if (!e)
             throw new Exception ("if test expression must not evalute to null.");
 
-        auto when = cast(AstNum)e;
+        auto when = cast(ValueNum)e;
         if (!when)
             throw new Exception ("if test expression must evalute to number.");
 
@@ -105,14 +105,14 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         }
         else
         {
-            auto fn = new AstFn (i);
+            auto fn = new ValueFn (i);
             fn.exps = when.value == "0" ? i.otherwise : i.then;
-            return visit(new AstLambda(currentLambda, fn));
+            return visit(new ExpLambda(currentLambda, fn));
         }
     }
 
 
-    Exp visit (AstIdent ident){
+    Exp visit (ExpIdent ident){
 
         auto d = ident.declaredBy;
         if (d.paramIndex == typeof(d.paramIndex).max)
@@ -130,7 +130,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    Exp visit (AstFn fn)
+    Exp visit (ValueFn fn)
     {
         if (!fn.isPrepared)
             prep.visit(fn);
@@ -139,7 +139,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    @trusted Exp visit (AstReturn ret)
+    @trusted Exp visit (StmReturn ret)
     {
         auto r = ret.exp.eval(this);
         currentLambda.currentExpIndex = cast(uint)currentLambda.fn.exps.length;
@@ -147,7 +147,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    @trusted Exp visit (AstGoto gt)
+    @trusted Exp visit (StmGoto gt)
     {
         if (gt.labelExpIndex == typeof(gt.labelExpIndex).max)
             context.except("goto skiped because it has no matching label");
@@ -158,21 +158,21 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    Exp visit (AstDeclr d) { return d.value ? d.value.eval(this) : null; }
+    Exp visit (StmDeclr d) { return d.value ? d.value.eval(this) : null; }
 
-    Exp visit (AstText text) { return text; }
+    Exp visit (ValueText text) { return text; }
 
-    Exp visit (AstChar ch) { return ch; }
+    Exp visit (ValueChar ch) { return ch; }
 
-    Exp visit (AstNum num) { return num; }
+    Exp visit (ValueNum num) { return num; }
 
     Exp visit (BuiltinFn bfn) { return bfn; }
 
     Exp visit (AstUnknown un) { return un; }
 
-    Exp visit (AstStruct s) { return s; }
+    Exp visit (ValueStruct s) { return s; }
 
-    Exp visit (AstLabel) { return null; }
+    Exp visit (StmLabel) { return null; }
 
     Exp visit (TypeType) { return null; }
 

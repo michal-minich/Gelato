@@ -61,26 +61,23 @@ interface IAstVisitor (R)
 {
     R visit (AstUnknown);
 
-    R visit (AstNum);
-    R visit (AstText);
-    R visit (AstChar);
-    R visit (AstFn);
-
+    R visit (ValueNum);
+    R visit (ValueText);
+    R visit (ValueChar);
+    R visit (ValueFile);
+    R visit (ValueStruct);
+    R visit (ValueFn);
     R visit (BuiltinFn);
 
-    R visit (AstFnApply);
-    R visit (AstLambda);
+    R visit (ExpIdent);
+    R visit (ExpFnApply);
+    R visit (ExpLambda);
+    R visit (ExpIf);
 
-    R visit (AstIdent);
-    R visit (AstDeclr);
-
-    R visit (AstFile);
-    R visit (AstStruct);
-
-    R visit (AstLabel);
-    R visit (AstGoto);
-    R visit (AstReturn);
-    R visit (AstIf);
+    R visit (StmDeclr);
+    R visit (StmLabel);
+    R visit (StmGoto);
+    R visit (StmReturn);
 
     R visit (TypeType);
     R visit (TypeAny);
@@ -248,7 +245,7 @@ final class AstUnknown : Exp
 }
 
 
-final class AstFile : Exp
+final class ValueFile : Exp
 {
     Exp[] exps;
 
@@ -258,14 +255,14 @@ final class AstFile : Exp
 }
 
 
-final class AstDeclr : Exp
+final class StmDeclr : Exp
 {
-    AstIdent ident;
+    ExpIdent ident;
     Exp type;
     Exp value;
     size_t paramIndex = typeof(paramIndex).max;
 
-    this (Exp parent, AstIdent identifier)
+    this (Exp parent, ExpIdent identifier)
     {
         super(parent);
         ident = identifier;
@@ -275,10 +272,10 @@ final class AstDeclr : Exp
 }
 
 
-final class AstStruct : Exp
+final class ValueStruct : Exp
 {
     Exp[] exps;
-    AstFn constructor;
+    ValueFn constructor;
 
     this (Exp parent) { super(parent); }
 
@@ -286,10 +283,10 @@ final class AstStruct : Exp
 }
 
 
-final class AstIdent : Exp
+final class ExpIdent : Exp
 {
     dstring[] idents;
-    AstDeclr declaredBy;
+    StmDeclr declaredBy;
 
     this (Exp parent, dstring[] identfiers)
     {
@@ -301,7 +298,7 @@ final class AstIdent : Exp
 }
 
 
-final class AstNum : Exp
+final class ValueNum : Exp
 {
     dstring value;
 
@@ -315,7 +312,7 @@ final class AstNum : Exp
 }
 
 
-final class AstText : Exp
+final class ValueText : Exp
 {
     dstring value;
 
@@ -329,7 +326,7 @@ final class AstText : Exp
 }
 
 
-final class AstChar : Exp
+final class ValueChar : Exp
 {
     dchar value;
 
@@ -343,22 +340,22 @@ final class AstChar : Exp
 }
 
 
-final class AstLambda : Exp
+final class ExpLambda : Exp
 {
-    AstFn fn;
-    AstLambda parentLambda;
+    ValueFn fn;
+    ExpLambda parentLambda;
     uint currentExpIndex;
-    AstDeclr[] evaledArgs;
+    StmDeclr[] evaledArgs;
 
-    this (AstLambda pl, AstFn f) { super (null); parentLambda = pl; fn = f; }
+    this (ExpLambda pl, ValueFn f) { super (null); parentLambda = pl; fn = f; }
 
     mixin visitImpl;
 }
 
 
-final class AstFn : Exp
+final class ValueFn : Exp
 {
-    AstDeclr[] params;
+    StmDeclr[] params;
     Exp[] exps;
     bool isPrepared;
 
@@ -368,12 +365,12 @@ final class AstFn : Exp
 }
 
 
-final class AstFnApply : Exp
+final class ExpFnApply : Exp
 {
-    AstIdent ident;
+    ExpIdent ident;
     Exp[] args;
 
-    this (Exp parent, AstIdent identifier)
+    this (Exp parent, ExpIdent identifier)
     {
         super(parent);
         ident = identifier;
@@ -383,7 +380,7 @@ final class AstFnApply : Exp
 }
 
 
-final class AstIf : Exp
+final class ExpIf : Exp
 {
     Exp when;
     Exp[] then;
@@ -395,7 +392,7 @@ final class AstIf : Exp
 }
 
 
-final class AstLabel : Exp
+final class StmLabel : Exp
 {
     dstring label;
 
@@ -409,7 +406,7 @@ final class AstLabel : Exp
 }
 
 
-final class AstGoto : Exp
+final class StmGoto : Exp
 {
     dstring label;
     uint labelExpIndex = uint.max;
@@ -424,7 +421,7 @@ final class AstGoto : Exp
 }
 
 
-final class AstReturn : Exp
+final class StmReturn : Exp
 {
     Exp exp;
 

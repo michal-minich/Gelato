@@ -4,11 +4,11 @@ import std.algorithm, std.array, std.conv, std.string;
 import common, parse.ast, validate.remarks, interpret.builtins;
 
 
-@safe AstDeclr findDeclr (Exp[] exps, dstring name)
+@safe StmDeclr findDeclr (Exp[] exps, dstring name)
 {
     foreach (e; exps)
     {
-        auto d = cast(AstDeclr)e;
+        auto d = cast(StmDeclr)e;
         if (d && d.ident.str(fv) == name)
             return d;
     }
@@ -19,14 +19,14 @@ import common, parse.ast, validate.remarks, interpret.builtins;
 @safe final class PreparerForEvaluator : IAstVisitor!(void)
 {
     IValidationContext vctx;
-    private AstFn currentFn;
+    private ValueFn currentFn;
     private uint currentExpIndex;
 
 
     this (IValidationContext validationContex) { vctx = validationContex; }
 
 
-    private AstDeclr getIdentDeclaredBy (AstIdent ident)
+    private StmDeclr getIdentDeclaredBy (ExpIdent ident)
     {
         if (ident.declaredBy)
             return ident.declaredBy;
@@ -34,7 +34,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         auto bfn = ident.idents[0] in builtinFns;
         if (bfn && ident.idents.length == 1)
         {
-            auto d = new AstDeclr(null, null);
+            auto d = new StmDeclr(null, null);
             d.value = *bfn;
             return d;
         }
@@ -42,7 +42,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         auto d = findIdentDelr (ident, ident.parent);
         if (!d)
         {
-            d = new AstDeclr(ident.parent, ident);
+            d = new StmDeclr(ident.parent, ident);
             d.value = new AstUnknown(ident);
         }
 
@@ -50,9 +50,9 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    private AstDeclr findIdentDelr (AstIdent ident, Exp e)
+    private StmDeclr findIdentDelr (ExpIdent ident, Exp e)
     {
-        AstDeclr d;
+        StmDeclr d;
         auto idents = ident.idents;
         d = findIdentDelrInExpOrParent(idents[0], e);
         if (d)
@@ -71,9 +71,9 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    private AstDeclr findIdentDelrInExpOrParent (dstring ident, Exp e)
+    private StmDeclr findIdentDelrInExpOrParent (dstring ident, Exp e)
     {
-        AstDeclr d;
+        StmDeclr d;
         while (e && !d)
         {
             d = findIdentDelrInExp(ident, e);
@@ -83,14 +83,14 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    private AstDeclr findIdentDelrInExp (dstring ident, Exp e)
+    private StmDeclr findIdentDelrInExp (dstring ident, Exp e)
     {
         Exp[] exps;
-        auto s = cast(AstStruct)e;
+        auto s = cast(ValueStruct)e;
         if (s)
             exps = s.exps;
 
-        auto f = cast(AstFile)e;
+        auto f = cast(ValueStruct)e;
         if (f)
             exps = f.exps;
 
@@ -98,14 +98,14 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         {
             foreach (e2; exps)
             {
-                auto d = cast(AstDeclr)e2;
+                auto d = cast(StmDeclr)e2;
                 if (d && d.ident.idents[0] == ident)
                     return d;
             }
             return null;
         }
 
-        auto fn = cast(AstFn)e;
+        auto fn = cast(ValueFn)e;
         if (fn)
         {
             foreach (p; fn.params)
@@ -116,7 +116,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
             {
                 if (e2 is e)
                      break;
-                auto d = cast(AstDeclr)e2;
+                auto d = cast(StmDeclr)e2;
                 if (d && d.ident.idents[0] == ident)
                     return d;
             }
@@ -126,25 +126,25 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    void visit (AstStruct s)
+    void visit (ValueStruct s)
     {
-        auto f = new AstFn(s);
+        auto f = new ValueFn(s);
         foreach (e; s.exps)
         {
-            auto id = cast(AstIdent)e;
-            auto d = cast(AstDeclr)e;
+            auto id = cast(ExpIdent)e;
+            auto d = cast(StmDeclr)e;
             if (!id && !d)
                 assert (false, "struct can contain only declarations or identifiers");
             else
-                f.params ~= d ? d : new AstDeclr(s, id);
+                f.params ~= d ? d : new StmDeclr(s, id);
         }
         s.exps = null;
-        f.exps ~= new AstFn (s);
+        f.exps ~= new ValueFn (s);
         s.constructor = f;
     }
 
 
-    void visit (AstFn fn)
+    void visit (ValueFn fn)
     {
         foreach (ix, p; fn.params)
         {
@@ -162,7 +162,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    @trusted void visit (AstGoto gt)
+    @trusted void visit (StmGoto gt)
     {
         uint expIndex;
         auto l = findLabelOrLast(currentFn.exps, gt.label, expIndex);
@@ -186,12 +186,12 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    static nothrow private AstLabel findLabelOrLast (Exp[] exps, dstring label, out uint expIndex)
+    static nothrow private StmLabel findLabelOrLast (Exp[] exps, dstring label, out uint expIndex)
     {
-        AstLabel lbl;
+        StmLabel lbl;
         foreach (ix, e; exps)
         {
-            auto l = cast(AstLabel)e;
+            auto l = cast(StmLabel)e;
             if (l)
             {
                 lbl = l;
@@ -205,7 +205,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    void visit (AstIf i)
+    void visit (ExpIf i)
     {
         i.when.prepare(this);
 
@@ -217,7 +217,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    void visit (AstFnApply fna)
+    void visit (ExpFnApply fna)
     {
         visit(fna.ident);
 
@@ -226,16 +226,16 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    @trusted void visit (AstFile file)
+    @trusted void visit (ValueFile file)
     {
         auto start = findDeclr(file.exps, "start");
 
         if (!start)
         {
             vctx.remark(MissingStartFunction(null));
-            auto i = new AstIdent(file, ["start"]);
-            auto d = new AstDeclr(file, i);
-            auto fn = new AstFn(file);
+            auto i = new ExpIdent(file, ["start"]);
+            auto d = new StmDeclr(file, i);
+            auto fn = new ValueFn(file);
             fn.exps = file.exps;
             d.value = fn;
             file.exps = [d];
@@ -246,7 +246,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    void visit (AstDeclr d)
+    void visit (StmDeclr d)
     {
         d.ident.declaredBy = d;
         if (d.type)
@@ -256,21 +256,21 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    void visit (AstIdent ident) { ident.declaredBy = getIdentDeclaredBy(ident); }
+    void visit (ExpIdent ident) { ident.declaredBy = getIdentDeclaredBy(ident); }
 
-    void visit (AstReturn r) { r.exp.prepare(this);}
+    void visit (StmReturn r) { r.exp.prepare(this);}
 
-    void visit (AstLambda l) { visit(l.fn); }
+    void visit (ExpLambda l) { visit(l.fn); }
 
-    void visit (AstLabel) { }
+    void visit (StmLabel) { }
 
     void visit (TypeType) { }
 
-    void visit (AstText) { }
+    void visit (ValueText) { }
 
-    void visit (AstChar) { }
+    void visit (ValueChar) { }
 
-    void visit (AstNum) { }
+    void visit (ValueNum) { }
 
     void visit (BuiltinFn) { }
 

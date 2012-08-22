@@ -11,7 +11,7 @@ import common, parse.ast;
     private enum tab = "    ";
 
 
-    nothrow dstring visit (AstNum e)
+    nothrow dstring visit (ValueNum e)
     {
         return e.value;
     }
@@ -23,13 +23,13 @@ import common, parse.ast;
     }
 
 
-    dstring visit (AstFile e)
+    dstring visit (ValueFile e)
     {
         return e.exps.map!(d => d.str(this))().join(newLine);
     }
 
 
-    dstring visit (AstDeclr e)
+    dstring visit (StmDeclr e)
     {
         auto t = useInferredTypes ? e.infType : e.type;
 
@@ -41,14 +41,14 @@ import common, parse.ast;
     }
 
 
-    dstring visit (AstStruct e)
+    dstring visit (ValueStruct e)
     {
         return dtext("struct", newLine, "{", newLine, tab,
             e.exps.map!(d => d.str(this))().join(newLine ~ tab), newLine ~ "}");
     }
 
 
-    dstring visit (AstFn e)
+    dstring visit (ValueFn e)
     {
         return dtext("fn (", e.params.map!(p => p.str(this))().join(", "),
                     ")", newLine, "{", newLine, tab,
@@ -56,44 +56,44 @@ import common, parse.ast;
     }
 
 
-    dstring visit (AstFnApply e)
+    dstring visit (ExpFnApply e)
     {
         return dtext(e.ident.str(this),
             "(", e.args ? e.args.map!(a => a.str(this))().join(", ") : "", ")");
     }
 
 
-    dstring visit (AstIdent e)
+    dstring visit (ExpIdent e)
     {
         return e.idents.join(".").array();
     }
 
 
-    nothrow dstring visit (AstLabel e)
+    nothrow dstring visit (StmLabel e)
     {
         return "label " ~ e.label;
     }
 
 
-    dstring visit (AstReturn e)
+    dstring visit (StmReturn e)
     {
         return e.exp ? "return " ~ e.exp.str(this) : "return";
     }
 
 
-    dstring visit (AstText e)
+    dstring visit (ValueText e)
     {
         return dtext("\"", e.value.toVisibleCharsText(), "\"");
     }
 
 
-    dstring visit (AstChar e)
+    dstring visit (ValueChar e)
     {
         return dtext("'", e.value.to!dstring().toVisibleCharsChar(), "'");
     }
 
 
-    dstring visit (AstIf e)
+    dstring visit (ExpIf e)
     {
         auto t = e.then.map!(th => th.str(this))().join(newLine ~ tab);
         return e.otherwise.length == 0
@@ -103,13 +103,13 @@ import common, parse.ast;
     }
 
 
-    nothrow dstring visit (AstGoto e)
+    nothrow dstring visit (StmGoto e)
     {
         return "goto " ~ e.label;
     }
 
 
-    dstring visit (AstLambda e)
+    dstring visit (ExpLambda e)
     {
         return e.fn.str(this);
     }
@@ -154,7 +154,7 @@ final class Formatter
 
         /*foreach (e; exps)
         {
-            auto decldstring = cast(AstDeclr)e;
+            auto decldstring = cast(StmDeclr)e;
             if (declr.ident.ident == "name")
                 rl.name = declr.value.str(this);
             else

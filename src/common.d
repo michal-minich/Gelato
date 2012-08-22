@@ -34,13 +34,13 @@ Token[] tokenizeFile (string filePath)
 }
 
 
-AstFile parseString (IValidationContext vctx, const dstring src)
+ValueFile parseString (IValidationContext vctx, const dstring src)
 {
     return (new Parser(vctx, (new Tokenizer(src)).array())).parseAll();
 }
 
 
-AstFile parseFile (IValidationContext vctx, string filePath)
+ValueFile parseFile (IValidationContext vctx, string filePath)
 {
     return (new Parser(vctx, tokenizeFile(filePath))).parseAll();
 }

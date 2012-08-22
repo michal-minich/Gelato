@@ -43,7 +43,7 @@ Exp[] flatternType(Exp t)
 final class TypeInferer : IAstVisitor!(Exp)
 {
     private IValidationContext vctx;
-    private AstFn currentFn;
+    private ValueFn currentFn;
 
 
     this (IValidationContext validationContex) { vctx = validationContex; }
@@ -57,21 +57,21 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (AstNum n)
+    Exp visit (ValueNum n)
     {
         n.infType = new TypeNum;
         return n.infType;
     }
 
 
-    Exp visit (AstText t)
+    Exp visit (ValueText t)
     {
         t.infType = new TypeText;
         return t.infType;
     }
 
 
-    Exp visit (AstChar ch)
+    Exp visit (ValueChar ch)
     {
         ch.infType = new TypeChar;
         return ch.infType;
@@ -85,7 +85,7 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (AstFn fn)
+    Exp visit (ValueFn fn)
     {
         Exp[] paramTypes;
         foreach (e; fn.params)
@@ -99,14 +99,14 @@ final class TypeInferer : IAstVisitor!(Exp)
             e.infer(this);
         }
 
-        if (fn.exps.length == 1 && !cast(AstReturn)fn.exps[0])
+        if (fn.exps.length == 1 && !cast(StmReturn)fn.exps[0])
             (cast(TypeFn)fn.infType).retType = fn.exps[0].infType;
 
         return fn.infType;
     }
 
 
-    Exp visit (AstFnApply fna)
+    Exp visit (ExpFnApply fna)
     {
         foreach (e; fna.args)
             e.infer(this);
@@ -117,14 +117,14 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (AstLambda l)
+    Exp visit (ExpLambda l)
     {
         visit(l.fn);
         return l.infType;
     }
 
 
-    Exp visit (AstIdent i)
+    Exp visit (ExpIdent i)
     {
         i.infType = i.declaredBy.value
             ? i.declaredBy.value.infer(this)
@@ -133,14 +133,14 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (AstDeclr d)
+    Exp visit (StmDeclr d)
     {
         d.infType = d.value ? d.value.infer(this) : new TypeAny;
         return d.infType;
     }
 
 
-    Exp visit (AstFile f)
+    Exp visit (ValueFile f)
     {
         foreach (e; f.exps)
             e.infer(this);
@@ -148,7 +148,7 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (AstStruct s )
+    Exp visit (ValueStruct s )
     {
         foreach (e; s.exps)
             e.infer(this);
@@ -156,21 +156,21 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (AstLabel l)
+    Exp visit (StmLabel l)
     {
         l.infType = new TypeVoid;
         return l.infType;
     }
 
 
-    Exp visit (AstGoto gt)
+    Exp visit (StmGoto gt)
     {
         gt.infType = new TypeVoid;
         return gt.infType;
     }
 
 
-    @trusted Exp visit (AstReturn r)
+    @trusted Exp visit (StmReturn r)
     {
         auto fnRetType = &(cast(TypeFn)currentFn.infType).retType;
         auto infType = r.exp.infer(this);
@@ -184,7 +184,7 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    @trusted Exp visit (AstIf i)
+    @trusted Exp visit (ExpIf i)
     {
         i.infType = i.then.length == 1 && i.otherwise.length <= 1
             ? mergeTypesToSingle(i.then[0].infer(this), i.otherwise[0].infer(this))

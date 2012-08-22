@@ -32,9 +32,9 @@ final class Parser
     }
 
 
-    AstFile parseAll ()
+    ValueFile parseAll ()
     {
-        auto f = new AstFile;
+        auto f = new ValueFile;
         Exp e;
         while ((e = parse(f)) !is null)
             f.exps ~= e;
@@ -221,12 +221,12 @@ final class Parser
     }
 
 
-    AstIf parseIf (Exp parent)
+    ExpIf parseIf (Exp parent)
     {
         uint startIndex = current.index;
         nextTok();
 
-        auto i = new AstIf(parent);
+        auto i = new ExpIf(parent);
         i.when = parse(i);
         skipWhite();
 
@@ -267,15 +267,15 @@ final class Parser
     }
 
 
-    AstStruct parserStruct (Exp parent)
+    ValueStruct parserStruct (Exp parent)
     {
-        auto s = new AstStruct(parent);
+        auto s = new ValueStruct(parent);
         s.exps = parseCurlyBrace(s);
         return s;
     }
 
 
-    AstFn parserFn (Exp parent)
+    ValueFn parserFn (Exp parent)
     {
         uint startIndex = current.index;
 
@@ -283,7 +283,7 @@ final class Parser
         if (current.text != "(")
             assert (false, "no brace after fn");
 
-        auto f = new AstFn(parent);
+        auto f = new ValueFn(parent);
 
         nextNonWhiteTok();
         if (current.text != ")")
@@ -324,14 +324,14 @@ final class Parser
     }
 
 
-    AstDeclr[] parseFnParameter (Exp parent)
+    StmDeclr[] parseFnParameter (Exp parent)
     {
-        AstDeclr[] params;
+        StmDeclr[] params;
         while (true)
         {
             auto e = parse(parent);
-            auto i = cast(AstIdent)e;
-            auto d = cast(AstDeclr)e;
+            auto i = cast(ExpIdent)e;
+            auto d = cast(StmDeclr)e;
             if (!i && !d)
             {
                 assert (false, "fn parameter is not identifier or declaration");
@@ -341,7 +341,7 @@ final class Parser
                 skipWhite();
                 if (current.type == TokenType.braceEnd && current.text == ")")
                 {
-                    params ~= d ? d : new AstDeclr(parent, i);
+                    params ~= d ? d : new StmDeclr(parent, i);
                     nextTok();
                     return params;
                 }
@@ -350,17 +350,17 @@ final class Parser
                     assert (false, "no fn arg coma");
                 }
 
-                params ~= d ? d : new AstDeclr(parent, i);
+                params ~= d ? d : new StmDeclr(parent, i);
                 nextTok();
             }
         }
     }
 
 
-    AstReturn parserReturn (Exp parent)
+    StmReturn parserReturn (Exp parent)
     {
         nextNonWhiteTokOnSameLine();
-        auto r = new AstReturn(parent);
+        auto r = new StmReturn(parent);
         r.exp = parse(r);
         if (!r.exp)
             assert (false, "return without expression");
@@ -368,36 +368,36 @@ final class Parser
     }
 
 
-    AstGoto parserGoto (Exp parent)
+    StmGoto parserGoto (Exp parent)
     {
         nextNonWhiteTokOnSameLine();
         if (current.type == TokenType.ident)
         {
-            auto g = new AstGoto(parent, current.text);
+            auto g = new StmGoto(parent, current.text);
             nextTok();
             return g;
         }
         else
         {
-            auto gt = new AstGoto(parent, null);
+            auto gt = new StmGoto(parent, null);
             vctx.remark(GotoWithoutIdentifier(gt));
             return gt;
         }
     }
 
 
-    AstLabel parserLabel (Exp parent)
+    StmLabel parserLabel (Exp parent)
     {
         nextNonWhiteTokOnSameLine();
         if (current.type == TokenType.ident)
         {
-            auto l = new AstLabel (parent, current.text);
+            auto l = new StmLabel (parent, current.text);
             nextTok();
             return l;
         }
         else
         {
-            auto l = new AstLabel (parent, null);
+            auto l = new StmLabel (parent, null);
             vctx.remark(LabelWithoutIdentifier(l));
             return l;
         }
@@ -471,7 +471,7 @@ final class Parser
             if (finished)
             {
                 assert (false, "unclosed text");
-                //return new AstText(ts, txt);
+                //return new ValueText(ts, txt);
             }
 
             alias current t;
@@ -484,7 +484,7 @@ final class Parser
         nextTok();
 
         auto t = txt.length == 1 && ts[0].text == "'"
-            ? new AstChar(parent, txt[0]) : new AstText(parent, txt);
+            ? new ValueChar(parent, txt[0]) : new ValueText(parent, txt);
         t.tokens = ts;
         return t;
     }
@@ -498,9 +498,9 @@ final class Parser
     }
 
 
-    AstNum parseNum (Exp parent)
+    ValueNum parseNum (Exp parent)
     {
-        auto n = new AstNum(parent, current.text);
+        auto n = new ValueNum(parent, current.text);
         nextTok();
         return n;
     }
@@ -509,7 +509,7 @@ final class Parser
     Exp parseIdent (Exp parent)
     {
         auto i = parseIdentOnly (parent);
-        AstDeclr d;
+        StmDeclr d;
 
         if (current.text == "(")
         {
@@ -517,7 +517,7 @@ final class Parser
         }
         else if (current.text == ":")
         {
-            d = new AstDeclr(parent, i);
+            d = new StmDeclr(parent, i);
             i.parent = d;
             nextTok();
             d.type = parse(d);
@@ -527,7 +527,7 @@ final class Parser
         if (current.text == "=")
         {
             if (!d)
-                d = new AstDeclr(parent, i);
+                d = new StmDeclr(parent, i);
             i.parent = d;
             nextTok();
             d.value = parse(d);
@@ -538,17 +538,17 @@ final class Parser
     }
 
 
-    AstFnApply parseFnApply (Exp parent, AstIdent i)
+    ExpFnApply parseFnApply (Exp parent, ExpIdent i)
     {
         nextNonWhiteTok();
         if (current.type == TokenType.braceEnd && current.text == ")")
         {
             nextTok();
-            return new AstFnApply(parent, i);
+            return new ExpFnApply(parent, i);
         }
         else
         {
-            auto fa = new AstFnApply(parent, i);
+            auto fa = new ExpFnApply(parent, i);
 
             while (current.text != ")")
             {
@@ -575,7 +575,7 @@ final class Parser
     }
 
 
-    AstIdent parseIdentOnly (Exp parent)
+    ExpIdent parseIdentOnly (Exp parent)
     {
         dstring[] idents;
 
@@ -597,6 +597,6 @@ final class Parser
             }
         }
 
-        return new AstIdent(parent, idents);
+        return new ExpIdent(parent, idents);
     }
 }

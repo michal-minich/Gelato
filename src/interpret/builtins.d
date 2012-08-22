@@ -23,7 +23,7 @@ Exp customPrint (IInterpreterContext context, Exp[] exps)
 {
     foreach (e; exps)
     {
-        const txt = cast(AstText)e;
+        const txt = cast(ValueText)e;
         context.print(txt ? txt.value : e.str(fv));
     }
     context.println();
@@ -33,7 +33,7 @@ Exp customPrint (IInterpreterContext context, Exp[] exps)
 
 Exp incNum (IInterpreterContext context, Exp[] exps)
 {
-    auto n = cast(AstNum)exps[0];
+    auto n = cast(ValueNum)exps[0];
     auto i = n.value.to!int();
-    return new AstNum(null, (++i).to!dstring());
+    return new ValueNum(null, (++i).to!dstring());
 }

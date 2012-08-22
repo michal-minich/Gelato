@@ -56,11 +56,11 @@ final class Settings
 
         foreach (e; f.exps)
         {
-            auto d = cast(AstDeclr)e;
+            auto d = cast(StmDeclr)e;
             if (d.ident.idents[0] == "language")
-                s.language = (cast(AstText)d.value).value;
+                s.language = (cast(ValueText)d.value).value;
             if (d.ident.idents[0] == "remarkLevelName")
-                s.remarkLevelName = (cast(AstText)d.value).value;
+                s.remarkLevelName = (cast(ValueText)d.value).value;
         }
 
         s.remarkTranslation = RemarkTranslation.load (loadContext, rootPath, to!string(s.language));
@@ -72,5 +72,5 @@ final class Settings
 
 private @property dstring txtval (Exp e)
 {
-    return (cast(AstText)e).value;
+    return (cast(ValueText)e).value;
 }

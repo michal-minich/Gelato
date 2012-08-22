@@ -80,7 +80,7 @@ final class RemarkLevel : IRemarkLevel
 
         foreach (e; f.exps)
         {
-            auto d = cast(AstDeclr)e;
+            auto d = cast(StmDeclr)e;
             if (d.ident.idents[0] == "name")
                 rl.name = d.value.str(fv);
             else
@@ -135,9 +135,9 @@ final class RemarkTranslation : IRemarkTranslation
 
         foreach (e; f.exps)
         {
-            auto d = cast(AstDeclr)e;
+            auto d = cast(StmDeclr)e;
             if (d.ident.idents[0] == "inherit")
-                rt.inherit = (cast(AstText)d.value).value.to!string();
+                rt.inherit = (cast(ValueText)d.value).value.to!string();
         }
 
         rt.values = loadValues (vctx, rootPath ~ "/lang/" ~ language ~ "/remarks.gel");
@@ -153,7 +153,7 @@ final class RemarkTranslation : IRemarkTranslation
 
         foreach (e; f.exps)
         {
-            auto d = cast(AstDeclr)e;
+            auto d = cast(StmDeclr)e;
             vals[d.ident.idents[0]] = d.value.str(fv);
         }
 
