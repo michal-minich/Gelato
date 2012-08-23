@@ -11,7 +11,6 @@ TOKENIZER -----------------------------
 
 PARSER -----------------------------
 ! cleanup and reliability fixes
-! op apply on any expression, not only identfier
 ! generate remarks
 ! coma separated statements and struct members
 ! new line separated fn args and params

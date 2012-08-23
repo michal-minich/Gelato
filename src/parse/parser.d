@@ -275,7 +275,7 @@ final class Parser
     }
 
 
-    ValueFn parserFn (Exp parent)
+    Exp parserFn (Exp parent)
     {
         uint startIndex = current.index;
 
@@ -286,17 +286,23 @@ final class Parser
         auto f = new ValueFn(parent);
 
         nextNonWhiteTok();
-        if (current.text != ")")
+        if (current.text == ")")
+            nextTok();
+        else
             f.params = parseFnParameter(f);
 
         f.exps = parseCurlyBrace (f);
+
+        if (current.text == "(")
+            return parseFnApply(parent, f);
+
         return f;
     }
 
 
     Exp[] parseCurlyBrace (Exp parent)
     {
-        nextNonWhiteTok();
+        skipWhite();
         if (current.text == "{")
             nextNonWhiteTok();
         else
@@ -541,11 +547,12 @@ final class Parser
 
     ExpFnApply parseFnApply (Exp parent, Exp i)
     {
+        ExpFnApply fna;
         nextNonWhiteTok();
         if (current.type == TokenType.braceEnd && current.text == ")")
         {
             nextTok();
-            return new ExpFnApply(parent, i);
+            fna = new ExpFnApply(parent, i);
         }
         else
         {
@@ -571,8 +578,14 @@ final class Parser
             }
 
             nextTok();
-            return fa;
+            fna = fa;
         }
+
+        skipWhite();
+        if (current.text == "(")
+            return parseFnApply(parent, fna);
+        else
+            return fna;
     }
 
 
