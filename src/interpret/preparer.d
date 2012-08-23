@@ -31,8 +31,8 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         if (ident.declaredBy)
             return ident.declaredBy;
 
-        auto bfn = ident.idents[0] in builtinFns;
-        if (bfn && ident.idents.length == 1)
+        auto bfn = ident.ident in builtinFns;
+        if (bfn)
         {
             auto d = new StmDeclr(null, null);
             d.value = *bfn;
@@ -50,14 +50,16 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     }
 
 
-    private StmDeclr findIdentDelr (ExpIdent ident, Exp e)
+    @trusted private StmDeclr findIdentDelr (ExpIdent ident, Exp e)
     {
         StmDeclr d;
-        auto idents = ident.idents;
-        d = findIdentDelrInExpOrParent(idents[0], e);
+        d = findIdentDelrInExpOrParent(ident.ident, e);
         if (d)
             return d;
-        idents = idents[1 .. $];
+        else
+            assert (false, ident.ident.to!string() ~ " identifer is undefined");
+
+        /*idents = idents[1 .. $];
         e = d;
         while (e && idents.length)
         {
@@ -67,7 +69,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
             idents = idents[1 .. $];
             e = d.value;
         }
-        return d;
+        return d;*/
     }
 
 
@@ -86,7 +88,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     private StmDeclr findIdentDelrInExp (dstring ident, Exp e)
     {
         Exp[] exps;
-        auto s = cast(ValueStruct)e;
+        auto s = cast(ValueFile)e;
         if (s)
             exps = s.exps;
 
@@ -99,7 +101,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
             foreach (e2; exps)
             {
                 auto d = cast(StmDeclr)e2;
-                if (d && d.ident.idents[0] == ident)
+                if (d && d.ident.ident == ident)
                     return d;
             }
             return null;
@@ -109,7 +111,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         if (fn)
         {
             foreach (p; fn.params)
-                if (p.ident.idents[0] == ident)
+                if (p.ident.ident == ident)
                     return p;
 
             foreach (e2; fn.exps)
@@ -117,7 +119,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
                 if (e2 is e)
                      break;
                 auto d = cast(StmDeclr)e2;
-                if (d && d.ident.idents[0] == ident)
+                if (d && d.ident.ident == ident)
                     return d;
             }
         }
@@ -222,7 +224,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
 
     void visit (ExpFnApply fna)
     {
-        visit(fna.ident);
+        fna.ident.prepare(this);
 
         foreach (a; fna.args)
             a.prepare(this);
@@ -236,7 +238,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         if (!start)
         {
             vctx.remark(MissingStartFunction(null));
-            auto i = new ExpIdent(file, ["start"]);
+            auto i = new ExpIdent(file, "start");
             auto d = new StmDeclr(file, i);
             auto fn = new ValueFn(file);
             fn.exps = file.exps;
@@ -260,6 +262,11 @@ import common, parse.ast, validate.remarks, interpret.builtins;
 
 
     void visit (ExpIdent ident) { ident.declaredBy = getIdentDeclaredBy(ident); }
+
+
+    void visit (ExpDot dot)
+    {
+    }
 
     void visit (StmReturn r) { r.exp.prepare(this);}
 

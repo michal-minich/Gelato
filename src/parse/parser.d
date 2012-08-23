@@ -508,14 +508,15 @@ final class Parser
 
     Exp parseIdent (Exp parent)
     {
-        auto i = parseIdentOnly (parent);
+        auto exp = parseIdentOnly (parent);
+        auto i = cast(ExpIdent)exp;
         StmDeclr d;
 
         if (current.text == "(")
         {
             return parseFnApply(parent, i);
         }
-        else if (current.text == ":")
+        else if (i && current.text == ":")
         {
             d = new StmDeclr(parent, i);
             i.parent = d;
@@ -524,10 +525,10 @@ final class Parser
         }
 
         skipWhite();
-        if (current.text == "=")
+        if (i && current.text == "=") // on assigment i is not required
         {
             if (!d)
-                d = new StmDeclr(parent, i);
+                d = new StmDeclr(parent, i); // it could be also assignment
             i.parent = d;
             nextTok();
             d.value = parse(d);
@@ -538,7 +539,7 @@ final class Parser
     }
 
 
-    ExpFnApply parseFnApply (Exp parent, ExpIdent i)
+    ExpFnApply parseFnApply (Exp parent, Exp i)
     {
         nextNonWhiteTok();
         if (current.type == TokenType.braceEnd && current.text == ")")
@@ -575,28 +576,24 @@ final class Parser
     }
 
 
-    ExpIdent parseIdentOnly (Exp parent)
+    Exp parseIdentOnly (Exp parent)
     {
-        dstring[] idents;
+        Exp res = new ExpIdent(parent, current.text);
 
         while (true)
         {
-            idents ~= current.text;
             nextNonWhiteTok();
-            if (current.text == ".")
-            {
-                nextNonWhiteTok();
-                if (current.type != TokenType.ident)
-                {
-                    assert (false, "ident expected after dot");
-                }
-            }
-            else
-            {
+            if (current.text != ".")
                 break;
-            }
+
+            auto d = new ExpDot(parent, res, null);
+            res = d;
+            nextNonWhiteTok();
+            if (current.type != TokenType.ident)
+                assert (false, "ident expected after dot");
+            d.member = current.text;
         }
 
-        return new ExpIdent(parent, idents);
+        return res;
     }
 }

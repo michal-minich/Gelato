@@ -108,7 +108,7 @@ final class TypeInferer : IAstVisitor!(Exp)
         foreach (e; fna.args)
             e.infer(this);
 
-        fna.infType = (cast(TypeFn)fna.ident.declaredBy.infer(this)).retType;
+        fna.infType = (cast(TypeFn)fna.ident.infer(this)).retType;
 
         return fna.infType;
     }
@@ -194,6 +194,12 @@ final class TypeInferer : IAstVisitor!(Exp)
             : new TypeVoid;
 
         return i.infType;
+    }
+
+
+    Exp visit (ExpDot dot)
+    {
+        assert (false, "infer dot");
     }
 
 

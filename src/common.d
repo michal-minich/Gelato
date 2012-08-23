@@ -25,11 +25,15 @@ int dbgCounter;
     {
         foreach (a; as)
         {
-            auto e = cast(Exp)a;
-            if (e && fv)
-                write(e.str(fv));
-            else
-                write(a);
+            static if (is (T : Exp))
+            {
+                auto e = cast(Exp)a;
+                if (e && fv)
+                    write(e.str(fv));
+                else
+                    write(a);
+            }
+            else write(a);
             write(" | ");
         }
         writeln();

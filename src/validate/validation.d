@@ -82,6 +82,12 @@ import common, parse.ast, parse.parser, validate.remarks;
     }
 
 
+
+    void visit (ExpDot dot)
+    {
+    }
+
+
     void visit (StmDeclr d)
     {
         visit(d.ident);

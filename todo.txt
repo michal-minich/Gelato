@@ -1,68 +1,83 @@
-parse validate not recoverable erros
-remark undefined symbols
-prepare functions on firs call
-dynamic typing
-static typing
-parse dot op apply
-interpret dot op apply
+TOKENIZER -----------------------------
+  cancel unclosed text after escape on first line
+  cancel unclosed comment on first line
+  decimal numbers
+  hex numbers
+  hex decimals
+  hex escapes
+  nested comment
+  documentation comments
 
 
 PARSER -----------------------------
-parse array / brace op apply
-coma separated statements and struct members
-new line separated fn args and params
-comments
-operators
-parse declaration type
-consider including trailing white after last token in it
+! cleanup and reliability fixes
+! op apply on any expression, not only identfier
+! generate remarks
+! coma separated statements and struct members
+! new line separated fn args and params
+  parse array / brace op apply
+  comments
+  operators
+  include all tokens incl white with exp objects
 
 
 VALIDATOR -----------------------------
-syntax
-intendation level
-unknown identifiers
-double identifiers
+  syntax
+  intendation level
+
+
+PREPARER -----------------------------
+! prepare functions on firs call
+  remark undefined identifiers
+  remark multiply defined identifiers
+  remark unused identifiers
+  operators priority
+  tail call
+
+
+TYPE INFERENCE / CHECK -----------------------------
+! infer identfier by usage in fn (not only by def)
+! infer identifier by usage as fn arg
+  report type errors
+  report declared vs inffered type dicrepancies
+  infer definite assigment
+  infer value origin
+  infer value destination
+  infer possible values for variable
+  infer on fn apply / op apply: throws, ...
+  infer on fn pure, deterministic throws, modify global, ..
 
 
 INTERPRETER -----------------------------
-dynamic typing
-forbid using fn as struct
-primitive operations on numbers
-builtins with qualified name
-array object (empty, first, rest)
+! struct
+! builtins with qualified name
+! dynamic and static typing versions
+  array object (empty, first, rest)
     variable length fn params
     text is array
-project file
-multi file support
-var / mutable variables
-ref
-exceptions /, scope guars
-contracts
-builtin for stack trace
-builtin in for env
-user overridable struct functions - construct, destruct, clone, ...
-first-class types
-first base library
-cast
-arrays / mem allocation
-operators priority
-
-
-TOKENIZER -----------------------------
-cancel unclosed text after escape on first line
-cancel unclosed comment on first line
-decimal numbers
-hex numbers
-hex decimals
-hex escapes
-nested comment
-documentation comments
+  var / mutable variables
+  ref
+  throw
+  try catch finally /, scope guars
+  contracts
+  builtin for stack trace
+  builtin in for env
+  user overridable struct functions - construct, destruct, clone, ...
+  cast
+  arrays / mem allocation
 
 
 FORMATTER -----------------------------
-configuration profiles
-fixes for validation formatting remarks
+  configuration profiles
+
+
+AUTFIXER -----------------------------
+  formatting / syntax
+
+
+CMD LINE -----------------------------
+! project file, multi file support
 
 
 INTERACTIVE -----------------------------
-first version
+  first version

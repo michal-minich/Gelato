@@ -48,15 +48,22 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 
     @trusted Exp visit (ExpFnApply fna)
     {
-        auto f = fna.ident.declaredBy.value.eval(this);
+        auto exp = fna.ident.eval(this);
+        auto f = cast(ValueFn)exp;
 
-        auto bfn = cast(BuiltinFn)f;
-        if (bfn)
+        if (!f)
         {
-            Exp[] ea;
-            foreach (a; fna.args)
-                ea ~= a.eval(this);
-            return bfn.func(context, ea);
+            auto bfn = cast(BuiltinFn)exp;
+            if (bfn)
+            {
+                Exp[] ea;
+                foreach (a; fna.args)
+                    ea ~= a.eval(this);
+                return bfn.func(context, ea);
+            }
+
+            assert (false, "ony fn can be applied");
+
         }
 
         auto fn = cast(ValueFn)f;
@@ -136,6 +143,12 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
             prep.visit(fn);
 
         return fn;
+    }
+
+
+    Exp visit (ExpDot dot)
+    {
+        assert (false, "eval dot");
     }
 
 

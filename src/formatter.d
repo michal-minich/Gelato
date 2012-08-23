@@ -8,11 +8,12 @@ import common, parse.ast;
 {
     bool useInferredTypes;
     private uint level;
+    enum dstring tabs = "    "d.replicate(16);
 
 
-    private @property tab() { return "    "d.replicate(level); }
+    private @property tab() { return tabs[0 .. 4 * level]; }
 
-    private @property tab1() { return "    "d.replicate(level - 1); }
+    private @property tab1() { return tabs[0 .. 4 * (level - 1)]; }
 
 
     dstring visit (ValueNum e) { return e.value.to!dstring(); }
@@ -72,7 +73,7 @@ import common, parse.ast;
 
     dstring visit (ExpIdent e)
     {
-        return e.idents.join(".").array();
+        return e.ident;
     }
 
 
@@ -103,18 +104,19 @@ import common, parse.ast;
     dstring visit (ExpIf e)
     {
         ++level;
+        auto expandBoth = e.then.length > 1 || e.otherwise.length > 1;
         auto txt = e.otherwise.length == 1 && cast(AstUnknown)e.otherwise[0]
-            ? dtext("if ", e.when.str(this), " then", dtextExps(e.then), "end")
-            : dtext("if ", e.when.str(this), " then", dtextExps(e.then), "else",
-                dtextExps(e.otherwise), "end");
+            ? dtext("if ", e.when.str(this), " then", dtextExps(e.then, expandBoth), "end")
+            : dtext("if ", e.when.str(this), " then", dtextExps(e.then, expandBoth), "else",
+                dtextExps(e.otherwise, expandBoth), "end");
         --level;
         return txt;
     }
 
 
-    private dstring dtextExps(Exp[] exps)
+    private dstring dtextExps(Exp[] exps, bool forceExpand)
     {
-        if (exps.length == 1)
+        if (!forceExpand && exps.length == 1)
         {
             return " " ~ exps[0].str(this) ~ " ";
         }
@@ -139,6 +141,8 @@ import common, parse.ast;
         return e.fn.str(this);
     }
 
+
+    dstring visit (ExpDot) { return "."; }
 
     dstring visit (TypeType tt) { return dtext("Type(", tt.type.str(this) ,")"); }
 

@@ -73,6 +73,7 @@ interface IAstVisitor (R)
     R visit (ExpFnApply);
     R visit (ExpLambda);
     R visit (ExpIf);
+    R visit (ExpDot);
 
     R visit (StmDeclr);
     R visit (StmLabel);
@@ -334,10 +335,10 @@ final class ExpLambda : Exp
 
 final class ExpFnApply : Exp
 {
-    ExpIdent ident;
+    Exp ident;
     Exp[] args;
 
-    this (Exp parent, ExpIdent identifier)
+    this (Exp parent, Exp identifier)
     {
         super(parent);
         ident = identifier;
@@ -349,13 +350,13 @@ final class ExpFnApply : Exp
 
 final class ExpIdent : Exp
 {
-    dstring[] idents;
+    dstring ident;
     StmDeclr declaredBy;
 
-    this (Exp parent, dstring[] identfiers)
+    this (Exp parent, dstring identfier)
     {
         super(parent);
-        idents = identfiers;
+        ident = identfier;
     }
 
     mixin visitImpl;
@@ -369,6 +370,22 @@ final class ExpIf : Exp
     Exp[] otherwise;
 
     this (Exp parent) { super(parent); }
+
+    mixin visitImpl;
+}
+
+
+final class ExpDot : Exp
+{
+    Exp record;
+    dstring member;
+
+    this (Exp parent, Exp record, dstring member)
+    {
+        super(parent);
+        this.record = record;
+        this.member = member;
+    }
 
     mixin visitImpl;
 }
