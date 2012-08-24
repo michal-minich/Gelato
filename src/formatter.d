@@ -11,12 +11,12 @@ import common, parse.ast;
     enum dstring tabs = "    "d.replicate(16);
 
 
-    private @property tab() { return tabs[0 .. 4 * level]; }
+    const private @property tab() { return tabs[0 .. 4 * level]; }
 
-    private @property tab1() { return tabs[0 .. 4 * (level - 1)]; }
+    const private @property tab1() { return tabs[0 .. 4 * (level - 1)]; }
 
 
-    dstring visit (ValueNum e) { return e.value.to!dstring(); }
+    const dstring visit (ValueNum e) { return e.value.to!dstring(); }
 
 
     dstring visit (AstUnknown e)
@@ -46,7 +46,7 @@ import common, parse.ast;
     dstring visit (ValueStruct e)
     {
         ++level;
-        auto txt = dtext("struct", newLine, tab1, "{", newLine, tab,
+        immutable txt = dtext("struct", newLine, tab1, "{", newLine, tab,
             e.exps.map!(d => d.str(this))().join(newLine ~ tab), newLine, tab1, "}");
         --level;
         return txt;
@@ -56,9 +56,10 @@ import common, parse.ast;
     dstring visit (ValueFn e)
     {
         ++level;
-        auto txt = dtext("fn (", e.params.map!(p => p.str(this))().join(", "),
-                    ")", newLine, tab1, "{", newLine, tab,
-                    e.exps.map!(e => e.str(this))().join(newLine ~ tab), newLine, tab1, "}");
+        immutable bdy = e.exps.length ? dtext(newLine, tab1, "{", newLine, tab,
+                    e.exps.map!(e => e.str(this))().join(newLine ~ tab), newLine, tab1) : " { ";
+
+        immutable txt = dtext("fn (", e.params.map!(p => p.str(this))().join(", "), ")", bdy, "}");
         --level;
         return txt;
     }
@@ -71,7 +72,7 @@ import common, parse.ast;
     }
 
 
-    dstring visit (ExpIdent e)
+    const dstring visit (ExpIdent e)
     {
         return e.ident;
     }
@@ -104,8 +105,8 @@ import common, parse.ast;
     dstring visit (ExpIf e)
     {
         ++level;
-        auto expandBoth = e.then.length > 1 || e.otherwise.length > 1;
-        auto txt = e.otherwise.length == 1 && cast(AstUnknown)e.otherwise[0]
+        immutable expandBoth = e.then.length > 1 || e.otherwise.length > 1;
+        immutable txt = e.otherwise.length == 1 && cast(AstUnknown)e.otherwise[0]
             ? dtext("if ", e.when.str(this), " then", dtextExps(e.then, expandBoth), "end")
             : dtext("if ", e.when.str(this), " then", dtextExps(e.then, expandBoth), "else",
                 dtextExps(e.otherwise, expandBoth), "end");
@@ -130,7 +131,7 @@ import common, parse.ast;
     }
 
 
-    nothrow dstring visit (StmGoto e)
+    const nothrow dstring visit (StmGoto e)
     {
         return "goto " ~ e.label;
     }
@@ -142,21 +143,21 @@ import common, parse.ast;
     }
 
 
-    dstring visit (ExpDot) { return "."; }
+    const dstring visit (ExpDot) { return "."; }
 
     dstring visit (TypeType tt) { return dtext("Type(", tt.type.str(this) ,")"); }
 
-    dstring visit (TypeAny) { return "Any"; }
+    const dstring visit (TypeAny) { return "Any"; }
 
-    dstring visit (TypeVoid) { return "Void"; }
+    const dstring visit (TypeVoid) { return "Void"; }
 
-    dstring visit (TypeNum) { return "Num"; }
+    const dstring visit (TypeNum) { return "Num"; }
 
-    dstring visit (TypeText) { return "Text"; }
+    const dstring visit (TypeText) { return "Text"; }
 
-    dstring visit (TypeChar) { return "Char"; }
+    const dstring visit (TypeChar) { return "Char"; }
 
-    dstring visit (BuiltinFn) { assert (false, "built in fn has no textual representation"); }
+    const dstring visit (BuiltinFn) { assert (false, "built in fn has no textual representation"); }
 
 
     dstring visit (TypeOr or)

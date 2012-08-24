@@ -5,11 +5,7 @@ import std.algorithm, std.array, std.conv;
 import common, validate.remarks, parse.ast;
 
 
-struct ParseResult
-{
-    Remark[] remarks;
-    Exp value;
-}
+nothrow:
 
 
 final class Parser
@@ -20,6 +16,7 @@ final class Parser
         Token[] toks;
         IValidationContext vctx;
         Token current;
+        bool sepPassed;
     }
 
 
@@ -36,6 +33,7 @@ final class Parser
     {
         auto f = new ValueFile;
         Exp e;
+        skipWhite();
         while ((e = parse(f)) !is null)
             f.exps ~= e;
         return f;
@@ -47,7 +45,8 @@ final class Parser
 
     void nextTok ()
     {
-        if (!finished) {
+        if (!finished)
+        {
             toks.popFront();
             if (!finished)
             current = toks.front;
@@ -55,20 +54,43 @@ final class Parser
     }
 
 
-    @property bool finished () { return toks.empty; }
+    @property const bool finished () { return !toks.length; }
 
 
-    @property bool isWhite ()
+    @property const bool isWhite ()
     {
         return current.type == TokenType.newLine || current.type == TokenType.white;
     }
 
-
+/*
     void nextNonWhiteTok ()
     {
         nextTok();
         while (!finished && isWhite)
             nextTok();
+    }
+*/
+
+    void nextNonWhiteTok ()
+    {
+        nextTok();
+        skipWhite();
+    }
+
+
+    void skipWhite ()
+    {
+        sepPassed = false;
+        while(!finished)
+        {
+            switch (current.type)
+            {
+                case TokenType.white: nextTok(); continue;
+                case TokenType.newLine: sepPassed = true; nextTok(); continue;
+                case TokenType.coma: sepPassed = true; nextTok(); continue;
+                default: return;
+            }
+        }
     }
 
 
@@ -80,18 +102,22 @@ final class Parser
     }
 
 
-    void skipWhite ()
+    bool skipSep ()
     {
-        if (!finished && isWhite)
-            nextNonWhiteTok();
-    }
+        while(!finished)
+        {
+            switch (current.type)
+            {
+                case TokenType.newLine: goto end;
+                case TokenType.coma: goto end;
+                case TokenType.white: nextTok(); break;
+                default: return false;
+            }
+        }
 
-
-    Exp parseSkipWhiteAfter (Exp parent)
-    {
-        auto e = parse(parent);
-        skipWhite();
-        return e;
+        end:
+        nextNonWhiteTok();
+        return true;
     }
 
 
@@ -110,65 +136,103 @@ final class Parser
         if (finished)
             return null;
 
-        if (isWhite)
-            nextNonWhiteTok();
+        skipSep();
 
+        Exp exp;
         switch (current.type)
         {
-            case TokenType.num: return parseNum(parent);
-            case TokenType.ident: return parseIdent(parent);
-            case TokenType.textStart: return parseText(parent);
+            case TokenType.num: exp = parseNum(parent); break;
+            case TokenType.ident: exp = parseIdent(parent); break;
+            case TokenType.textStart: exp = parseText(parent); break;
 
-            case TokenType.braceStart: return parseBrace(parent);
             case TokenType.braceEnd: assert(false, "redudant brace end");
 
-            case TokenType.keyIf: return parseIf(parent);
+            case TokenType.keyIf: exp = parseIf(parent); break;
             case TokenType.keyThen: assert(false, "then without if");
             case TokenType.keyElse: assert(false, "else without if");
             case TokenType.keyEnd: assert(false, "end without if");
 
-            case TokenType.keyFn: return parserFn(parent);
-            case TokenType.keyReturn: return parserReturn(parent);
+            case TokenType.keyFn: exp = parserFn(parent); break;
+            case TokenType.keyReturn: exp = parserReturn(parent); break;
 
-            case TokenType.keyGoto: return parserGoto(parent);
-            case TokenType.keyLabel: return parserLabel(parent);
+            case TokenType.keyGoto: exp = parserGoto(parent); break;
+            case TokenType.keyLabel: exp = parserLabel(parent); break;
 
-            case TokenType.keyStruct: return parserStruct(parent);
-            //case TokenType.keyThrow: return parserThrow(parent);
-            //case TokenType.keyVar: return parserVar(parent);
+            case TokenType.keyStruct: exp = parserStruct(parent); break;
+            //case TokenType.keyThrow: exp = parserThrow(parent); break;
+            //case TokenType.keyVar: exp = parserVar(parent); break;
 
-            case TokenType.unknown: return parseUnknown(parent);
+            case TokenType.unknown: exp = parseUnknown(parent); break;
             case TokenType.empty: assert (false, "empty token");
 
-            case TokenType.typeType: return parseTypeType(parent);
-            case TokenType.typeAny: return parseTypeAny(parent);
-            case TokenType.typeVoid: return parseTypeVoid(parent);
-            case TokenType.typeOr: return parseTypeOr(parent);
-            case TokenType.typeFn: return parseTypeFn(parent);
-            case TokenType.typeNum: return parseTypeNum(parent);
-            case TokenType.typeText: return parseTypeText(parent);
-            case TokenType.typeChar: return parseTypeChar(parent);
+            case TokenType.typeType: exp = parseTypeType(parent); break;
+            case TokenType.typeAny: exp = parseTypeAny(parent); break;
+            case TokenType.typeVoid: exp = parseTypeVoid(parent); break;
+            case TokenType.typeOr: exp = parseTypeOr(parent); break;
+            case TokenType.typeFn: exp = parseTypeFn(parent); break;
+            case TokenType.typeNum: exp = parseTypeNum(parent); break;
+            case TokenType.typeText: exp = parseTypeText(parent); break;
+            case TokenType.typeChar: exp = parseTypeChar(parent); break;
 
-            default: return null;
+            default: break;
+        }
+
+        sepPassed = skipSep() || sepPassed;
+
+        while (current.type == TokenType.braceStart)
+            exp = new ExpFnApply(parent, exp, parseBracedExpList(parent));
+
+        return exp;
+    }
+
+
+    Exp[] parseBracedExpList (Exp parent)
+    {
+        Exp[] list;
+        immutable opposite = oppositeBrace(current.text);
+        nextNonWhiteTok();
+        while (current.text != opposite)
+        {
+            auto e = parse(parent);
+            if (!e)
+            {
+                vctx.remark(textRemark("reached end of file and close brace not found"));
+                return list;
+            }
+
+            list ~= e;
+
+            if (current.type == TokenType.braceEnd)
+            {
+                if (current.text != opposite)
+                    vctx.remark(textRemark("end brace does not match start brace"));
+
+                break;
+            }
+            else if (!sepPassed)
+            {
+                vctx.remark(textRemark("missing comma or new line to separeate expressions"));
+            }
+        }
+
+        nextNonWhiteTok();
+        return list;
+    }
+
+
+    dstring oppositeBrace (dstring brace)
+    {
+        switch (brace)
+        {
+            case "(": return ")";
+            case "[": return "]";
+            case "{": return "}";
+            default: assert (false, "bad brace '" ~ brace.to!string() ~ "'");
         }
     }
 
 
-    TypeType  parseTypeType (Exp parent)
-    {
-        auto tt = new TypeType(parent, null);
-
-        nextNonWhiteTok();
-        if (current.text != "(")
-            assert (false, " type type (");
-
-        tt.type = parse(tt);
-
-        return tt;
-    }
-
-
-    TypeAny  parseTypeAny (Exp parent)
+    TypeAny parseTypeAny (Exp parent)
     {
         nextTok();
         return new TypeAny(parent);
@@ -182,35 +246,10 @@ final class Parser
     }
 
 
-    TypeOr parseTypeOr (Exp parent)
-    {
-        nextNonWhiteTok();
-        auto fna = parseFnApply(parent, null);
-        return new TypeOr(parent, fna.args);
-    }
-
-
-    TypeFn parseTypeFn (Exp parent)
-    {
-        nextNonWhiteTok();
-        auto fna = parseFnApply(parent, null);
-        return new TypeFn(parent, fna.args[0.. $ - 1], fna.args[0]);
-    }
-
-
     TypeNum parseTypeNum (Exp parent)
     {
         nextTok();
         return new TypeNum(parent);
-    }
-
-
-    TypeText parseTypeText (Exp parent)
-    {
-        nextTok();
-        auto t = new TypeText(parent);
-        nextTok();
-        return t;
     }
 
 
@@ -221,6 +260,40 @@ final class Parser
     }
 
 
+    TypeType parseTypeType (Exp parent)
+    {
+        nextNonWhiteTok();
+        auto types = parseBracedExpList(parent);
+        if (types.length != 1)
+            vctx.remark(textRemark("Type takes one argument"));
+        return new TypeType(parent, types[0]);
+    }
+
+
+    TypeOr parseTypeOr (Exp parent)
+    {
+        nextNonWhiteTok();
+        auto types = parseBracedExpList(parent);
+        return new TypeOr(parent, types);
+    }
+
+
+    TypeFn parseTypeFn (Exp parent)
+    {
+        nextNonWhiteTok();
+        auto types = parseBracedExpList(parent);
+        return new TypeFn(parent, types[0.. $ - 1], types[0]);
+    }
+
+    TypeText parseTypeText (Exp parent)
+    {
+        nextTok();
+        auto t = new TypeText(parent);
+        nextTok();
+        return t;
+    }
+
+
     ExpIf parseIf (Exp parent)
     {
         uint startIndex = current.index;
@@ -228,7 +301,6 @@ final class Parser
 
         auto i = new ExpIf(parent);
         i.when = parse(i);
-        skipWhite();
 
         if (current.type == TokenType.keyThen)
         {
@@ -238,7 +310,6 @@ final class Parser
             while (current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
             {
                 i.then ~= parse(i);
-                skipWhite();
             }
 
             if (current.type == TokenType.keyElse)
@@ -248,7 +319,6 @@ final class Parser
                 while (current.type != TokenType.keyEnd)
                 {
                     i.otherwise ~= parse(i);
-                    skipWhite();
                 }
             }
 
@@ -270,96 +340,18 @@ final class Parser
     ValueStruct parserStruct (Exp parent)
     {
         auto s = new ValueStruct(parent);
-        s.exps = parseCurlyBrace(s);
+        s.exps = parseBracedExpList(s);
         return s;
     }
 
 
     Exp parserFn (Exp parent)
     {
-        uint startIndex = current.index;
-
-        nextNonWhiteTok();
-        if (current.text != "(")
-            assert (false, "no brace after fn");
-
         auto f = new ValueFn(parent);
-
         nextNonWhiteTok();
-        if (current.text == ")")
-            nextTok();
-        else
-            f.params = parseFnParameter(f);
-
-        f.exps = parseCurlyBrace (f);
-
-        if (current.text == "(")
-            return parseFnApply(parent, f);
-
+        f.params = cast(StmDeclr[])parseBracedExpList(f); // BUG: cast(StmDeclr[]), should be Exp[]
+        f.exps = parseBracedExpList (f);
         return f;
-    }
-
-
-    Exp[] parseCurlyBrace (Exp parent)
-    {
-        skipWhite();
-        if (current.text == "{")
-            nextNonWhiteTok();
-        else
-            assert (false, "expected curly brace");
-
-        if (current.text == "}")
-        {
-            nextTok();
-            return null;
-        }
-        else
-        {
-            Exp[] items;
-            while (current.text != "}")
-            {
-                auto e = parse(parent);
-                if (!e)
-                    break;
-                items ~= e;
-                skipWhite();
-            }
-            nextTok();
-            return items;
-        }
-    }
-
-
-    StmDeclr[] parseFnParameter (Exp parent)
-    {
-        StmDeclr[] params;
-        while (true)
-        {
-            auto e = parse(parent);
-            auto i = cast(ExpIdent)e;
-            auto d = cast(StmDeclr)e;
-            if (!i && !d)
-            {
-                assert (false, "fn parameter is not identifier or declaration");
-            }
-            else
-            {
-                skipWhite();
-                if (current.type == TokenType.braceEnd && current.text == ")")
-                {
-                    params ~= d ? d : new StmDeclr(parent, i);
-                    nextTok();
-                    return params;
-                }
-                else if (current.type != TokenType.op && current.text != ",")
-                {
-                    assert (false, "no fn arg coma");
-                }
-
-                params ~= d ? d : new StmDeclr(parent, i);
-                nextTok();
-            }
-        }
     }
 
 
@@ -369,7 +361,7 @@ final class Parser
         auto r = new StmReturn(parent);
         r.exp = parse(r);
         if (!r.exp)
-            assert (false, "return without expression");
+            vctx.remark(textRemark("return without expression"));
         return r;
     }
 
@@ -406,54 +398,6 @@ final class Parser
             auto l = new StmLabel (parent, null);
             vctx.remark(LabelWithoutIdentifier(l));
             return l;
-        }
-    }
-
-
-    Exp parseBrace (Exp parent)
-    {
-        auto b = current.text[0];
-
-        if (b != '(')
-            assert (false, "unsupported brace");
-
-        nextTok();
-
-        if (current.type == TokenType.braceEnd)
-            assert (false, "empty braces");
-
-        auto e = parse(parent);
-
-        skipWhite();
-
-        if (current.type != TokenType.braceEnd)
-        {
-            assert (false, "missing closing brace");
-        }
-        else if (current.text[0] != oppositeBrace(b))
-        {
-            assert (false, "closing brace does not matches opening");
-        }
-        else if (e is null)
-        {
-            assert (false, "start brace without expression and unclosed");
-        }
-        else
-        {
-            nextTok();
-            return e;
-        }
-    }
-
-
-    dchar oppositeBrace (dchar brace)
-    {
-        switch (brace)
-        {
-            case '(': return ')';
-            case '[': return ']';
-            case '{': return '}';
-            default: assert (false);
         }
     }
 
@@ -514,23 +458,17 @@ final class Parser
 
     Exp parseIdent (Exp parent)
     {
-        auto exp = parseIdentOnly (parent);
+        auto exp = parseIdentOrOpDot (parent);
         auto i = cast(ExpIdent)exp;
         StmDeclr d;
 
-        if (current.text == "(")
-        {
-            return parseFnApply(parent, i);
-        }
-        else if (i && current.text == ":")
+        if (i && current.text == ":")
         {
             d = new StmDeclr(parent, i);
             i.parent = d;
             nextTok();
             d.type = parse(d);
         }
-
-        skipWhite();
         if (i && current.text == "=") // on assigment i is not required
         {
             if (!d)
@@ -545,58 +483,14 @@ final class Parser
     }
 
 
-    ExpFnApply parseFnApply (Exp parent, Exp i)
-    {
-        ExpFnApply fna;
-        nextNonWhiteTok();
-        if (current.type == TokenType.braceEnd && current.text == ")")
-        {
-            nextTok();
-            fna = new ExpFnApply(parent, i);
-        }
-        else
-        {
-            auto fa = new ExpFnApply(parent, i);
-
-            while (current.text != ")")
-            {
-                fa.args ~= parse(fa);
-                skipWhite();
-
-                if (current.text == ",")
-                {
-                    nextNonWhiteTok();
-                }
-                else if (current.text == ")")
-                {
-                    break;
-                }
-                else
-                {
-                    assert (false, "missing comma in fn apply");
-                }
-            }
-
-            nextTok();
-            fna = fa;
-        }
-
-        skipWhite();
-        if (current.text == "(")
-            return parseFnApply(parent, fna);
-        else
-            return fna;
-    }
-
-
-    Exp parseIdentOnly (Exp parent)
+    Exp parseIdentOrOpDot (Exp parent)
     {
         Exp res = new ExpIdent(parent, current.text);
 
         while (true)
         {
             nextNonWhiteTok();
-            if (current.text != ".")
+            if (current.type != TokenType.dot)
                 break;
 
             auto d = new ExpDot(parent, res, null);

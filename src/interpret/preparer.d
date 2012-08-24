@@ -9,7 +9,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
     foreach (e; exps)
     {
         auto d = cast(StmDeclr)e;
-        if (d && d.ident.str(fv) == name)
+        if (d && d.ident.ident == name)
             return d;
     }
     return null;
@@ -154,11 +154,10 @@ import common, parse.ast, validate.remarks, interpret.builtins;
             visit(p);
         }
 
-        uint expIndex;
-        foreach (e; fn.exps)
+        foreach (ix, e; fn.exps)
         {
             currentFn = fn;
-            currentExpIndex = expIndex++;
+            currentExpIndex = cast(uint)ix;
             e.prepare(this);
         }
     }
@@ -214,11 +213,11 @@ import common, parse.ast, validate.remarks, interpret.builtins;
         foreach (t; i.then)
             t.prepare(this);
 
-        if (!i.otherwise)
+        if (i.otherwise)
+            foreach (o; i.otherwise)
+                o.prepare(this);
+        else
             i.otherwise = [new AstUnknown(i)];
-
-        foreach (o; i.otherwise)
-            o.prepare(this);
     }
 
 

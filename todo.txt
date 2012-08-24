@@ -1,23 +1,24 @@
 TOKENIZER -----------------------------
+! hex numbers
   cancel unclosed text after escape on first line
   cancel unclosed comment on first line
   decimal numbers
-  hex numbers
   hex decimals
   hex escapes
+  decimal unicode escapes
   nested comment
   documentation comments
 
 
 PARSER -----------------------------
 ! cleanup and reliability fixes
-! generate remarks
 ! coma separated statements and struct members
 ! new line separated fn args and params
-  parse array / brace op apply
+! generate remarks
+! parse array / brace op apply
+! include all tokens incl white with exp objects
   comments
   operators
-  include all tokens incl white with exp objects
 
 
 VALIDATOR -----------------------------
@@ -26,7 +27,8 @@ VALIDATOR -----------------------------
 
 
 PREPARER -----------------------------
-! prepare functions on firs call
+! chained declarations
+  prepare functions on firs call
   remark undefined identifiers
   remark multiply defined identifiers
   remark unused identifiers
@@ -37,6 +39,8 @@ PREPARER -----------------------------
 TYPE INFERENCE / CHECK -----------------------------
 ! infer identfier by usage in fn (not only by def)
 ! infer identifier by usage as fn arg
+! infer struct
+! infer array
   report type errors
   report declared vs inffered type dicrepancies
   infer definite assigment
@@ -50,17 +54,18 @@ TYPE INFERENCE / CHECK -----------------------------
 INTERPRETER -----------------------------
 ! struct
 ! builtins with qualified name
-! dynamic and static typing versions
-  array object (empty, first, rest)
-    variable length fn params
-    text is array
-  var / mutable variables
-  ref
-  throw
-  try catch finally /, scope guars
+! array object (empty, first, rest)
+! text is array
+! var / mutable variables
+! ref
+! throw
+! try catch
+! builtin for stack trace
+! builtin in for env
+  dynamic and static typing versions
+  variable length fn params
   contracts
-  builtin for stack trace
-  builtin in for env
+  finally / scope guars
   user overridable struct functions - construct, destruct, clone, ...
   cast
   arrays / mem allocation

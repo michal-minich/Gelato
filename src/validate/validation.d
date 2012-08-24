@@ -1,10 +1,13 @@
 module validate.validation;
 
-import std.algorithm;
+import std.algorithm, std.exception;
 import common, parse.ast, parse.parser, validate.remarks;
 
 
-@trusted final class Validator : IAstVisitor!(void)
+@safe nothrow:
+
+
+final class Validator : IAstVisitor!(void)
 {
     private IValidationContext vctx;
 
@@ -16,7 +19,7 @@ import common, parse.ast, parse.parser, validate.remarks;
     }
 
 
-    void visit (ValueNum n)
+    @trusted  void visit (ValueNum n)
     {
         Remark[] rs;
         auto txt = n.str(fv);
@@ -36,7 +39,7 @@ import common, parse.ast, parse.parser, validate.remarks;
         if (rs.length == 1)
             vctx.remark(rs[0]);
         else if (rs.length > 1)
-            vctx.remark(NumberNotProperlyFormatted(n, rs));
+            vctx.remark(NumberNotProperlyFormatted(n, assumeUnique(rs)));
     }
 
 

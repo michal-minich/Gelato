@@ -6,22 +6,22 @@ import common, parse.ast, validate.validation;
 
 class Remark
 {
-    const dstring code;
+    immutable dstring code;
     Exp subject;
 
-    @safe nothrow this (dstring c, Exp s) { code = c; subject = s; }
+    @safe pure nothrow this (dstring c, Exp s) { code = c; subject = s; }
 
-    @property RemarkSeverity severity () { return sett.remarkLevel.severityOf(this); }
+    @property const RemarkSeverity severity () { return sett.remarkLevel.severityOf(this); }
 
-    @property dstring text () { return sett.remarkTranslation.textOf(this); }
+    @property const dstring text () { return sett.remarkTranslation.textOf(this); }
 }
 
 
 final class GroupRemark : Remark
 {
-    Remark[] children;
+    immutable Remark[] children;
 
-    @safe nothrow this (dstring c, Exp s, Remark[] ch) { super(c, s); children = ch; }
+    @safe nothrow this (dstring c, Exp s, immutable Remark[] ch) { super(c, s); children = ch; }
 }
 
 interface IRemarkTranslation
@@ -162,6 +162,9 @@ final class RemarkTranslation : IRemarkTranslation
 }
 
 
+@safe nothrow:
+
+
 private mixin template r (string name)
 {
     mixin ("Remark " ~ name ~ " (Exp subject) { return new Remark (\""
@@ -170,8 +173,8 @@ private mixin template r (string name)
 
 private mixin template gr (string name)
 {
-    mixin ("Remark " ~ name ~ " (Exp subject, Remark[] children) { return new GroupRemark (\""
-        ~ name ~ "\", subject, children); }");
+    mixin ("Remark " ~ name ~ " (Exp subject, immutable Remark[] children) { "
+        ~ "return new GroupRemark (\"" ~ name ~ "\", subject, children); }");
 }
 
 

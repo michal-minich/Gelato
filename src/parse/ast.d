@@ -43,9 +43,11 @@ enum TokenType
 {
     empty, unknown,
     white, newLine,
-    num, ident, op,
-    textStart, text, textEscape, textEnd,
+    num,
+    ident,
+    dot, coma, op,
     braceStart, braceEnd,
+    textStart, text, textEscape, textEnd,
     commentLine, commentMultiStart, commentMulti, commentMultiEnd,
     keyIf, keyThen, keyElse, keyEnd,
     keyFn, keyReturn,
@@ -338,10 +340,11 @@ final class ExpFnApply : Exp
     Exp ident;
     Exp[] args;
 
-    this (Exp parent, Exp identifier)
+    this (Exp parent, Exp applicable, Exp[] args)
     {
         super(parent);
-        ident = identifier;
+        ident = applicable;
+        this.args = args;
     }
 
     mixin visitImpl;

@@ -88,7 +88,7 @@ final class ConsoleInterpreter
             auto inf = new TypeInferer(context);
             inf.visit(astFile);
 
-            fv.useInferredTypes = true;
+            //fv.useInferredTypes = true;
             writeln(fv.visit(astFile));
 
             if (context.hasBlocker)

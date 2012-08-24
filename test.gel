@@ -1,13 +1,9 @@
 start = fn ()
 {
-    n : Num = 1
-    MyNum = Num
-    MyNum2 = MyNum
-    MyNum3 : MyNum2
-    x : Type(Fn(Any, Num)) = n
-    f = fn () { if 1 then 1 3 else 's' end }
-    print(inc(  fn(a){a}(inc(1)) ))
-    y = fn (a) {  fn(b){ if a then inc(b) else b end }   }
-    print(y(1)(10))
-    print(y(0)(10))
+   a = fn () {}
+   b : Num = 1
+   c = 2
+   d : Num
+   print(inc(b)  'a')
+   x = c
 }

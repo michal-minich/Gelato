@@ -29,12 +29,12 @@ int dbgCounter;
             {
                 auto e = cast(Exp)a;
                 if (e && fv)
-                    write(e.str(fv));
+                    write("'", e.str(fv), "'");
                 else
-                    write(a);
+                    write("'", a.toVisibleCharsText(), "'");
             }
-            else write(a);
-            write(" | ");
+            else write("'", a.toVisibleCharsText(), "'");
+            write(", ");
         }
         writeln();
     }

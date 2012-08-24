@@ -206,7 +206,12 @@ TokenResult parseTextEscapeImpl (const dstring src, ParseContext pc)
 
 TokenResult parseOp (const dstring src)
 {
-    return TokenResult.ok(TokenType.op, lengthWhile!isOp(src));
+    switch (src[0])
+    {
+        case '.': return TokenResult.ok(TokenType.dot, 1);
+        case ',': return TokenResult.ok(TokenType.coma, 1);
+        default:  return TokenResult.ok(TokenType.op, lengthWhile!isOp(src));
+    }
 }
 
 
