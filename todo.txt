@@ -12,11 +12,8 @@ TOKENIZER -----------------------------
 
 PARSER -----------------------------
 ! cleanup and reliability fixes
-! coma separated statements and struct members
-! new line separated fn args and params
 ! generate remarks
 ! parse array / brace op apply
-! include all tokens incl white with exp objects
   comments
   operators
 

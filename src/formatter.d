@@ -56,8 +56,12 @@ import common, parse.ast;
     dstring visit (ValueFn e)
     {
         ++level;
-        immutable bdy = e.exps.length ? dtext(newLine, tab1, "{", newLine, tab,
-                    e.exps.map!(e => e.str(this))().join(newLine ~ tab), newLine, tab1) : " { ";
+        immutable bdy = e.exps.length == 0
+            ? " { "
+            : e.exps.length == 1
+                ? " { " ~ e.exps[0].str(this) ~ " "
+                : dtext(newLine, tab1, "{", newLine, tab,
+                    e.exps.map!(e => e.str(this))().join(newLine ~ tab), newLine, tab1);
 
         immutable txt = dtext("fn (", e.params.map!(p => p.str(this))().join(", "), ")", bdy, "}");
         --level;

@@ -14,8 +14,16 @@ FormatVisitor fv;
 enum newLine = "\r\n";
 
 
+@trusted debug void dbge(Exps...) (Exps as)
+{
+    foreach (a; as)
+       write("'", a.str(fv), "'");
+    writeln();
+}
+
+
 int dbgCounter;
-@trusted debug void dbg(T...) (T as)
+@trusted debug void dbgs(T...) (T as)
 {
     static if (!T.length)
     {
@@ -24,18 +32,7 @@ int dbgCounter;
     else
     {
         foreach (a; as)
-        {
-            static if (is (T : Exp))
-            {
-                auto e = cast(Exp)a;
-                if (e && fv)
-                    write("'", e.str(fv), "'");
-                else
-                    write("'", a.toVisibleCharsText(), "'");
-            }
-            else write("'", a.toVisibleCharsText(), "'");
-            write(", ");
-        }
+            write("'", a.toVisibleCharsText(), "', ");
         writeln();
     }
 }

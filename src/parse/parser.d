@@ -62,14 +62,6 @@ final class Parser
         return current.type == TokenType.newLine || current.type == TokenType.white;
     }
 
-/*
-    void nextNonWhiteTok ()
-    {
-        nextTok();
-        while (!finished && isWhite)
-            nextTok();
-    }
-*/
 
     void nextNonWhiteTok ()
     {
@@ -142,7 +134,7 @@ final class Parser
         switch (current.type)
         {
             case TokenType.num: exp = parseNum(parent); break;
-            case TokenType.ident: exp = parseIdent(parent); break;
+            case TokenType.ident: exp = parseIdentOrDeclr(parent); break;
             case TokenType.textStart: exp = parseText(parent); break;
 
             case TokenType.braceEnd: assert(false, "redudant brace end");
@@ -349,8 +341,28 @@ final class Parser
     {
         auto f = new ValueFn(parent);
         nextNonWhiteTok();
-        f.params = cast(StmDeclr[])parseBracedExpList(f); // BUG: cast(StmDeclr[]), should be Exp[]
+
+        foreach (p; parseBracedExpList(f))
+        {
+            auto d = cast(StmDeclr)p;
+            if (d)
+            {
+                f.params ~= d;
+                continue;
+            }
+
+            auto i = cast(ExpIdent)p;
+            if (i)
+            {
+                f.params ~= new StmDeclr(f, i);
+                continue;
+            }
+
+            vctx.remark(textRemark("fn parameter is not identifer or declration"));
+        }
+
         f.exps = parseBracedExpList (f);
+
         return f;
     }
 
@@ -456,7 +468,7 @@ final class Parser
     }
 
 
-    Exp parseIdent (Exp parent)
+    Exp parseIdentOrDeclr (Exp parent)
     {
         auto exp = parseIdentOrOpDot (parent);
         auto i = cast(ExpIdent)exp;

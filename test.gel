@@ -1,3 +1,4 @@
+
 start = fn ()
 {
    a = fn () {}
@@ -5,5 +6,6 @@ start = fn ()
    c = 2
    d : Num
    print(inc(b)  'a')
-   x = c
+   e = c
+   f = fn (g) { g }
 }
