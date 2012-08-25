@@ -1,5 +1,4 @@
 TOKENIZER -----------------------------
-! hex numbers
   cancel unclosed text after escape on first line
   cancel unclosed comment on first line
   decimal numbers

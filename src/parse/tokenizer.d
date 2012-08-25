@@ -217,6 +217,13 @@ TokenResult parseOp (const dstring src)
 
 TokenResult parseNum (const dstring src)
 {
+    if (src[0] == '#')
+    {
+        auto tr = parseIdentOrNum!(isHexNum, ch => isHexNum(ch) || isUnderscore(ch))(
+            src[1 .. $], TokenType.num);
+        return TokenResult(tr.type, tr.length + 1);
+    }
+
     return parseIdentOrNum!(isNum, ch => isNum(ch) || isUnderscore(ch))(src, TokenType.num);
 }
 
@@ -387,6 +394,12 @@ bool isIdent (const dchar ch)
 bool isNum (const dchar ch)
 {
     return ch >= '0' && ch <= '9';
+}
+
+
+bool isHexNum (const dchar ch)
+{
+    return (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
 }
 
 

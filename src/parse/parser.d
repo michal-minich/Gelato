@@ -462,9 +462,21 @@ final class Parser
 
     ValueNum parseNum (Exp parent)
     {
-        auto n = new ValueNum(parent, current.text.to!long());
+        auto n = new ValueNum(parent, parseNum(current.text));
         nextTok();
         return n;
+    }
+
+
+    long parseNum (dstring str)
+    {
+        immutable s = str.replace("_", "");
+        if (s.length == 0)
+            return 0;
+        else if (s[0] == '#')
+            return s.length == 1 ? 0 : s[1 .. $].to!long(16);
+        else
+            return s.to!long();
     }
 
 

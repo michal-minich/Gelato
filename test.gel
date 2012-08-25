@@ -2,7 +2,7 @@
 start = fn ()
 {
    a = fn () {}
-   b : Num = 1
+   b : Num = #_F_f__
    c = 2
    d : Num
    print(inc(b)  'a')
