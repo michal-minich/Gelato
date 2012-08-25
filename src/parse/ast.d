@@ -1,6 +1,6 @@
 module parse.ast;
 
-import std.stdio, std.algorithm, std.array, std.conv;
+import std.algorithm, std.array, std.conv;
 import common;
 import formatter, validate.validation, validate.inferer, interpret.preparer, interpret.evaluator;
 
@@ -114,6 +114,24 @@ abstract class Exp
     Exp parent;
 
     this (Exp parent) { this.parent = parent; }
+
+
+    @trusted const pure @property tokensText ()
+    {
+        size_t l;
+        foreach (t; tokens)
+            l += t.text.length;
+
+        auto s = new dchar[l];
+        size_t rl;
+        foreach (t; tokens)
+        {
+            s[rl .. rl + t.text.length] = t.text;
+            rl += t.text.length;
+        }
+        return std.exception.assumeUnique(s);
+    }
+
 
     abstract dstring str (FormatVisitor);
 

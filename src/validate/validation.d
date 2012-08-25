@@ -22,7 +22,7 @@ final class Validator : IAstVisitor!(void)
     @trusted  void visit (ValueNum n)
     {
         Remark[] rs;
-        auto txt = n.str(fv);
+        auto txt = n.tokensText;
 
         if (txt.startsWith("_"))
             rs ~= NumberStartsWithUnderscore(n);

@@ -5,7 +5,7 @@ start = fn ()
    b : Num = #_F_f__
    c = 2
    d : Num
-   print(inc(b)  'a')
+   print(inc(b), 'a')
    e = c
    f = fn (g) { g }
 }

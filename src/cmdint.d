@@ -33,7 +33,7 @@ final class ConsoleInterpreterContext : IInterpreterContext
         std.stdio.write (++remarkCounter, "\t", svr, "\t", remark.text);
 
         if (remark.subject)
-            std.stdio.write ("\t", remark.subject.str(fv));
+            std.stdio.write ("\t", remark.subject.tokensText);
 
         writeln();
     }
