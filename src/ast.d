@@ -466,16 +466,12 @@ final class StmReturn : Exp
 
 final class StmDeclr : Exp
 {
-    ExpIdent ident;
+    Exp slot;
     Exp type;
     Exp value;
     size_t paramIndex = typeof(paramIndex).max;
 
-    this (Exp parent, ExpIdent identifier)
-    {
-        super(parent);
-        ident = identifier;
-    }
+    this (Exp parent, Exp slot) { super(parent); this.slot = slot; }
 
     mixin visitImpl;
 }

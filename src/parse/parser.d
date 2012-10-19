@@ -483,27 +483,26 @@ final class Parser
     Exp parseIdentOrDeclr (Exp parent)
     {
         auto exp = parseIdentOrOpDot (parent);
-        auto i = cast(ExpIdent)exp;
         StmDeclr d;
 
-        if (i && current.text == ":")
+        if (exp && current.text == ":")
         {
-            d = new StmDeclr(parent, i);
-            i.parent = d;
+            d = new StmDeclr(parent, exp);
+            exp.parent = d;
             nextTok();
             d.type = parse(d);
         }
-        if (i && current.text == "=") // on assignment i is not required
+        if (exp && current.text == "=") // on assignment i is not required
         {
             if (!d)
-                d = new StmDeclr(parent, i); // it could be also assignment
-            i.parent = d;
+                d = new StmDeclr(parent, exp); // it could be also assignment
+            exp.parent = d;
             nextTok();
             d.value = parse(d);
             return d;
         }
 
-        return d ? d: i;
+        return d ? d : exp;
     }
 
 

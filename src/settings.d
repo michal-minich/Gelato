@@ -57,9 +57,10 @@ final class Settings
         foreach (e; f.exps)
         {
             auto d = cast(StmDeclr)e;
-            if (d.ident.text == "language")
+            auto i = cast(ExpIdent)d.slot;
+            if (i.text == "language")
                 s.language = (cast(ValueText)d.value).value;
-            if (d.ident.text == "remarkLevelName")
+            if (i.text == "remarkLevelName")
                 s.remarkLevelName = (cast(ValueText)d.value).value;
         }
 

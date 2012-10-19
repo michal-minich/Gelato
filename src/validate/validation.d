@@ -93,7 +93,7 @@ final class Validator : IAstVisitor!(void)
 
     void visit (StmDeclr d)
     {
-        visit(d.ident);
+        d.slot.validate(this);
 
         if (d.type)
             d.type.validate(this);

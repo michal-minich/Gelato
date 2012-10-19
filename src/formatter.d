@@ -40,10 +40,10 @@ import common, parse.ast;
 
         auto t = useInferredTypes ? e.infType : e.type;
 
-        if (!t && !e.value) return e.ident.str(this);
-        else if (!t)        return dtext (e.ident.str(this), " = ", e.value.str(this));
-        else if (!e.value)  return dtext (e.ident.str(this), " : ", t.str(this));
-        else                return dtext (e.ident.str(this), " : ", t.str(this),
+        if (!t && !e.value) return e.slot.str(this);
+        else if (!t)        return dtext (e.slot.str(this), " = ", e.value.str(this));
+        else if (!e.value)  return dtext (e.slot.str(this), " : ", t.str(this));
+        else                return dtext (e.slot.str(this), " : ", t.str(this),
                                     " = ", e.value.str(this));
     }
 

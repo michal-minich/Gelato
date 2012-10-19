@@ -10,8 +10,12 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     foreach (e; exps)
     {
         auto d = cast(StmDeclr)e;
-        if (d && d.ident.text == name)
-            return d;
+        if (d)
+        {
+            auto i = cast(ExpIdent)d.slot;
+            if (i && i.text == name)
+                return d;
+        }
     }
     return null;
 }
@@ -91,8 +95,12 @@ private StmDeclr findIdentDelrInExp (dstring ident, Exp e)
 		foreach (e2; exps)
 		{
 			auto d = cast(StmDeclr)e2;
-			if (d && d.ident.text == ident)
-				return d;
+            if (d)
+            {
+                auto i = cast(ExpIdent)d.slot;
+			    if (i && i.text == ident)
+				    return d;
+            }
 		}
 		return null;
 	}
@@ -101,16 +109,23 @@ private StmDeclr findIdentDelrInExp (dstring ident, Exp e)
 	if (fn)
 	{
 		foreach (p; fn.params)
-			if (p.ident.text == ident)
-				return p;
+        {
+            auto i = cast(ExpIdent)p.slot;
+			    if (i && i.text == ident)
+				    return p;
+        }
 
 		foreach (e2; fn.exps)
 		{
 			if (e2 is e)
 				break;
 			auto d = cast(StmDeclr)e2;
-			if (d && d.ident.text == ident)
-				return d;
+            if (d)
+            {
+			    auto i = cast(ExpIdent)d.slot;
+			    if (i && i.text == ident)
+				    return d;
+            }
 		}
 	}
 

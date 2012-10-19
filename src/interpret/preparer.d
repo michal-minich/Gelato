@@ -128,7 +128,11 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
 
     void visit (StmDeclr d)
     {
-        d.ident.declaredBy = d;
+        auto i = cast(ExpIdent)d.slot;
+
+        if (i)
+            i.declaredBy = d;
+
         if (d.type)
             d.type.prepare(this);
         if (d.value)

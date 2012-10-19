@@ -7,4 +7,5 @@ Point = struct
 start = fn ()
 {
 	p = Point()
+	p.x  = 3
 }

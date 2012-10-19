@@ -83,7 +83,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         {
             foreach (argIx, a; fna.args)
             {
-                auto d = new StmDeclr(fna, fn.params[argIx].ident);
+                auto d = new StmDeclr(fna, fn.params[argIx].slot);
                 d.value = a.eval(this);
                 lambda.evaledArgs ~= d;
             }
@@ -93,7 +93,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
                 if (!p.value)
                     assert (false, "parameter has not default value so argument must be specified");
 
-                auto d = new StmDeclr(fna, p.ident);
+                auto d = new StmDeclr(fna, p.slot);
                 d.value = p.eval(this);
                 lambda.evaledArgs ~= d;
             }
