@@ -193,7 +193,6 @@ del Debug\Gelato.obj</preBuildCommand>
    <File path="src\interpret\preparer.d" />
   </Folder>
   <Folder name="parse">
-   <File path="src\parse\ast.d" />
    <File path="src\parse\parser.d" />
    <File path="src\parse\tokenizer.d" />
   </Folder>
@@ -202,6 +201,7 @@ del Debug\Gelato.obj</preBuildCommand>
    <File path="src\validate\remarks.d" />
    <File path="src\validate\validation.d" />
   </Folder>
+  <File path="src\ast.d" />
   <File path="src\cmdint.d" />
   <File path="src\common.d" />
   <File path="src\formatter.d" />
