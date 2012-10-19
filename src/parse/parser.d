@@ -205,7 +205,7 @@ final class Parser
             }
             else if (!sepPassed)
             {
-                vctx.remark(textRemark("missing comma or new line to separeate expressions"));
+                vctx.remark(textRemark("missing comma or new line to separate expressions"));
             }
         }
 
@@ -361,7 +361,7 @@ final class Parser
                 continue;
             }
 
-            vctx.remark(textRemark("fn parameter is not identifer or declration"));
+            vctx.remark(textRemark("fn parameter is not identifier or declaration"));
         }
 
         f.exps = parseBracedExpList (f);
@@ -493,7 +493,7 @@ final class Parser
             nextTok();
             d.type = parse(d);
         }
-        if (i && current.text == "=") // on assigment i is not required
+        if (i && current.text == "=") // on assignment i is not required
         {
             if (!d)
                 d = new StmDeclr(parent, i); // it could be also assignment

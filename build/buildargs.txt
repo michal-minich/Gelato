@@ -2,6 +2,7 @@
 -w
 
 interpret/builtins.d
+interpret/declrfinder.d
 interpret/evaluator.d
 interpret/preparer.d
 

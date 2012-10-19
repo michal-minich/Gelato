@@ -88,9 +88,9 @@ import common, parse.ast;
     }
 
 
-    const dstring visit (ExpIdent e)
+    const dstring visit (ExpIdent i)
     {
-        return e.ident;
+        return i.text;
     }
 
 
@@ -201,10 +201,10 @@ final class Formatter
         /*foreach (e; exps)
         {
             auto decldstring = cast(StmDeclr)e;
-            if (declr.ident.ident == "name")
+            if (declr.ident.text == "name")
                 rl.name = declr.value.str(this);
             else
-                rl.values[declr.ident.ident] = declr.value.str(this).to!RemarkSeverity();
+                rl.values[declr.ident.text] = declr.value.str(this).to!RemarkSeverity();
         }*/
 
         return f;

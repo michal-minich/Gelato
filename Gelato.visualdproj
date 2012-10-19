@@ -187,8 +187,12 @@ del Debug\Gelato.obj</preBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="Gelato">
+  <Folder name="build">
+   <File path="build\buildargs.txt" />
+  </Folder>
   <Folder name="interpert">
    <File path="src\interpret\builtins.d" />
+   <File path="src\interpret\declrfinder.d" />
    <File path="src\interpret\evaluator.d" />
    <File path="src\interpret\preparer.d" />
   </Folder>
@@ -208,5 +212,9 @@ del Debug\Gelato.obj</preBuildCommand>
   <File path="src\localization.d" />
   <File path="src\main.d" />
   <File path="src\settings.d" />
+  <File path="std.gel" />
+  <File path="test.gel" />
+  <File path="test2.gel" />
+  <File path="todo.txt" />
  </Folder>
 </DProject>

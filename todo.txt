@@ -19,7 +19,7 @@ PARSER -----------------------------
 
 VALIDATOR -----------------------------
   syntax
-  intendation level
+  indentation level
 
 
 PREPARER -----------------------------
@@ -33,13 +33,13 @@ PREPARER -----------------------------
 
 
 TYPE INFERENCE / CHECK -----------------------------
-! infer identfier by usage in fn (not only by def)
+! infer identifier by usage in fn (not only by def)
 ! infer identifier by usage as fn arg
 ! infer struct
 ! infer array
   report type errors
-  report declared vs inffered type dicrepancies
-  infer definite assigment
+  report declared vs. inferred type discrepancies
+  infer definite assignment
   infer value origin
   infer value destination
   infer possible values for variable
@@ -49,15 +49,15 @@ TYPE INFERENCE / CHECK -----------------------------
 
 INTERPRETER -----------------------------
 ! struct
-! builtins with qualified name
+! built-ins with qualified name
 ! array object (empty, first, rest)
 ! text is array
 ! var / mutable variables
 ! ref
 ! throw
 ! try catch
-! builtin for stack trace
-! builtin in for env
+! built-in for stack trace
+! built-in in for env
   dynamic and static typing versions
   variable length fn params
   contracts

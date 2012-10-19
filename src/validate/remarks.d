@@ -81,10 +81,10 @@ final class RemarkLevel : IRemarkLevel
         foreach (e; f.exps)
         {
             auto d = cast(StmDeclr)e;
-            if (d.ident.ident == "name")
+            if (d.ident.text == "name")
                 rl.name = d.value.str(fv);
             else
-                rl.values[d.ident.ident] = d.value.str(fv).to!RemarkSeverity();
+                rl.values[d.ident.text] = d.value.str(fv).to!RemarkSeverity();
         }
 
         return rl;
@@ -136,7 +136,7 @@ final class RemarkTranslation : IRemarkTranslation
         foreach (e; f.exps)
         {
             auto d = cast(StmDeclr)e;
-            if (d.ident.ident == "inherit")
+            if (d.ident.text == "inherit")
                 rt.inherit = (cast(ValueText)d.value).value.to!string();
         }
 
@@ -154,7 +154,7 @@ final class RemarkTranslation : IRemarkTranslation
         foreach (e; f.exps)
         {
             auto d = cast(StmDeclr)e;
-            vals[d.ident.ident] = d.value.str(fv);
+            vals[d.ident.text] = d.value.str(fv);
         }
 
         return vals;

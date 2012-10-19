@@ -57,9 +57,9 @@ final class Settings
         foreach (e; f.exps)
         {
             auto d = cast(StmDeclr)e;
-            if (d.ident.ident == "language")
+            if (d.ident.text == "language")
                 s.language = (cast(ValueText)d.value).value;
-            if (d.ident.ident == "remarkLevelName")
+            if (d.ident.text == "remarkLevelName")
                 s.remarkLevelName = (cast(ValueText)d.value).value;
         }
 

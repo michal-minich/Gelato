@@ -371,13 +371,13 @@ final class ExpFnApply : Exp
 
 final class ExpIdent : Exp
 {
-    dstring ident;
+    dstring text;
     StmDeclr declaredBy;
 
     this (Exp parent, dstring identfier)
     {
         super(parent);
-        ident = identfier;
+        text = identfier;
     }
 
     mixin visitImpl;

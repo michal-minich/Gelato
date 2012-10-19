@@ -1,7 +1,7 @@
 module interpret.evaluator;
 
 import std.algorithm, std.array, std.conv;
-import common, parse.ast, validate.remarks, interpret.preparer, interpret.builtins;
+import common, parse.ast, validate.remarks, interpret.preparer, interpret.builtins, interpret.declrfinder;
 
 
 
@@ -62,7 +62,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
                 return bfn.func(context, ea);
             }
 
-            assert (false, "ony fn can be applied");
+            assert (false, "only fn can be applied");
 
         }
 
@@ -84,7 +84,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
             foreach (p; fn.params[fna.args.length .. $])
             {
                 if (!p.value)
-                    assert (false, "parameter has not default value so arg must be specified");
+                    assert (false, "parameter has not default value so argument must be specified");
 
                 auto d = new StmDeclr(fna, p.ident);
                 d.value = p.eval(this);
@@ -100,11 +100,11 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     {
         auto e = i.when.eval(this);
         if (!e)
-            throw new Exception ("if test expression must not evalute to null.");
+            throw new Exception ("if test expression must not evaluate to null.");
 
         auto when = cast(ValueNum)e;
         if (!when)
-            throw new Exception ("if test expression must evalute to number.");
+            throw new Exception ("if test expression must evaluate to number.");
 
         if (!when.value && !i.otherwise)
         {
@@ -133,7 +133,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
             l = l.parentLambda;
         }
 
-        assert (false, "undefined ident");
+        assert (false, "undefined identifier");
     }
 
 
@@ -163,7 +163,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     @trusted Exp visit (StmGoto gt)
     {
         if (gt.labelExpIndex == typeof(gt.labelExpIndex).max)
-            context.except("goto skiped because it has no matching label");
+            context.except("goto skipped because it has no matching label");
         else
             currentLambda.currentExpIndex = gt.labelExpIndex;
 
