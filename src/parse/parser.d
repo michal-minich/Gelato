@@ -521,7 +521,7 @@ final class Parser
             res = d;
             nextNonWhiteTok();
             if (current.type != TokenType.ident)
-                assert (false, "ident expected after dot");
+                assert (false, "identifier expected after dot");
             d.member = current.text;
         }
 

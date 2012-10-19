@@ -162,5 +162,7 @@ final class Validator : IAstVisitor!(void)
 
     void visit (TypeChar) { }
 
+    void visit (TypeStruct) { }
+
     void visit (BuiltinFn) { }
 }

@@ -62,8 +62,15 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
                 return bfn.func(context, ea);
             }
 
-            assert (false, "only fn can be applied");
+            auto s = cast(ValueStruct)exp;
+            if (s)
+            {
+                auto fn = new ValueFn(null);
+                auto lambda = new ExpLambda(currentLambda, fn);
+                return lambda;
+            }
 
+            assert (false, "only fn, built in fn or struct can be applied");
         }
 
         auto fn = cast(ValueFn)f;
@@ -202,4 +209,6 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     Exp visit (TypeText) { return null; }
 
     Exp visit (TypeChar) { return null; }
+
+    Exp visit (TypeStruct) { return null; }
 }

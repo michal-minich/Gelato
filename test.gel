@@ -1,11 +1,10 @@
+Point = struct
+{
+	x = 1
+	y = 2
+}
 
 start = fn ()
 {
-   a = fn () {}
-   b : Num = #_F_f__
-   c = 2
-   d : Num
-   print(inc(b), 'a')
-   e = c
-   f = fn (g) { g }
+	p = Point()
 }

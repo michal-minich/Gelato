@@ -173,8 +173,9 @@ import common, parse.ast;
 
     const dstring visit (TypeChar) { return "Char"; }
 
-    const dstring visit (BuiltinFn) { assert (false, "built in fn has no textual representation"); }
+    const dstring visit (TypeStruct) { return "struct { TODO }"; }
 
+    const dstring visit (BuiltinFn) { assert (false, "built in fn has no textual representation"); }
 
     dstring visit (TypeOr or)
     {

@@ -17,19 +17,8 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
 
     void visit (ValueStruct s)
     {
-        auto f = new ValueFn(s);
         foreach (e; s.exps)
-        {
-            auto id = cast(ExpIdent)e;
-            auto d = cast(StmDeclr)e;
-            if (!id && !d)
-                assert (false, "struct can contain only declarations or identifiers");
-            else
-                f.params ~= d ? d : new StmDeclr(s, id);
-        }
-        s.exps = null;
-        f.exps ~= new ValueFn (s);
-        s.constructor = f;
+            e.prepare(this);
     }
 
 
@@ -185,4 +174,6 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
     void visit (TypeText) { }
 
     void visit (TypeChar) { }
+
+    void visit (TypeStruct) { }
 }

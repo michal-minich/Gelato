@@ -90,6 +90,7 @@ interface IAstVisitor (R)
     R visit (TypeNum);
     R visit (TypeText);
     R visit (TypeChar);
+    R visit (TypeStruct);
 }
 
 
@@ -244,6 +245,18 @@ final class TypeChar: Exp
     this () { super(null); }
 
     this (Exp parent) { super(parent); }
+
+    mixin visitImpl;
+}
+
+
+final class TypeStruct: Exp
+{
+    Exp value;
+
+    this (Exp value) { this(null, value); }
+
+    this (Exp parent, Exp value) { super(parent); this.value = value; }
 
     mixin visitImpl;
 }

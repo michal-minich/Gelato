@@ -108,7 +108,10 @@ final class TypeInferer : IAstVisitor!(Exp)
         foreach (e; fna.args)
             e.infer(this);
 
-        fna.infType = (cast(TypeFn)fna.applicable.infer(this)).retType;
+        auto applicableType = fna.applicable.infer(this);
+        auto fn = cast(TypeFn)applicableType;
+
+        fna.infType = fn ? fn.retType : applicableType /* struct */;
 
         return fna.infType;
     }
@@ -151,10 +154,12 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (ValueStruct s )
+    Exp visit (ValueStruct s)
     {
         foreach (e; s.exps)
             e.infer(this);
+
+        s.infType = new TypeStruct(null, s); // TODO: there should be identifier
         return s.infType;
     }
 
@@ -218,4 +223,6 @@ final class TypeInferer : IAstVisitor!(Exp)
     Exp visit (TypeText tt) { return new TypeType(null, tt); }
 
     Exp visit (TypeChar tch) { return new TypeType(null, tch); }
+
+    Exp visit (TypeStruct s) { return new TypeType(null, s); }
 }
