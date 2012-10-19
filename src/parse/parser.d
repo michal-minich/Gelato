@@ -118,7 +118,9 @@ final class Parser
         auto startIndex = current.index;
         auto e = parse2(parent);
         if (e)
-            e.tokens = toks2[startIndex .. current.index];
+        {
+            e.tokens = toks2[startIndex .. current.index + 1];
+        }
         return e;
     }
 
@@ -150,7 +152,7 @@ final class Parser
             case TokenType.keyGoto: exp = parserGoto(parent); break;
             case TokenType.keyLabel: exp = parserLabel(parent); break;
 
-            case TokenType.keyStruct: exp = parserStruct(parent); break;
+            case TokenType.keyStruct: exp = parseStruct(parent); break;
             //case TokenType.keyThrow: exp = parserThrow(parent); break;
             //case TokenType.keyVar: exp = parserVar(parent); break;
 
@@ -329,9 +331,10 @@ final class Parser
     }
 
 
-    ValueStruct parserStruct (Exp parent)
+    ValueStruct parseStruct (Exp parent)
     {
         auto s = new ValueStruct(parent);
+        nextNonWhiteTok();
         s.exps = parseBracedExpList(s);
         return s;
     }
@@ -462,21 +465,18 @@ final class Parser
 
     ValueNum parseNum (Exp parent)
     {
-        auto n = new ValueNum(parent, parseNum(current.text));
+        long num;
+        immutable s = current.text.replace("_", "");
+        if (s.length == 0)
+            num = 0;
+        else if (s[0] == '#')
+            num = s.length == 1 ? 0 : s[1 .. $].to!long(16);
+        else
+            num = s.to!long();
+
+        auto n = new ValueNum(parent, num);
         nextTok();
         return n;
-    }
-
-
-    long parseNum (dstring str)
-    {
-        immutable s = str.replace("_", "");
-        if (s.length == 0)
-            return 0;
-        else if (s[0] == '#')
-            return s.length == 1 ? 0 : s[1 .. $].to!long(16);
-        else
-            return s.to!long();
     }
 
 

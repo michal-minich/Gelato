@@ -22,7 +22,7 @@ final class Validator : IAstVisitor!(void)
     @trusted  void visit (ValueNum n)
     {
         Remark[] rs;
-        auto txt = n.tokensText;
+        auto txt = n.tokens[0].text[0] == '#' ? n.tokensText[1 .. $] : n.tokensText;
 
         if (txt.startsWith("_"))
             rs ~= NumberStartsWithUnderscore(n);
@@ -66,7 +66,7 @@ final class Validator : IAstVisitor!(void)
 
     void visit (ExpFnApply fna)
     {
-        fna.ident.validate(this);
+        fna.applicable.validate(this);
 
         foreach (a; fna.args)
             a.validate(this);

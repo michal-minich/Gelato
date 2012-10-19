@@ -48,7 +48,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 
     @trusted Exp visit (ExpFnApply fna)
     {
-        auto exp = fna.ident.eval(this);
+        auto exp = fna.applicable.eval(this);
         auto f = cast(ValueFn)exp;
 
         if (!f)

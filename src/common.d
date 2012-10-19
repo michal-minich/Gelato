@@ -1,8 +1,9 @@
 module common;
 
 
-import std.stdio, std.array, std.range, std.algorithm, std.conv,
-    std.string, std.file, std.utf, std.path;
+import std.stdio, std.range, std.array, std.range, std.algorithm, std.conv,
+    std.string, std.utf, std.path;
+import std.file : readText, exists, isFile;
 import settings, formatter, parse.ast, parse.parser, parse.tokenizer, validate.remarks,
     interpret.evaluator;
 
@@ -14,27 +15,59 @@ FormatVisitor fv;
 enum newLine = "\r\n";
 
 
-@trusted debug void dbge(Exps...) (Exps as)
+@trusted debug void dbg (T) (T a, bool nl = true)
 {
-    foreach (a; as)
-       write("'", a.str(fv), "'");
+    static if (is(T : Exp))
+    {
+        auto e = cast(Exp)a;
+        write(e ? e.str(fv).toVisibleCharsText() : "NULL");
+
+        if (nl)
+            writeln();
+    }
+    else static if (is(T : Exp[]))
+    {
+        foreach (i, e; a)
+        {
+            write("|", i, "|");
+            dbg(e);
+        }
+    }
+    else
+    {
+        write(a.to!dstring().toVisibleCharsText());
+
+        if (nl)
+            writeln();
+    }
+}
+
+
+@safe @property O[] of (O, I) (I[] objs)
+{
+    O[] res;
+    foreach (o; objs)
+    {
+        auto ot = cast(O)o;
+        if (ot)
+            res ~= ot;
+    }
+    return res;
+}
+
+
+@trusted debug void dbg (T...) (T items)
+{
+    foreach (i; items)
+        dbg(i, false);
     writeln();
 }
 
 
 int dbgCounter;
-@trusted debug void dbgs(T...) (T as)
+@trusted debug void dbg () ()
 {
-    static if (!T.length)
-    {
-        writeln("DEBUG ", ++dbgCounter);
-    }
-    else
-    {
-        foreach (a; as)
-            write("'", a.toVisibleCharsText(), "', ");
-        writeln();
-    }
+    writeln("DEBUG ", ++dbgCounter);
 }
 
 
@@ -83,14 +116,18 @@ interface IValidationContext
 }
 
 
-interface IInterpreterContext : IValidationContext
+interface IPrinterContext
 {
     void print (dstring);
 
     void println ();
 
     void println (dstring);
+}
 
+
+interface IInterpreterContext : IValidationContext, IPrinterContext
+{
     void except (dstring ex);
 }
 

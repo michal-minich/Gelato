@@ -355,13 +355,13 @@ final class ExpLambda : Exp
 
 final class ExpFnApply : Exp
 {
-    Exp ident;
+    Exp applicable;
     Exp[] args;
 
     this (Exp parent, Exp applicable, Exp[] args)
     {
         super(parent);
-        ident = applicable;
+        this.applicable = applicable;
         this.args = args;
     }
 

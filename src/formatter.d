@@ -7,6 +7,8 @@ import common, parse.ast;
 @trusted pure final class FormatVisitor : IAstVisitor!(dstring)
 {
     bool useInferredTypes;
+    bool printOriginalParse;
+
     private uint level;
     enum dstring tabs = "    "d.replicate(16);
 
@@ -33,6 +35,9 @@ import common, parse.ast;
 
     dstring visit (StmDeclr e)
     {
+        if (printOriginalParse && !e.parent)
+            return e.value.str(this);
+
         auto t = useInferredTypes ? e.infType : e.type;
 
         if (!t && !e.value) return e.ident.str(this);
@@ -45,9 +50,13 @@ import common, parse.ast;
 
     dstring visit (ValueStruct e)
     {
+        auto exps = e.exps.map!(d => d.str(this))().join(newLine ~ tab);
+
+        if (printOriginalParse && !e.parent)
+            return exps;
+
         ++level;
-        immutable txt = dtext("struct", newLine, tab1, "{", newLine, tab,
-            e.exps.map!(d => d.str(this))().join(newLine ~ tab), newLine, tab1, "}");
+        immutable txt = dtext("struct", newLine, tab1, "{", newLine, tab, exps, newLine, tab1, "}");
         --level;
         return txt;
     }
@@ -71,7 +80,10 @@ import common, parse.ast;
 
     dstring visit (ExpFnApply e)
     {
-        return dtext(e.ident.str(this),
+        if (printOriginalParse && !e.parent)
+            return e.applicable.str(this);
+
+        return dtext(e.applicable.str(this),
             "(", e.args ? e.args.map!(a => a.str(this))().join(", ") : "", ")");
     }
 

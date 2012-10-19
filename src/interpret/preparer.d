@@ -223,7 +223,7 @@ import common, parse.ast, validate.remarks, interpret.builtins;
 
     void visit (ExpFnApply fna)
     {
-        fna.ident.prepare(this);
+        fna.applicable.prepare(this);
 
         foreach (a; fna.args)
             a.prepare(this);

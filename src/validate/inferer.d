@@ -108,7 +108,7 @@ final class TypeInferer : IAstVisitor!(Exp)
         foreach (e; fna.args)
             e.infer(this);
 
-        fna.infType = (cast(TypeFn)fna.ident.infer(this)).retType;
+        fna.infType = (cast(TypeFn)fna.applicable.infer(this)).retType;
 
         return fna.infType;
     }
