@@ -196,7 +196,7 @@ TokenResult parseTextEscapeImpl (const dstring src, ParseContext pc)
             return TokenResult.error(TokenType.textEscape, 1, pc);
 
         immutable ch = src[1];
-        if (ch == 'n' || ch == 'r' || ch == 't')
+        if (ch == 'n' || ch == 'r' || ch == 't' || ch == '"' || ch == '\'' || ch == '\\')
             return TokenResult.ok(TokenType.textEscape, 2, pc);
         return TokenResult.error(TokenType.textEscape, 2, pc);
     }

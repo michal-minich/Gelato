@@ -187,7 +187,9 @@ void cmdError (string[] text ...)
         .replace("\\n", "\n")
         .replace("\\r", "\r")
         .replace("\\t", "\t")
-        .replace("\\\\", "\\");
+        .replace("\\\\", "\\")
+        .replace("\\\"", "\"")
+        .replace("\\\'", "\'");
 }
 /*
     switch (ptChar.capture[0])

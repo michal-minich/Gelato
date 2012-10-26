@@ -25,7 +25,8 @@ final class Parser
         vctx = valContext;
         toks = tokens;
         toks2 = tokens;
-        current = toks.front;
+        if (!finished)
+            current = toks.front;
     }
 
 

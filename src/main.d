@@ -14,8 +14,11 @@ int main (string[] args)
     version (unittest)
     {
         import tester;
-        test();
-        readln();
+        auto success = test("tests.txt");
+
+        if (!success)
+            readln();
+
         return 0;
     }
     else

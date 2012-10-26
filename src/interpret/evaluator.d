@@ -35,14 +35,17 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     {
         auto exps = lambda.fn.exps;
         lambda.currentExpIndex = 0;
+        Exp lastExp;
         Exp e;
         while (lambda.currentExpIndex < exps.length)
         {
             currentScope = lambda;
-            e = exps[lambda.currentExpIndex].eval(this);
+            lastExp = exps[lambda.currentExpIndex];
+            e = lastExp.eval(this);
             ++lambda.currentExpIndex;
         }
-        return e;
+
+        return exps.length == 1 || cast(StmReturn)lastExp ? e : null;
     }
 
 

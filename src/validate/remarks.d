@@ -83,7 +83,7 @@ final class RemarkLevel : IRemarkLevel
             auto d = cast(StmDeclr)e;
             auto i = cast(ExpIdent)d.slot;
             if (i.text == "name")
-                rl.name = d.value.str(fv);
+                rl.name = (cast(ValueText)d.value).value;
             else
                 rl.values[i.text] = d.value.str(fv).to!RemarkSeverity();
         }
@@ -157,7 +157,7 @@ final class RemarkTranslation : IRemarkTranslation
         {
             auto d = cast(StmDeclr)e;
             auto i = cast(ExpIdent)d.slot;
-            vals[i.text] = d.value.str(fv);
+            vals[i.text] = (cast(ValueText)d.value).value;
         }
 
         return vals;

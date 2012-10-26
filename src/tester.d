@@ -4,7 +4,7 @@ import std.stdio, std.range, std.array, std.range, std.algorithm, std.conv,
     std.string, std.utf, std.path;
 import std.file : readText, exists, isFile;
 import common, settings, formatter, parse.ast, parse.parser, parse.tokenizer, validate.remarks,
-    interpret.preparer, interpret.evaluator;
+    validate.validation, interpret.preparer, interpret.evaluator;
 
 
 final class TestInterpreterContext : IInterpreterContext
@@ -27,12 +27,15 @@ final class TestInterpreterContext : IInterpreterContext
 
     void remark (Remark remark)
     {
+        if (remark.text == "Missing start function")
+            return;
+
         auto svr = remark.severity;
 
         if (svr == RemarkSeverity.blocker)
             hasBlocker = true;
 
-        remarks ~= remarks;
+        remarks ~= remark;
     }
 
     void except (dstring ex)
@@ -64,9 +67,9 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (StmReturn e) { return "StmReturn"; }
 
-    const dstring visit (ValueText e){ return e.value.toVisibleCharsText(); }
+    const dstring visit (ValueText e){ return e.value; }
 
-    const dstring visit (ValueChar e) { return e.value.to!dstring().toVisibleCharsChar(); }
+    const dstring visit (ValueChar e) { return e.value.to!dstring(); }
 
     const dstring visit (ExpIf e) { return "ExpIf"; }
 
@@ -103,21 +106,28 @@ final class TestInterpreterContext : IInterpreterContext
 
 
 
-void test ()
+bool test (string filePath)
 {
     auto testsExecuted = 0;
     auto testsFailed = 0;
     auto testsCrashed = 0;
+    auto testsSkipped = 0;
 
     dstring testPrefix = "";
 
     auto tfv = new TestFormatVisitor;
 
-    foreach (line; File("tests.csv").byLine())
+    foreach (line; File(filePath).byLine())
     {
         if (line.length > 0 && line[0] == '@')
         {
             testPrefix = line[2 .. $ - 2].to!dstring();
+            continue;
+        }
+
+        if (line.startsWith("--"))
+        {
+            ++testsSkipped;
             continue;
         }
 
@@ -129,23 +139,14 @@ void test ()
             continue;
         }
 
-        auto expected = line[1 .. tabIx - 1].to!dstring();
-        auto codeStart = line[tabIx + 1 .. $];
-        auto code = line[tabIx + codeStart.countUntil('"') + 2 .. $ - 2].to!dstring();
-
-        switch (expected)
-        {
-            case "\n": expected = "\n"; break;
-            case "\r": expected = "\r"; break;
-            case "\t": expected = "\t"; break;
-            default:
-        }
-
-        auto thisFailed = false;
-        auto context = new TestInterpreterContext;
-
         ++testsExecuted;
 
+        auto expectedStr = line[1 .. tabIx - 1].to!dstring();
+        auto expected = expectedStr.replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t");
+        auto codeStart = line[tabIx + 1 .. $];
+        auto code = line[tabIx + codeStart.countUntil('"') + 2 .. $ - 2].to!dstring();
+        auto thisFailed = false;
+        auto context = new TestInterpreterContext;
         auto fullCode = testPrefix ~ code;
 
         try
@@ -168,6 +169,17 @@ void test ()
                 errPrint(fullCode, context);
                 continue;
             }
+            
+            
+            auto val = new Validator(context);
+            val.visit(astFile);
+
+            if (context.hasBlocker)
+            {
+                ++testsFailed;
+                errPrint(fullCode, context);
+                continue;
+            }
 
             auto ev = new Evaluator(context);
             auto res = ev.visit(astFile);
@@ -179,10 +191,10 @@ void test ()
 
             auto evalFailed = resStr != expected;
 
-            if (evalFailed)
+            if (evalFailed || context.remarks || context.exceptions)
             {
                 ++testsFailed;
-                errPrint(fullCode, context, expected, resStr);
+                errPrint(fullCode, context, expectedStr, resStr);
                 continue;
             }
         }
@@ -190,51 +202,51 @@ void test ()
         {
             ++testsCrashed;
             thisFailed = true;
-            writeln("Code: ", fullCode);
-            writeln("Expected: ", "\"" ~ expected ~ "\"");
+            writeln("Code:      ", fullCode);
+            writeln("Expected:  ", "\"" ~ expected ~ "\"");
             writeln("Exception: ", t.msg);
-            // writeln(t.stacktrace);
             writeln("-------------------------------------------------------------------------------");
         }
     }
 
+    if (testsFailed == 0 && testsCrashed == 0)
+        write("ALL OK, ");
+
     write("Tests executed: ", testsExecuted);
 
-    if (testsFailed == 0 && testsCrashed == 0)
-    {
-        writeln("ALL OK");
-    }
-    else
-    {
-        writeln();
-        writeln("Tests failed:   ", testsFailed);
-        writeln("Tests crashed:  ", testsCrashed);
-    }
+    if (testsFailed != 0)
+        write(", failed: ", testsFailed);
+
+    if (testsCrashed != 0)
+        write(", crashed: ", testsCrashed);
+
+    if (testsSkipped != 0)
+        write(", skipped: ", testsSkipped);
+
+    writeln();
+
+    return testsFailed == 0 && testsCrashed == 0;
 }
 
 
 void errPrint (dstring code, TestInterpreterContext context)
 {
-    writeln("Code: ", code);
-
-    foreach (r; context.remarks)
-        writeln("Remark: ", r.severity, " ", r.text);
-
-    foreach (ex; context.exceptions)
-        writeln("App Exception: ", ex);
-
-    writeln("-------------------------------------------------------------------------------");
+    errPrint (code, context, null, null);
 }
 
 
 void errPrint (dstring code, TestInterpreterContext context, dstring expected, dstring resStr)
 {
-    writeln("Code: ", code);
-    writeln("Expected: ", "\"" ~ expected ~ "\"");
-    writeln("Result: ", "\"" ~ resStr ~ "\"");
+    writeln("Code:     ", code);
+
+    if (expected !is null && resStr !is null)
+    {
+        writeln("Expected: ", "\"" ~ expected ~ "\"");
+        writeln("Result:   ", "\"" ~ resStr ~ "\"");
+    }
 
     foreach (r; context.remarks)
-        writeln("Remark: ", r.severity, " ", r.text);
+        writeln("Remark:   ", r.severity, " - ", r.text);
 
     foreach (ex; context.exceptions)
         writeln("App Exception: ", ex);

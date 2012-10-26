@@ -310,7 +310,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
   <File path="test.gel" />
   <File path="test2.gel" />
   <File path="src\tester.d" />
-  <File path="tests.csv" />
+  <File path="tests.txt" />
   <File path="todo.txt" />
  </Folder>
 </DProject>
