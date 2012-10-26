@@ -11,10 +11,20 @@ int main (string[] args)
     sett = Settings.beforeLoad;
     sett = Settings.load (new ConsoleInterpreterContext, dirName(buildNormalizedPath(args[0])));
 
-    auto task = InterpretTask.parse (args);
+    version (unittest)
+    {
+        import tester;
+        test();
+        readln();
+        return 0;
+    }
+    else
+    {
+        auto task = InterpretTask.parse (args);
 
-    auto ci = new ConsoleInterpreter;
-    auto r = ci.process (task);
-	readln();
-	return r;
+        auto ci = new ConsoleInterpreter;
+        auto r = ci.process (task);
+        readln();
+        return r;
+    }
 }

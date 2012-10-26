@@ -48,7 +48,6 @@ TYPE INFERENCE / CHECK -----------------------------
 
 
 INTERPRETER -----------------------------
-! struct
 ! built-ins with qualified name
 ! array object (empty, first, rest)
 ! text is array

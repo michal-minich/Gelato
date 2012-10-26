@@ -92,24 +92,6 @@ ValueFile parseFile (IValidationContext vctx, string filePath)
 }
 
 
-void interpretFile (IInterpreterContext icontext, string filePath)
-{
-    (new Evaluator(icontext)).visit(parseFile(icontext, filePath));
-}
-
-
-void interpretString (IInterpreterContext icontext, dstring src)
-{
-    (new Evaluator(icontext)).visit(parseString(icontext, src));
-}
-
-
-void interpretTokens (IInterpreterContext icontext, Token[] toks)
-{
-    (new Evaluator(icontext)).visit((new Parser(icontext, toks)).parseAll());
-}
-
-
 interface IValidationContext
 {
     void remark (Remark);

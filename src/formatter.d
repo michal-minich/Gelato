@@ -4,7 +4,7 @@ import std.algorithm, std.array, std.conv;
 import common, parse.ast;
 
 
-@trusted pure final class FormatVisitor : IAstVisitor!(dstring)
+@trusted pure final class FormatVisitor : IFormatVisitor
 {
     bool useInferredTypes;
     bool printOriginalParse;

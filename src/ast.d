@@ -95,9 +95,12 @@ interface IAstVisitor (R)
 }
 
 
+alias IAstVisitor!(dstring) IFormatVisitor;
+
+
 mixin template visitImpl ()
 {
-    override dstring str (FormatVisitor v) { return v.visit(this); }
+    override dstring str (IFormatVisitor v) { return v.visit(this); }
 
     override Exp eval (Evaluator v) { return v.visit(this); }
 
@@ -135,7 +138,7 @@ abstract class Exp
     }
 
 
-    abstract dstring str (FormatVisitor);
+    abstract dstring str (IFormatVisitor);
 
     abstract Exp eval (Evaluator);
 
