@@ -17,18 +17,25 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
 
     void visit (ValueStruct s)
     {
+        Exp[] ds;
+
         foreach (e; s.exps)
-            e.prepare(this);
+        {
+            if (cast(StmDeclr)e)
+            {
+                ds ~= e;
+                e.prepare(this);
+            }
+        }
+
+        s.exps = ds;
     }
 
 
     void visit (ValueFn fn)
     {
-        foreach (ix, p; fn.params)
-        {
-            p.paramIndex = ix;
+        foreach (p; fn.params)
             visit(p);
-        }
 
         foreach (ix, e; fn.exps)
         {
@@ -53,7 +60,7 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
                 if (l.label)
                     vctx.remark(textRemark("goto will go to last label in function", l));
                 else
-                    vctx.remark(textRemark("goto will go to first unamed label", l));
+                    vctx.remark(textRemark("goto will go to first unnamed label", l));
             }
         }
         else
@@ -135,21 +142,26 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
 
         if (d.type)
             d.type.prepare(this);
+
         if (d.value)
             d.value.prepare(this);
     }
 
 
-    void visit (ExpIdent ident) { ident.declaredBy = getIdentDeclaredBy(ident); }
+    @trusted void visit (ExpIdent ident)
+    { 
+        ident.declaredBy = getIdentDeclaredBy(ident);
 
-
-    void visit (ExpDot dot)
-    {
+        assert (ident.declaredBy, "undefined identifier " ~ ident.text.to!string());
     }
 
-    void visit (StmReturn r) { r.exp.prepare(this);}
+    void visit (ExpScope) { assert (false, "ExpScope prepare"); }
 
-    void visit (ExpLambda l) { visit(l.fn); }
+    void visit (ExpLambda l) { assert (false, "ExpLambda prepare"); }
+
+    void visit (ExpDot dot) { dot.record.prepare(this); }
+
+    void visit (StmReturn r) { r.exp.prepare(this);}
 
     void visit (StmLabel) { }
 

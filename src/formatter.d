@@ -159,7 +159,17 @@ import common, parse.ast;
     }
 
 
-    const dstring visit (ExpDot) { return "."; }
+    dstring visit (ExpScope sc) 
+    {
+        dstring bdy;
+        foreach (ix, d; sc.declarations)
+            bdy ~= newLine ~ tab ~ d.slot.str(this) ~ " = " ~ sc.values[ix].str(this);
+
+        return "{ "~ bdy ~ " }"; 
+    }
+
+
+    dstring visit (ExpDot dot) { return dot.record.str(this) ~ "." ~ dot.member; }
 
     dstring visit (TypeType tt) { return dtext("Type(", tt.type.str(this) ,")"); }
 

@@ -76,6 +76,7 @@ interface IAstVisitor (R)
     R visit (ExpLambda);
     R visit (ExpIf);
     R visit (ExpDot);
+    R visit (ExpScope);
 
     R visit (StmDeclr);
     R visit (StmLabel);
@@ -353,14 +354,23 @@ final class BuiltinFn : Exp
 }
 
 
-final class ExpLambda : Exp
+class ExpScope : Exp
+{
+    StmDeclr[] declarations;
+    Exp[] values;
+
+    this (ExpScope ps, StmDeclr[] declrs) { super (ps); declarations = declrs; }
+
+    mixin visitImpl;
+}
+
+
+final class ExpLambda : ExpScope
 {
     ValueFn fn;
-    ExpLambda parentLambda;
     uint currentExpIndex;
-    StmDeclr[] evaledArgs;
 
-    this (ExpLambda pl, ValueFn f) { super (null); parentLambda = pl; fn = f; }
+    this (ExpScope ps, ValueFn fn) { super (ps, fn.params); this.fn = fn; }
 
     mixin visitImpl;
 }

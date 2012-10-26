@@ -345,23 +345,25 @@ final class Parser
         auto f = new ValueFn(parent);
         nextNonWhiteTok();
 
-        foreach (p; parseBracedExpList(f))
+        foreach (ix, p; parseBracedExpList(f))
         {
             auto d = cast(StmDeclr)p;
+            if (!d)
+            {
+                auto i = cast(ExpIdent)p;
+                if (i)
+                    d = new StmDeclr(f, i);
+            }
+
             if (d)
             {
+                d.paramIndex = ix;
                 f.params ~= d;
-                continue;
             }
-
-            auto i = cast(ExpIdent)p;
-            if (i)
+            else
             {
-                f.params ~= new StmDeclr(f, i);
-                continue;
+                vctx.remark(textRemark("fn parameter is not identifier or declaration"));
             }
-
-            vctx.remark(textRemark("fn parameter is not identifier or declaration"));
         }
 
         f.exps = parseBracedExpList (f);

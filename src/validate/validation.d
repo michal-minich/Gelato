@@ -146,6 +146,8 @@ final class Validator : IAstVisitor!(void)
     }
 
 
+    void visit (ExpScope) { }
+
     void visit (TypeType) { }
 
     void visit (TypeAny) { }

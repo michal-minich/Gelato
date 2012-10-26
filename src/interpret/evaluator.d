@@ -11,7 +11,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     {
         IInterpreterContext context;
         PreparerForEvaluator prep;
-        ExpLambda currentLambda;
+        ExpScope currentScope;
     }
 
 
@@ -38,7 +38,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         Exp e;
         while (lambda.currentExpIndex < exps.length)
         {
-            currentLambda = lambda;
+            currentScope = lambda;
             e = exps[lambda.currentExpIndex].eval(this);
             ++lambda.currentExpIndex;
         }
@@ -65,9 +65,13 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
             auto s = cast(ValueStruct)exp;
             if (s)
             {
-                auto fn = new ValueFn(null);
-                auto lambda = new ExpLambda(currentLambda, fn);
-                return lambda;
+                auto declrs = cast(StmDeclr[])s.exps; // sure cast
+                auto sc = new ExpScope(currentScope, declrs);
+
+                foreach (d; declrs)
+                    sc.values ~= d.value.eval(this);
+
+                return sc;
             }
 
             assert (false, "only fn, built in fn or struct can be applied");
@@ -77,25 +81,17 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 
         assert (fn, "cannot apply undefined fn");
 
-        auto lambda = new ExpLambda(currentLambda, fn);
+        auto lambda = new ExpLambda(currentScope, fn);
 
         if (fn.params)
         {
-            foreach (argIx, a; fna.args)
-            {
-                auto d = new StmDeclr(fna, fn.params[argIx].slot);
-                d.value = a.eval(this);
-                lambda.evaledArgs ~= d;
-            }
+            foreach (a; fna.args)
+                lambda.values ~= a.eval(this);
 
             foreach (p; fn.params[fna.args.length .. $])
             {
-                if (!p.value)
-                    assert (false, "parameter has not default value so argument must be specified");
-
-                auto d = new StmDeclr(fna, p.slot);
-                d.value = p.eval(this);
-                lambda.evaledArgs ~= d;
+                assert (p.value, "parameter has not default value so argument must be specified");
+                lambda.values ~= p.eval(this);
             }
         }
 
@@ -121,26 +117,27 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         {
             auto fn = new ValueFn (i);
             fn.exps = when.value ? i.then : i.otherwise;
-            return visit(new ExpLambda(currentLambda, fn));
+            return visit(new ExpLambda(currentScope, fn));
         }
     }
 
 
-    Exp visit (ExpIdent ident){
-
+    Exp visit (ExpIdent ident)
+    {
         auto d = ident.declaredBy;
         if (d.paramIndex == typeof(d.paramIndex).max)
             return d.value.eval(this);
 
-        auto l = currentLambda;
-        while (l)
+        auto s = currentScope;
+        while (s)
         {
-            if (d.parent is l.fn)
-                return l.evaledArgs[d.paramIndex].value.eval(this);
-            l = l.parentLambda;
+            auto l = cast(ExpLambda)s;
+            if (l && d.parent is l.fn)
+                return s.values[d.paramIndex];
+            s = cast(ExpScope)s.parent; // sureCast
         }
 
-        assert (false, "undefined identifier");
+        assert (false);
     }
 
 
@@ -153,15 +150,26 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    Exp visit (ExpDot dot)
+    @trusted Exp visit (ExpDot dot)
     {
-        assert (false, "eval dot");
+        auto record = dot.record.eval(this);
+       
+        auto sc = cast(ExpScope)record;
+
+        assert (sc, "only struct can have members (" ~ dot.member.to!string() ~ ")");
+        
+        foreach (ix, d; sc.declarations)
+            if ((cast(ExpIdent)d.slot).text == dot.member)
+                return sc.values[ix].eval(this);
+
+        assert (false, "struct has no member " ~ dot.member.to!string());
     }
 
 
     @trusted Exp visit (StmReturn ret)
     {
         auto r = ret.exp.eval(this);
+        auto currentLambda = cast(ExpLambda)currentScope;
         currentLambda.currentExpIndex = cast(uint)currentLambda.fn.exps.length;
         return r;
     }
@@ -172,11 +180,15 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         if (gt.labelExpIndex == typeof(gt.labelExpIndex).max)
             context.except("goto skipped because it has no matching label");
         else
+        {
+            auto currentLambda = cast(ExpLambda)currentScope;
             currentLambda.currentExpIndex = gt.labelExpIndex;
+        }
 
         return null;
     }
 
+    Exp visit (ExpScope sc) { return sc; }
 
     Exp visit (StmDeclr d) { return d.value ? d.value.eval(this) : null; }
 

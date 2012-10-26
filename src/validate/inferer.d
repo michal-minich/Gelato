@@ -204,9 +204,11 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (ExpDot dot)
     {
-        assert (false, "infer dot");
+        return new AstUnknown(null);
     }
 
+
+    Exp visit (ExpScope) { return new AstUnknown(null); }
 
     Exp visit (TypeType tt) { return new TypeType(null, tt); }
 

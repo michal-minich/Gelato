@@ -6,7 +6,6 @@ interpret/declrfinder.d
 interpret/evaluator.d
 interpret/preparer.d
 
-parse/ast.d
 parse/parser.d
 parse/tokenizer.d
 
@@ -14,6 +13,7 @@ validate/inferer.d
 validate/remarks.d
 validate/validation.d
 
+ast.d
 cmdint.d
 common.d
 formatter.d

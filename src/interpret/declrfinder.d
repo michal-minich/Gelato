@@ -4,7 +4,6 @@ import std.algorithm, std.array, std.conv;
 import common, parse.ast, validate.remarks, interpret.preparer, interpret.builtins;
 
 
-
 @safe StmDeclr findDeclr (Exp[] exps, dstring name)
 {
     foreach (e; exps)
@@ -20,115 +19,124 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     return null;
 }
 
+
 @safe StmDeclr getIdentDeclaredBy (ExpIdent ident)
 {
-	if (ident.declaredBy)
-		return ident.declaredBy;
+    if (ident.declaredBy)
+        return ident.declaredBy;
 
-	auto bfn = ident.text in builtinFns;
-	if (bfn)
-	{
-		auto d = new StmDeclr(null, null);
-		d.value = *bfn;
-		return d;
-	}
+    auto bfn = ident.text in builtinFns;
+    if (bfn)
+    {
+        auto d = new StmDeclr(null, null);
+        d.value = *bfn;
+        return d;
+    }
 
-	auto d = findIdentDelr (ident, ident.parent);
-	if (!d)
-	{
-		d = new StmDeclr(ident.parent, ident);
-		d.value = new AstUnknown(ident);
-	}
+    auto d = findIdentDelr (ident.parent, ident);
+    if (!d)
+    {
+        d = new StmDeclr(ident.parent, ident);
+        d.value = new AstUnknown(ident);
+    }
 
-	return d;
+    return d;
 }
 
 
-@trusted private StmDeclr findIdentDelr (ExpIdent ident, Exp e)
+@trusted private StmDeclr findIdentDelr (Exp e, ExpIdent ident)
 {
-	StmDeclr d;
-	d = findIdentDelrInExpOrParent(ident.text, e);
-	if (d)
-		return d;
+    StmDeclr d;
+    d = findIdentDelrInExpOrParent(e, ident.text);
+    if (d)
+        return d;
 else
-		assert (false, ident.text.to!string() ~ " identifer is undefined");
+        assert (false, ident.text.to!string() ~ " identifer is undefined");
 
-	/*idents = idents[1 .. $];
-	e = d;
-	while (e && idents.length)
-	{
-	d = findIdentDelrInExp(idents[0], e);
-	if (d)
-	return d;
-	idents = idents[1 .. $];
-	e = d.value;
-	}
-	return d;*/
+    /*idents = idents[1 .. $];
+    e = d;
+    while (e && idents.length)
+    {
+    d = findIdentDelrInExp(idents[0], e);
+    if (d)
+    return d;
+    idents = idents[1 .. $];
+    e = d.value;
+    }
+    return d;*/
 }
 
 
-private StmDeclr findIdentDelrInExpOrParent (dstring ident, Exp e)
+@safe StmDeclr findIdentDelrInExpOrParent (Exp e, dstring ident)
 {
-	StmDeclr d;
-	while (e && !d)
-	{
-		d = findIdentDelrInExp(ident, e);
-		e = e.parent;
-	}
-	return d;
+    StmDeclr d;
+    while (e && !d)
+    {
+        d = findIdentDelrInExp(e, ident);
+        e = e.parent;
+    }
+    return d;
 }
 
 
-private StmDeclr findIdentDelrInExp (dstring ident, Exp e)
+@trusted private StmDeclr findIdentDelrInExp (Exp e, dstring ident)
 {
-	Exp[] exps;
-	auto s = cast(ValueFile)e;
-	if (s)
-		exps = s.exps;
+    Exp[] exps;
 
-	auto f = cast(ValueStruct)e;
-	if (f)
-		exps = f.exps;
+    auto f = cast(ValueFile)e;
+    if (f)
+        exps = f.exps;
 
-	if (exps.length)
-	{
-		foreach (e2; exps)
-		{
-			auto d = cast(StmDeclr)e2;
+    auto s = cast(ValueStruct)e;
+    if (s)
+        exps = s.exps;
+
+    if (exps.length)
+    {
+        foreach (e2; exps)
+        {
+            auto d = cast(StmDeclr)e2;
             if (d)
             {
                 auto i = cast(ExpIdent)d.slot;
-			    if (i && i.text == ident)
-				    return d;
+                if (i && i.text == ident)
+                    return d;
             }
-		}
-		return null;
-	}
+        }
+        return null;
+    }
 
-	auto fn = cast(ValueFn)e;
-	if (fn)
-	{
-		foreach (p; fn.params)
+    auto fn = cast(ValueFn)e;
+    if (!fn)
+    {
+        auto lambda = (cast(ExpLambda)e);
+
+        if (lambda)
+        fn = lambda.fn;
+    }
+
+    if (fn)
+    {
+        foreach (p; fn.params)
         {
             auto i = cast(ExpIdent)p.slot;
-			    if (i && i.text == ident)
-				    return p;
+                if (i && i.text == ident)
+                    return p;
         }
 
-		foreach (e2; fn.exps)
-		{
-			if (e2 is e)
-				break;
-			auto d = cast(StmDeclr)e2;
+        foreach (e2; fn.exps)
+        {
+            if (e2 is e)
+                break;
+            auto d = cast(StmDeclr)e2;
             if (d)
             {
-			    auto i = cast(ExpIdent)d.slot;
-			    if (i && i.text == ident)
-				    return d;
+                auto i = cast(ExpIdent)d.slot;
+                if (i && i.text == ident)
+                    return d;
             }
-		}
-	}
+        }
+    }
 
-	return null;
+    return null;
 }
-

@@ -68,13 +68,13 @@ final class ConsoleInterpreter
                 return 1;
 
 
-            debug writeln("VALIDATE");
+           /* debug writeln("VALIDATE");
             auto val = new Validator(context);
             val.visit(astFile);
 
             if (context.hasBlocker)
                 return 1;
-
+*/
 
             debug writeln("PREPARE");
             auto prep = new PreparerForEvaluator(context);
@@ -84,15 +84,15 @@ final class ConsoleInterpreter
                 return 1;
 
 
-            debug writeln("TYPE INFER");
+          /*  debug writeln("TYPE INFER");
             auto inf = new TypeInferer(context);
             inf.visit(astFile);
 
-            fv.useInferredTypes = true;
-            writeln(fv.visit(astFile));
-
             if (context.hasBlocker)
-                return 1;
+                return 1;*/
+
+            fv.useInferredTypes = false;
+            writeln(fv.visit(astFile));
 
             debug writeln("EVALUATE");
             auto ev = new Evaluator(context);
