@@ -87,7 +87,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
-  <additionalOptions />
+  <additionalOptions>-gs</additionalOptions>
   <preBuildCommand>del $(ConfigurationName)\Gelato.exe_cv
 del $(ConfigurationName)\Gelato.map
 del $(ConfigurationName)\Gelato.obj</preBuildCommand>

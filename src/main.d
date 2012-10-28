@@ -16,8 +16,8 @@ int main (string[] args)
         import tester;
         auto success = test("tests.txt");
 
-        if (!success)
-            readln();
+        //if (!success)
+        //    readln();
 
         return 0;
     }

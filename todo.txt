@@ -10,9 +10,10 @@ TOKENIZER -----------------------------
 
 
 PARSER -----------------------------
+! op apply with priorities
+! custom brace op apply
 ! cleanup and reliability fixes
 ! generate remarks
-! parse array / brace op apply
   comments
   operators
 

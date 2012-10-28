@@ -117,17 +117,6 @@ final class Parser
     Exp parse (Exp parent)
     {
         auto startIndex = current.index;
-        auto e = parse2(parent);
-        if (e)
-        {
-            e.tokens = toks2[startIndex .. current.index + 1];
-        }
-        return e;
-    }
-
-
-    Exp parse2 (Exp parent)
-    {
         if (finished)
             return null;
 
@@ -174,10 +163,64 @@ final class Parser
 
         sepPassed = skipSep() || sepPassed;
 
+        if (exp)
+            exp.tokens = toks2[startIndex .. current.index + 1];
+
+        if (!exp && current.type == TokenType.braceStart)
+            exp = parseBracedExp(parent);
+
         while (current.type == TokenType.braceStart)
             exp = new ExpFnApply(parent, exp, parseBracedExpList(parent));
 
+        if (current.type == TokenType.op)
+            exp = parseOp(parent, exp);
+
+        if (exp)
+            exp.tokens = toks2[startIndex .. current.index + 1];
+
         return exp;
+    }
+
+
+
+    ExpFnApply parseOp (Exp parent, Exp operand1)
+    {
+        auto op = new ExpIdent(parent, current.text);
+        nextNonWhiteTok();
+        auto operand2 = parse(parent);
+
+        if (!operand2)
+        {
+            vctx.remark(textRemark("second operand is missing"));
+            operand2 = new AstUnknown(parent);
+        }
+
+        auto fna = new ExpFnApply(parent, op, [operand1, operand2]);
+        return fna;
+    }
+
+
+    Exp parseBracedExp (Exp parent)
+    {
+        if (current.text == "(")
+        {
+            auto exps = parseBracedExpList (parent);
+            if (exps.length > 1)
+                vctx.remark(textRemark("only one exp can be braced ()"));
+            return exps[0];
+        }
+        else if (current.text == "[")
+        {
+            auto op = new ExpIdent(parent, current.text);
+            auto exps = parseBracedExpList (parent);
+            auto fna = new ExpFnApply(parent, op, exps);
+            return fna;
+        }
+        else
+        {
+            vctx.remark(textRemark("unsupported brace op apply"));
+            return new AstUnknown(parent);
+        }
     }
 
 

@@ -68,13 +68,13 @@ final class ConsoleInterpreter
                 return 1;
 
 
-           /* debug writeln("VALIDATE");
+            debug writeln("VALIDATE");
             auto val = new Validator(context);
             val.visit(astFile);
 
             if (context.hasBlocker)
                 return 1;
-*/
+
 
             debug writeln("PREPARE");
             auto prep = new PreparerForEvaluator(context);
@@ -96,7 +96,12 @@ final class ConsoleInterpreter
 
             debug writeln("EVALUATE");
             auto ev = new Evaluator(context);
-            ev.visit(astFile);
+            auto res = ev.visit(astFile);
+            writeln("RESULT: " ~ res.str(fv));
+
+            auto num = cast(ValueNum)res;
+            if (num)
+                return num.value.to!int();
         }
 
         return 0;

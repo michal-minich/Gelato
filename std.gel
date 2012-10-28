@@ -1,0 +1,7 @@
+id = fn (a) { a }
+
+first = fn (f, s) { f }
+
+second = fn (f, s) { s }
+
+cons = fn (h, t) { struct { head = h, tail = t } () }

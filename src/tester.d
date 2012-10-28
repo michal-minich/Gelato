@@ -204,7 +204,7 @@ bool test (string filePath)
             thisFailed = true;
             writeln("Code:      ", fullCode);
             writeln("Expected:  ", "\"" ~ expected ~ "\"");
-            writeln("Exception: ", t.msg);
+            writeln("Exception:  " ~ typeid(t).name ~ " - ", t.msg);
             writeln("-------------------------------------------------------------------------------");
         }
     }
@@ -212,16 +212,16 @@ bool test (string filePath)
     if (testsFailed == 0 && testsCrashed == 0)
         write("ALL OK, ");
 
-    write("Tests executed: ", testsExecuted);
+    write(testsExecuted, " tests executed");
 
     if (testsFailed != 0)
-        write(", failed: ", testsFailed);
+        write(", ", testsFailed, " failed");
 
     if (testsCrashed != 0)
-        write(", crashed: ", testsCrashed);
+        write(", ", testsCrashed, " crashed");
 
     if (testsSkipped != 0)
-        write(", skipped: ", testsSkipped);
+        write(", ", testsSkipped, " skipped");
 
     writeln();
 
