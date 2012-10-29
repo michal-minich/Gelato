@@ -10,12 +10,10 @@ TOKENIZER -----------------------------
 
 
 PARSER -----------------------------
-! op apply with priorities
 ! custom brace op apply
 ! cleanup and reliability fixes
 ! generate remarks
   comments
-  operators
 
 
 VALIDATOR -----------------------------
@@ -25,11 +23,11 @@ VALIDATOR -----------------------------
 
 PREPARER -----------------------------
 ! chained declarations
+  operators priority
   prepare functions on firs call
   remark undefined identifiers
   remark multiply defined identifiers
   remark unused identifiers
-  operators priority
   tail call
 
 
@@ -50,16 +48,16 @@ TYPE INFERENCE / CHECK -----------------------------
 
 INTERPRETER -----------------------------
 ! built-ins with qualified name
+! variable length fn params
 ! array object (empty, first, rest)
 ! text is array
 ! var / mutable variables
 ! ref
 ! throw
 ! try catch
-! built-in for stack trace
-! built-in in for env
+  built-in for stack trace
+  built-in in for env
   dynamic and static typing versions
-  variable length fn params
   contracts
   finally / scope guars
   user overridable struct functions - construct, destruct, clone, ...

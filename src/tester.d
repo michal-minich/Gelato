@@ -24,6 +24,8 @@ final class TestInterpreterContext : IInterpreterContext
 
     void println (dstring str) { }
 
+    dstring readln () { return "TODO?"; }
+
 
     void remark (Remark remark)
     {
@@ -57,7 +59,7 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (ValueStruct e) { return "ValueStruct"; }
 
-    const dstring visit (ValueFn e) { return "ExpLambda"; }
+    const dstring visit (ValueFn e) { return "ValueFn"; }
 
     const dstring visit (ExpFnApply e) { return "ExpFnApply"; }
 
@@ -72,8 +74,6 @@ final class TestInterpreterContext : IInterpreterContext
     const dstring visit (ValueChar e) { return e.value.to!dstring(); }
 
     const dstring visit (ExpIf e) { return "ExpIf"; }
-
-    private dstring dtextExps(Exp[] exps, bool forceExpand) { return "ExpLambda"; }
 
     const nothrow dstring visit (StmGoto e) { return "StmGoto"; }
 
@@ -99,9 +99,83 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (BuiltinFn) { return "BuiltinFn"; }
 
-    const dstring visit (TypeOr or) { return "TypeOr"; }
+    const dstring visit (TypeOr tor) { return "TypeOr"; }
 
     const dstring visit (TypeFn tfn) { return "TypeFn"; }
+}
+
+
+@trusted pure final class TokenTestFormatVisitor : IFormatVisitor
+{
+    const dstring visit (ValueNum e) { return e.tokensText ~ "|"; }
+
+    const dstring visit (AstUnknown e) { return e.tokensText ~ "|"; }
+
+    dstring visit (ValueFile e) { return e.tokensText ~ "|" ~ e.exps.map!(e2 => e2.str(this))().join(); }
+
+    dstring visit (StmDeclr d)
+    { 
+        return d.tokensText ~ "|"
+            ~ (d.type ? d.type.str(this) : "") 
+            ~ (d.value ? d.value.str(this) : "");
+    }
+
+    dstring visit (ValueStruct e) { return e.tokensText ~ "|" ~ e.exps.map!(e2 => e2.str(this))().join(); }
+
+    dstring visit (ValueFn fn)
+    { 
+        return fn.tokensText ~ "|"
+            ~ fn.params.map!(p => p.str(this))().join()
+            ~ fn.exps.map!(e => e.str(this))().join();
+    }
+
+    dstring visit (ExpFnApply fna)
+    { 
+        return fna.tokensText ~ "|"
+            ~ fna.applicable.str(this)
+            ~ fna.args.map!(a => a.str(this))().join();
+    }
+
+
+    const dstring visit (ExpIdent i) { return i.tokensText ~ "|"; }
+
+    dstring visit (StmLabel e) { return e.tokensText ~ "|"; }
+
+    dstring visit (StmReturn e) { return e.tokensText ~ "|" ~ e.exp.str(this); }
+
+    const dstring visit (ValueText e){ return e.tokensText ~ "|"; }
+
+    const dstring visit (ValueChar e) { return e.tokensText ~ "|"; }
+
+    const dstring visit (ExpIf e) { return e.tokensText ~ "|"; }
+
+    const dstring visit (StmGoto e) { return e.tokensText ~ "|"; }
+
+    const dstring visit (ExpLambda l) { return l.tokensText ~ "|"; }
+
+    const dstring visit (ExpScope sc) { return sc.tokensText ~ "|"; }
+
+    const dstring visit (ExpDot dot) { return dot.tokensText ~ "|"; }
+
+    const dstring visit (TypeType tt) { return tt.tokensText ~ "|"; }
+
+    const dstring visit (TypeAny ta) { return ta.tokensText ~ "|"; }
+
+    const dstring visit (TypeVoid tv) { return tv.tokensText ~ "|"; }
+
+    const dstring visit (TypeNum tn) { return tn.tokensText ~ "|"; }
+
+    const dstring visit (TypeText tt) { return tt.tokensText ~ "|"; }
+
+    const dstring visit (TypeChar tch) { return tch.tokensText ~ "|"; }
+
+    const dstring visit (TypeStruct ts) { return ts.tokensText ~ "|"; }
+
+    const dstring visit (BuiltinFn bfn) { return bfn.tokensText ~ "|"; }
+
+    const dstring visit (TypeOr tor) { return tor.tokensText ~ "|"; }
+
+    const dstring visit (TypeFn tfn) { return tfn.tokensText ~ "|"; }
 }
 
 
@@ -116,9 +190,11 @@ bool test (string filePath)
     dstring testPrefix = "";
 
     auto tfv = new TestFormatVisitor;
+    auto ttfv = new TokenTestFormatVisitor;
 
-    foreach (line; File(filePath).byLine())
+    foreach (ln; File(filePath).byLine())
     {
+        auto line = ln.chomp().to!dstring();
         if (line.length > 0 && line[0] == '@')
         {
             testPrefix = line[2 .. $ - 2].to!dstring();
@@ -141,13 +217,24 @@ bool test (string filePath)
 
         ++testsExecuted;
 
-        auto expectedStr = line[1 .. tabIx - 1].to!dstring();
+        auto expectedStr = line[1 .. tabIx - 1];
         auto expected = expectedStr.replace("\\n", "\n").replace("\\r", "\r").replace("\\t", "\t");
-        auto codeStart = line[tabIx + 1 .. $];
-        auto code = line[tabIx + codeStart.countUntil('"') + 2 .. $ - 2].to!dstring();
+        auto codeStartIx = tabIx + line[tabIx .. $].countUntil('"') + 1;
+        auto codeStart = line[codeStartIx .. $];
+        auto codeEndIx = line.length - line.retro().countUntil('"') - 1;
+        auto code = line[codeStartIx .. codeEndIx];
+        auto tokTestStartIx = line[codeEndIx .. $].countUntil('|');
+        dstring tokensExpected;
+        if (tokTestStartIx != -1)
+        {
+            auto l = line[codeEndIx + tokTestStartIx .. $- 1].idup.to!dstring();
+            tokensExpected ='|' ~ code.idup ~ l;
+        }
         auto thisFailed = false;
         auto context = new TestInterpreterContext;
         auto fullCode = testPrefix ~ code;
+        auto tokenFailed = false;
+        dstring tokensParsed;
 
         try
         {
@@ -158,6 +245,15 @@ bool test (string filePath)
                 ++testsFailed;
                 errPrint(fullCode, context);
                 continue;
+            }
+
+            auto tt = astFile.tokensText;
+            if (tokensExpected.length)
+                tokensParsed = '|' ~ ttfv.visit(astFile) ~ '|';
+            else
+            {
+                tokensExpected = '|' ~ code ~ '|';
+                tokensParsed ='|' ~ code ~ '|';
             }
 
             auto prep = new PreparerForEvaluator(context);
@@ -191,10 +287,10 @@ bool test (string filePath)
 
             auto evalFailed = resStr != expected;
 
-            if (evalFailed || context.remarks || context.exceptions)
+            if (tokensExpected != tokensParsed || tokenFailed || evalFailed || context.remarks || context.exceptions)
             {
                 ++testsFailed;
-                errPrint(fullCode, context, expectedStr, resStr);
+                errPrint(fullCode, context, expectedStr, resStr, tokensExpected, tokensParsed);
                 continue;
             }
         }
@@ -231,11 +327,13 @@ bool test (string filePath)
 
 void errPrint (dstring code, TestInterpreterContext context)
 {
-    errPrint (code, context, null, null);
+    errPrint (code, context, null, null, null, null);
 }
 
 
-void errPrint (dstring code, TestInterpreterContext context, dstring expected, dstring resStr)
+void errPrint (dstring code, TestInterpreterContext context, 
+               dstring expected, dstring resStr, 
+               dstring tokensExpected, dstring tokensParsed)
 {
     writeln("Code:     ", code);
 
@@ -243,6 +341,12 @@ void errPrint (dstring code, TestInterpreterContext context, dstring expected, d
     {
         writeln("Expected: ", "\"" ~ expected ~ "\"");
         writeln("Result:   ", "\"" ~ resStr ~ "\"");
+    }
+
+    if (tokensExpected != tokensParsed)
+    {
+        writeln("Expected Tokens: ", tokensExpected);
+        writeln("Result Tokens:   ", tokensParsed);
     }
 
     foreach (r; context.remarks)

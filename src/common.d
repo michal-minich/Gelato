@@ -105,6 +105,8 @@ interface IPrinterContext
     void println ();
 
     void println (dstring);
+
+    dstring readln ();
 }
 
 

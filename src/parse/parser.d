@@ -129,7 +129,7 @@ final class Parser
             case TokenType.ident: exp = parseIdentOrDeclr(parent); break;
             case TokenType.textStart: exp = parseText(parent); break;
 
-            case TokenType.braceEnd: assert(false, "redudant brace end");
+            case TokenType.braceEnd: assert(false, "redundant brace end");
 
             case TokenType.keyIf: exp = parseIf(parent); break;
             case TokenType.keyThen: assert(false, "then without if");
@@ -175,12 +175,30 @@ final class Parser
         if (current.type == TokenType.op)
             exp = parseOp(parent, exp);
 
+        if (current.type == TokenType.dot)
+            exp = parseOpDot(parent, exp);
+
         if (exp)
             exp.tokens = toks2[startIndex .. current.index + 1];
 
         return exp;
     }
 
+
+    ExpDot parseOpDot (Exp parent, Exp operand1)
+    {
+        nextTok();
+
+        if (current.type != TokenType.ident)
+        {
+            vctx.remark(textRemark("second operand must be identifier"));
+            return new ExpDot(parent, operand1, "missingIdentifier");
+        }
+
+        auto dot = new ExpDot(parent, operand1, current.text);
+        nextNonWhiteTok();
+        return dot;
+    }
 
 
     ExpFnApply parseOp (Exp parent, Exp operand1)
@@ -555,7 +573,8 @@ final class Parser
     Exp parseIdentOrOpDot (Exp parent)
     {
         Exp res = new ExpIdent(parent, current.text);
-
+        nextNonWhiteTok();
+/*
         while (true)
         {
             nextNonWhiteTok();
@@ -569,7 +588,7 @@ final class Parser
                 assert (false, "identifier expected after dot");
             d.member = current.text;
         }
-
+*/
         return res;
     }
 }

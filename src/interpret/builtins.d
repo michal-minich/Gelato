@@ -11,6 +11,8 @@ static this ()
 {
     builtinFns = [
     "print"   : new BuiltinFn(&customPrint, new TypeFn([new TypeAny], new TypeVoid))
+   ,"readln"  : new BuiltinFn(&customReadln, new TypeFn([], new TypeText))
+   ,"toNum"   : new BuiltinFn(&toNum, new TypeFn([new TypeText], new TypeNum))
    ,"inc"     : new BuiltinFn(&incNum, new TypeFn([new TypeNum], new TypeNum))
    ,"dec"     : new BuiltinFn(&decNum, new TypeFn([new TypeNum], new TypeNum))
    ,"=="      : new BuiltinFn(&eq, new TypeFn([new TypeAny, new TypeAny], new TypeNum))
@@ -34,6 +36,21 @@ Exp customPrint (IInterpreterContext context, Exp[] exps)
     context.println();
     return null;
 }
+
+
+Exp customReadln (IInterpreterContext context, Exp[] exps)
+{
+    auto ln = context.readln();
+    return new ValueText(null, ln[0 .. $ - 1]);
+}
+
+
+Exp toNum (IInterpreterContext context, Exp[] exps)
+{
+    auto n = cast(ValueText)exps[0];
+    return new ValueNum(n.parent, n.value.to!long());
+}
+
 
 
 Exp incNum (IInterpreterContext context, Exp[] exps)

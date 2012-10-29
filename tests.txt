@@ -1,5 +1,5 @@
-"\0"		""
-"\0"		" "
+"\0"		""			||
+"\0"		" "			|a|
 
 "123"		"123"
 "1234"		"1_234"
@@ -52,7 +52,7 @@
 "4"			"a = b = c = d = 4"
 "44"		"(a = (b = (c = (d = (44)))))"
 
-"1"			"start = 1"
+"1"			"start = 1"						|start |= |1|
 "\0"		"start = fn () { }"
 "1"			"start = fn () { 1 }"
 "1"			"start = fn () { return 1 }"
@@ -121,17 +121,17 @@
 "ValueStruct"	"Point = struct { x, y }"
 "ValueStruct"	"Point = struct { x = 1, y = 2 }"
 
-@"Point = struct { x = 1, y = 2, z = struct { x }  }, "
+@"Point = struct { x = 1, y = 2, z = struct { x = 3 } () }, "
 "ExpScope"	"start = fn () { Point() }"
 "2"			"start = fn () { Point().y }"
-"1"			"start = fn () { Point().z.x }"
+"3"			"start = fn () { Point().z.x }"
 
 "1"			"struct { x = 1 }().x"
 "1"			"fn (a) { struct { x = a }() }(1)  .x"
 "1"			"fn (a) { struct { x = a }   }(1)().x"
 
 @"cons = fn (h, t) { struct { head = h, tail = t } () }, "
-"1"			"start = fn () { c = cons(1, 2), return c.head }"
+"1"			"start = fn () { c = cons(1, 2), return c.	head }"
 "2"			"start = fn () { c = cons(1, 2), return c.tail }"
 "2"			"start = fn () { c = cons(1, cons(2, 3)), return c.tail.head }"
 "3"			"start = fn () { c = cons(1, cons(2, 3)), return c.tail.tail }"
@@ -167,3 +167,8 @@
 "0"			"1 === "2""
 "0"			"1 === '1'"
 "0"			"1 === "1""
+
+@"s = struct { x = 2 } (), start = fn () { "
+"1"			"s.x == 2 }"
+"1"			"(s.x + 2) == 4 }"
+"1"			"((s.x + 1) + 1) == (s.x + s.x) }"

@@ -156,7 +156,11 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     @trusted Exp visit (ExpDot dot)
     {
         auto record = dot.record.eval(this);
-       
+
+        auto st = cast(ValueStruct)record;
+
+        assert (!st, "struct must be constructed before accessing member (" ~ dot.member.to!string() ~ ")");
+
         auto sc = cast(ExpScope)record;
 
         assert (sc, "only struct can have members (" ~ dot.member.to!string() ~ ")");
@@ -191,9 +195,18 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         return null;
     }
 
-    Exp visit (ExpScope sc) { return sc; }
+    Exp visit (StmDeclr d)
+    { 
+        if (d.value)
+        {
+            d.value = d.value.eval(this);
+            return d.value;
+        }
 
-    Exp visit (StmDeclr d) { return d.value ? d.value.eval(this) : null; }
+        return null;
+    }
+
+    Exp visit (ExpScope sc) { return sc; }
 
     Exp visit (ValueText text) { return text; }
 

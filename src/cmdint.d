@@ -22,6 +22,8 @@ final class ConsoleInterpreterContext : IInterpreterContext
 
     void println (dstring str) { writeln (str); }
 
+    dstring readln () { return std.stdio.readln().idup.to!dstring(); }
+
 
     void remark (Remark remark)
     {
@@ -97,7 +99,9 @@ final class ConsoleInterpreter
             debug writeln("EVALUATE");
             auto ev = new Evaluator(context);
             auto res = ev.visit(astFile);
-            writeln("RESULT: " ~ res.str(fv));
+
+            if (res)
+                writeln("RESULT: " ~ res.str(fv));
 
             auto num = cast(ValueNum)res;
             if (num)
