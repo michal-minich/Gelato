@@ -118,8 +118,13 @@ abstract class Exp
     Exp infType;
     Token[] tokens;
     Exp parent;
+    debug string typeName;
 
-    this (Exp parent) { this.parent = parent; }
+    this (Exp parent)
+    {
+        debug typeName = typeid(this).name;
+        this.parent = parent; 
+    }
 
 
     @trusted const pure @property tokensText ()

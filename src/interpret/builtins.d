@@ -47,7 +47,7 @@ Exp customReadln (IInterpreterContext context, Exp[] exps)
 
 Exp toNum (IInterpreterContext context, Exp[] exps)
 {
-    auto n = cast(ValueText)exps[0];
+    auto n = sureCast!ValueText(exps[0]);
     return new ValueNum(n.parent, n.value.to!long());
 }
 

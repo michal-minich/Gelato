@@ -1,3 +1,12 @@
+packages / modules / import / project file
+interactive
+goto from and inside if/then/else
+built-ins with qualified name
+struct tests fixes
+
+variable length fn params
+array
+
 TOKENIZER -----------------------------
   cancel unclosed text after escape on first line
   cancel unclosed comment on first line
@@ -47,6 +56,7 @@ TYPE INFERENCE / CHECK -----------------------------
 
 
 INTERPRETER -----------------------------
+! goto from and inside if/then/else
 ! built-ins with qualified name
 ! variable length fn params
 ! array object (empty, first, rest)
@@ -69,7 +79,7 @@ FORMATTER -----------------------------
   configuration profiles
 
 
-AUTFIXER -----------------------------
+AUTOFIXER -----------------------------
   formatting / syntax
 
 

@@ -115,7 +115,7 @@ final class TestInterpreterContext : IInterpreterContext
 
     dstring visit (StmDeclr d)
     { 
-        return d.tokensText ~ "|"
+        return d.tokensText ~ "|" ~ d.slot.str(this)
             ~ (d.type ? d.type.str(this) : "") 
             ~ (d.value ? d.value.str(this) : "");
     }
@@ -227,7 +227,7 @@ bool test (string filePath)
         dstring tokensExpected;
         if (tokTestStartIx != -1)
         {
-            auto l = line[codeEndIx + tokTestStartIx .. $- 1].idup.to!dstring();
+            auto l = line[codeEndIx + tokTestStartIx .. $];
             tokensExpected ='|' ~ code.idup ~ l;
         }
         auto thisFailed = false;
@@ -252,8 +252,8 @@ bool test (string filePath)
                 tokensParsed = '|' ~ ttfv.visit(astFile) ~ '|';
             else
             {
-                tokensExpected = '|' ~ code ~ '|';
-                tokensParsed ='|' ~ code ~ '|';
+                tokensExpected = '|' ~ fullCode ~ '|';
+                tokensParsed ='|' ~ astFile.tokensText ~ '|';
             }
 
             auto prep = new PreparerForEvaluator(context);

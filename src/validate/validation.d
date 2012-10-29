@@ -21,6 +21,7 @@ final class Validator : IAstVisitor!(void)
 
     @trusted  void visit (ValueNum n)
     {
+        // TODO "00" - should report as "can be written as "0""
         Remark[] rs;
         auto txt = n.tokens[0].text[0] == '#' ? n.tokensText[1 .. $] : n.tokensText;
 

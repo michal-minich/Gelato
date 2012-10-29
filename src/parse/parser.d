@@ -33,6 +33,7 @@ final class Parser
     ValueFile parseAll ()
     {
         auto f = new ValueFile;
+        f.tokens = toks2;
         Exp e;
         skipWhite();
         while ((e = parse(f)) !is null)
