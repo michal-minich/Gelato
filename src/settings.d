@@ -56,7 +56,7 @@ final class Settings
 
         foreach (e; f.exps)
         {
-            auto d = cast(StmDeclr)e;
+            auto d = cast(ExpAssign)e;
             auto i = cast(ExpIdent)d.slot;
             if (i.text == "language")
                 s.language = (cast(ValueText)d.value).value;

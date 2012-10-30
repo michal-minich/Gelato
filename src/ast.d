@@ -62,23 +62,22 @@ enum TokenType
 
 interface IAstVisitor (R)
 {
-    R visit (AstUnknown);
-
     R visit (ValueNum);
     R visit (ValueText);
     R visit (ValueChar);
     R visit (ValueStruct);
     R visit (ValueFn);
-    R visit (BuiltinFn);
+    R visit (ValueBuiltinFn);
+    R visit (ValueUnknown);
 
     R visit (ExpIdent);
     R visit (ExpFnApply);
-    R visit (ExpLambda);
     R visit (ExpIf);
     R visit (ExpDot);
+    R visit (ExpAssign);
+    R visit (ExpLambda);
     R visit (ExpScope);
 
-    R visit (StmDeclr);
     R visit (StmLabel);
     R visit (StmGoto);
     R visit (StmReturn);
@@ -159,7 +158,7 @@ abstract class Exp
 
 
 
-final class AstUnknown : Exp
+final class ValueUnknown : Exp
 {
     this (Exp parent) { super(parent); }
 
@@ -326,7 +325,7 @@ final class ValueChar : Exp
 
 final class ValueFn : Exp
 {
-    StmDeclr[] params;
+    ExpAssign[] params;
     Exp[] exps;
     bool isPrepared;
 
@@ -336,7 +335,7 @@ final class ValueFn : Exp
 }
 
 
-final class BuiltinFn : Exp
+final class ValueBuiltinFn : Exp
 {
     TypeFn signature;
     BuiltinFunc func;
@@ -354,10 +353,10 @@ final class BuiltinFn : Exp
 
 class ExpScope : Exp
 {
-    StmDeclr[] declarations;
+    ExpAssign[] assigments;
     Exp[] values;
 
-    this (ExpScope ps, StmDeclr[] declrs) { super (ps); declarations = declrs; }
+    this (ExpScope ps, ExpAssign[] declrs) { super (ps); assigments = declrs; }
 
     mixin visitImpl;
 }
@@ -393,7 +392,7 @@ final class ExpFnApply : Exp
 final class ExpIdent : Exp
 {
     dstring text;
-    StmDeclr declaredBy;
+    ExpAssign declaredBy;
 
     this (Exp parent, dstring identfier)
     {
@@ -472,7 +471,7 @@ final class StmReturn : Exp
 }
 
 
-final class StmDeclr : Exp
+final class ExpAssign : Exp
 {
     Exp slot;
     Exp type;

@@ -44,7 +44,7 @@ final class TypeInferer : IAstVisitor!(Exp)
 
 
 
-    Exp visit (AstUnknown u)
+    Exp visit (ValueUnknown u)
     {
         u.infType = new TypeVoid;
         return u.infType;
@@ -72,7 +72,7 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (BuiltinFn bfn)
+    Exp visit (ValueBuiltinFn bfn)
     {
         bfn.infType = bfn.signature;
         return bfn.signature;
@@ -136,7 +136,7 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (StmDeclr d)
+    Exp visit (ExpAssign d)
     {
         if (d.infType)
             return d.infType;
@@ -196,11 +196,11 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (ExpDot dot)
     {
-        return new AstUnknown(null);
+        return new ValueUnknown(null);
     }
 
 
-    Exp visit (ExpScope) { return new AstUnknown(null); }
+    Exp visit (ExpScope) { return new ValueUnknown(null); }
 
     Exp visit (TypeType tt) { return new TypeType(null, tt); }
 

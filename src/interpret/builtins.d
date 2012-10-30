@@ -4,21 +4,21 @@ import std.algorithm, std.array, std.conv, std.string;
 import common, parse.ast, validate.remarks, tester;
 
 
-BuiltinFn[dstring] builtinFns;
+ValueBuiltinFn[dstring] builtinFns;
 
 
 static this ()
 {
     builtinFns = [
-    "print"   : new BuiltinFn(&customPrint, new TypeFn([new TypeAny], new TypeVoid))
-   ,"readln"  : new BuiltinFn(&customReadln, new TypeFn([], new TypeText))
-   ,"toNum"   : new BuiltinFn(&toNum, new TypeFn([new TypeText], new TypeNum))
-   ,"inc"     : new BuiltinFn(&incNum, new TypeFn([new TypeNum], new TypeNum))
-   ,"dec"     : new BuiltinFn(&decNum, new TypeFn([new TypeNum], new TypeNum))
-   ,"=="      : new BuiltinFn(&eq, new TypeFn([new TypeAny, new TypeAny], new TypeNum))
-   ,"==="     : new BuiltinFn(&eqTyped, new TypeFn([new TypeAny, new TypeAny], new TypeNum))
-   ,"+"       : new BuiltinFn(&plusNum, new TypeFn([new TypeNum, new TypeNum], new TypeNum))
-   ,"["       : new BuiltinFn(&array3test, new TypeFn([new TypeAny, new TypeAny, new TypeAny], new TypeNum))
+    "print"   : new ValueBuiltinFn(&customPrint, new TypeFn([new TypeAny], new TypeVoid))
+   ,"readln"  : new ValueBuiltinFn(&customReadln, new TypeFn([], new TypeText))
+   ,"toNum"   : new ValueBuiltinFn(&toNum, new TypeFn([new TypeText], new TypeNum))
+   ,"inc"     : new ValueBuiltinFn(&incNum, new TypeFn([new TypeNum], new TypeNum))
+   ,"dec"     : new ValueBuiltinFn(&decNum, new TypeFn([new TypeNum], new TypeNum))
+   ,"=="      : new ValueBuiltinFn(&eq, new TypeFn([new TypeAny, new TypeAny], new TypeNum))
+   ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn([new TypeAny, new TypeAny], new TypeNum))
+   ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn([new TypeNum, new TypeNum], new TypeNum))
+   ,"["       : new ValueBuiltinFn(&array3test, new TypeFn([new TypeAny, new TypeAny, new TypeAny], new TypeNum))
     ];
 }
 

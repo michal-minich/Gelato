@@ -30,7 +30,7 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
         {
             vctx.remark(MissingStartFunction(null));
             auto i = new ExpIdent(file, "start");
-            auto d = new StmDeclr(file, i);
+            auto d = new ExpAssign(file, i);
             auto fn = new ValueFn(file);
             fn.exps = file.exps;
             d.value = fn;
@@ -46,7 +46,7 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
 
         foreach (e; s.exps)
         {
-            if (cast(StmDeclr)e)
+            if (cast(ExpAssign)e)
             {
                 ds ~= e;
                 e.prepare(this);
@@ -125,7 +125,7 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
             foreach (o; i.otherwise)
                 o.prepare(this);
         else
-            i.otherwise = [new AstUnknown(i)];
+            i.otherwise = [new ValueUnknown(i)];
     }
 
 
@@ -138,7 +138,7 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
     }
 
 
-    void visit (StmDeclr d)
+    void visit (ExpAssign d)
     {
         auto i = cast(ExpIdent)d.slot;
 
@@ -178,9 +178,9 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
 
     void visit (ValueNum) { }
 
-    void visit (BuiltinFn) { }
+    void visit (ValueBuiltinFn) { }
 
-    void visit (AstUnknown) { }
+    void visit (ValueUnknown) { }
 
     void visit (TypeAny) { }
 

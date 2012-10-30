@@ -14,7 +14,7 @@ final class Validator : IAstVisitor!(void)
     this (IValidationContext validationContex) { vctx = validationContex; }
 
 
-    void visit (AstUnknown u)
+    void visit (ValueUnknown u)
     {
     }
 
@@ -92,7 +92,7 @@ final class Validator : IAstVisitor!(void)
     }
 
 
-    void visit (StmDeclr d)
+    void visit (ExpAssign d)
     {
         d.slot.validate(this);
 
@@ -159,5 +159,5 @@ final class Validator : IAstVisitor!(void)
 
     void visit (TypeStruct) { }
 
-    void visit (BuiltinFn) { }
+    void visit (ValueBuiltinFn) { }
 }

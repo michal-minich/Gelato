@@ -51,9 +51,9 @@ final class TestInterpreterContext : IInterpreterContext
 {
     const dstring visit (ValueNum e) { return e.value.to!dstring(); }
 
-    const dstring visit (AstUnknown e) { return "AstUnknown"; }
+    const dstring visit (ValueUnknown e) { return "ValueUnknown"; }
 
-    const dstring visit (StmDeclr e) { return "StmDeclr"; }
+    const dstring visit (ExpAssign e) { return "ExpAssign"; }
 
     const dstring visit (ValueStruct e) { return "ValueStruct"; }
 
@@ -95,7 +95,7 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (TypeStruct) { return "TypeStruct"; }
 
-    const dstring visit (BuiltinFn) { return "BuiltinFn"; }
+    const dstring visit (ValueBuiltinFn) { return "ValueBuiltinFn"; }
 
     const dstring visit (TypeOr tor) { return "TypeOr"; }
 
@@ -107,9 +107,9 @@ final class TestInterpreterContext : IInterpreterContext
 {
     const dstring visit (ValueNum e) { return e.tokensText ~ "|"; }
 
-    const dstring visit (AstUnknown e) { return e.tokensText ~ "|"; }
+    const dstring visit (ValueUnknown e) { return e.tokensText ~ "|"; }
 
-    dstring visit (StmDeclr d)
+    dstring visit (ExpAssign d)
     { 
         return d.tokensText ~ "|" ~ d.slot.str(this)
             ~ (d.type ? d.type.str(this) : "") 
@@ -167,7 +167,7 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (TypeStruct ts) { return ts.tokensText ~ "|"; }
 
-    const dstring visit (BuiltinFn bfn) { return bfn.tokensText ~ "|"; }
+    const dstring visit (ValueBuiltinFn bfn) { return bfn.tokensText ~ "|"; }
 
     const dstring visit (TypeOr tor) { return tor.tokensText ~ "|"; }
 

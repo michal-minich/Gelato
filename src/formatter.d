@@ -21,13 +21,13 @@ import common, parse.ast;
     const dstring visit (ValueNum e) { return e.value.to!dstring(); }
 
 
-    dstring visit (AstUnknown e)
+    dstring visit (ValueUnknown e)
     {
         return e.tokens ? e.tokens.map!(t => t.text)().join() : "<unknown>";
     }
 
 
-    dstring visit (StmDeclr e)
+    dstring visit (ExpAssign e)
     {
         if (printOriginalParse && !e.parent)
             return e.value.str(this);
@@ -119,7 +119,7 @@ import common, parse.ast;
     {
         ++level;
         immutable expandBoth = e.then.length > 1 || e.otherwise.length > 1;
-        immutable txt = e.otherwise.length == 1 && cast(AstUnknown)e.otherwise[0]
+        immutable txt = e.otherwise.length == 1 && cast(ValueUnknown)e.otherwise[0]
             ? dtext("if ", e.when.str(this), " then", dtextExps(e.then, expandBoth), "end")
             : dtext("if ", e.when.str(this), " then", dtextExps(e.then, expandBoth), "else",
                 dtextExps(e.otherwise, expandBoth), "end");
@@ -159,7 +159,7 @@ import common, parse.ast;
     dstring visit (ExpScope sc) 
     {
         dstring bdy;
-        foreach (ix, d; sc.declarations)
+        foreach (ix, d; sc.assigments)
             bdy ~= newLine ~ tab ~ d.slot.str(this) ~ " = " ~ sc.values[ix].str(this);
 
         return "{ "~ bdy ~ " }"; 
@@ -182,7 +182,7 @@ import common, parse.ast;
 
     const dstring visit (TypeStruct) { return "struct { TODO }"; }
 
-    const dstring visit (BuiltinFn) { assert (false, "built in fn has no textual representation"); }
+    const dstring visit (ValueBuiltinFn) { assert (false, "built in fn has no textual representation"); }
 
     dstring visit (TypeOr or)
     {
@@ -208,7 +208,7 @@ final class Formatter
 
         /*foreach (e; exps)
         {
-            auto decldstring = cast(StmDeclr)e;
+            auto decldstring = cast(ExpAssign)e;
             if (declr.ident.text == "name")
                 rl.name = declr.value.str(this);
             else

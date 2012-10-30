@@ -31,7 +31,7 @@ VALIDATOR -----------------------------
 
 
 PREPARER -----------------------------
-! chained declarations
+! chained assigments
   operators priority
   prepare functions on firs call
   remark undefined identifiers

@@ -4,11 +4,11 @@ import std.algorithm, std.array, std.conv;
 import common, parse.ast, validate.remarks, interpret.preparer, interpret.builtins;
 
 
-@safe StmDeclr findDeclr (Exp[] exps, dstring name)
+@safe ExpAssign findDeclr (Exp[] exps, dstring name)
 {
     foreach (e; exps)
     {
-        auto d = cast(StmDeclr)e;
+        auto d = cast(ExpAssign)e;
         if (d)
         {
             auto i = cast(ExpIdent)d.slot;
@@ -20,7 +20,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 }
 
 
-@safe StmDeclr getIdentDeclaredBy (ExpIdent ident)
+@safe ExpAssign getIdentDeclaredBy (ExpIdent ident)
 {
     if (ident.declaredBy)
         return ident.declaredBy;
@@ -28,7 +28,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     auto bfn = ident.text in builtinFns;
     if (bfn)
     {
-        auto d = new StmDeclr(null, null);
+        auto d = new ExpAssign(null, null);
         d.value = *bfn;
         return d;
     }
@@ -36,17 +36,17 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     auto d = findIdentDelr (ident.parent, ident);
     if (!d)
     {
-        d = new StmDeclr(ident.parent, ident);
-        d.value = new AstUnknown(ident);
+        d = new ExpAssign(ident.parent, ident);
+        d.value = new ValueUnknown(ident);
     }
 
     return d;
 }
 
 
-@trusted private StmDeclr findIdentDelr (Exp e, ExpIdent ident)
+@trusted private ExpAssign findIdentDelr (Exp e, ExpIdent ident)
 {
-    StmDeclr d;
+    ExpAssign d;
     d = findIdentDelrInExpOrParent(e, ident.text);
     if (d)
         return d;
@@ -67,9 +67,9 @@ else
 }
 
 
-@safe StmDeclr findIdentDelrInExpOrParent (Exp e, dstring ident)
+@safe ExpAssign findIdentDelrInExpOrParent (Exp e, dstring ident)
 {
-    StmDeclr d;
+    ExpAssign d;
     while (e && !d)
     {
         d = findIdentDelrInExp(e, ident);
@@ -79,7 +79,7 @@ else
 }
 
 
-@trusted private StmDeclr findIdentDelrInExp (Exp e, dstring ident)
+@trusted private ExpAssign findIdentDelrInExp (Exp e, dstring ident)
 {
     Exp[] exps;
 
@@ -91,7 +91,7 @@ else
     {
         foreach (e2; exps)
         {
-            auto d = cast(StmDeclr)e2;
+            auto d = cast(ExpAssign)e2;
             if (d)
             {
                 auto i = cast(ExpIdent)d.slot;
@@ -124,7 +124,7 @@ else
         {
             if (e2 is e)
                 break;
-            auto d = cast(StmDeclr)e2;
+            auto d = cast(ExpAssign)e2;
             if (d)
             {
                 auto i = cast(ExpIdent)d.slot;

@@ -56,7 +56,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 
         if (!f)
         {
-            auto bfn = cast(BuiltinFn)exp;
+            auto bfn = cast(ValueBuiltinFn)exp;
             if (bfn)
             {
                 Exp[] ea;
@@ -68,11 +68,11 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
             auto s = cast(ValueStruct)exp;
             if (s)
             {
-                auto declrs = cast(StmDeclr[])s.exps; // sure cast
-                auto sc = new ExpScope(currentScope, declrs);
+                auto assigments = cast(ExpAssign[])s.exps; // sure cast
+                auto sc = new ExpScope(currentScope, assigments);
 
-                foreach (d; declrs)
-                    sc.values ~= d.value.eval(this);
+                foreach (a; assigments)
+                    sc.values ~= a.value.eval(this);
 
                 return sc;
             }
@@ -165,7 +165,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 
         assert (sc, "only struct can have members (" ~ dot.member.to!string() ~ ")");
         
-        foreach (ix, d; sc.declarations)
+        foreach (ix, d; sc.assigments)
             if ((cast(ExpIdent)d.slot).text == dot.member)
                 return sc.values[ix].eval(this);
 
@@ -195,7 +195,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         return null;
     }
 
-    Exp visit (StmDeclr d)
+    Exp visit (ExpAssign d)
     { 
         if (d.value)
         {
@@ -214,9 +214,9 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 
     Exp visit (ValueNum num) { return num; }
 
-    Exp visit (BuiltinFn bfn) { return bfn; }
+    Exp visit (ValueBuiltinFn bfn) { return bfn; }
 
-    Exp visit (AstUnknown un) { return un; }
+    Exp visit (ValueUnknown un) { return un; }
 
     Exp visit (ValueStruct s) { return s; }
 

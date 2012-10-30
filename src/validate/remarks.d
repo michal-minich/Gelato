@@ -80,7 +80,7 @@ final class RemarkLevel : IRemarkLevel
 
         foreach (e; f.exps)
         {
-            auto d = cast(StmDeclr)e;
+            auto d = cast(ExpAssign)e;
             auto i = cast(ExpIdent)d.slot;
             if (i.text == "name")
                 rl.name = (cast(ValueText)d.value).value;
@@ -136,7 +136,7 @@ final class RemarkTranslation : IRemarkTranslation
 
         foreach (e; f.exps)
         {
-            auto d = cast(StmDeclr)e;
+            auto d = cast(ExpAssign)e;
             auto i = cast(ExpIdent)d.slot;
             if (i.text == "inherit")
                 rt.inherit = (cast(ValueText)d.value).value.to!string();
@@ -155,7 +155,7 @@ final class RemarkTranslation : IRemarkTranslation
 
         foreach (e; f.exps)
         {
-            auto d = cast(StmDeclr)e;
+            auto d = cast(ExpAssign)e;
             auto i = cast(ExpIdent)d.slot;
             vals[i.text] = (cast(ValueText)d.value).value;
         }

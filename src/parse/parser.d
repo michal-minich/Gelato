@@ -211,7 +211,7 @@ final class Parser
         if (!operand2)
         {
             vctx.remark(textRemark("second operand is missing"));
-            operand2 = new AstUnknown(parent);
+            operand2 = new ValueUnknown(parent);
         }
 
         auto fna = new ExpFnApply(parent, op, [operand1, operand2]);
@@ -238,7 +238,7 @@ final class Parser
         else
         {
             vctx.remark(textRemark("unsupported brace op apply"));
-            return new AstUnknown(parent);
+            return new ValueUnknown(parent);
         }
     }
 
@@ -410,12 +410,12 @@ final class Parser
 
         foreach (ix, p; parseBracedExpList(f))
         {
-            auto d = cast(StmDeclr)p;
+            auto d = cast(ExpAssign)p;
             if (!d)
             {
                 auto i = cast(ExpIdent)p;
                 if (i)
-                    d = new StmDeclr(f, i);
+                    d = new ExpAssign(f, i);
             }
 
             if (d)
@@ -520,9 +520,9 @@ final class Parser
     }
 
 
-    AstUnknown parseUnknown (Exp parent)
+    ValueUnknown parseUnknown (Exp parent)
     {
-        auto u = new AstUnknown(parent);
+        auto u = new ValueUnknown(parent);
         nextTok();
         return u;
     }
@@ -548,11 +548,11 @@ final class Parser
     Exp parseIdentOrDeclr (Exp parent)
     {
         auto exp = parseIdentOrOpDot (parent);
-        StmDeclr d;
+        ExpAssign d;
 
         if (exp && current.text == ":")
         {
-            d = new StmDeclr(parent, exp);
+            d = new ExpAssign(parent, exp);
             exp.parent = d;
             nextTok();
             d.type = parse(d);
@@ -560,7 +560,7 @@ final class Parser
         if (exp && current.text == "=") // on assignment i is not required
         {
             if (!d)
-                d = new StmDeclr(parent, exp); // it could be also assignment
+                d = new ExpAssign(parent, exp); // it could be also assignment
             exp.parent = d;
             nextTok();
             d.value = parse(d);
