@@ -300,11 +300,11 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
    <File path="src\validate\validation.d" />
   </Folder>
   <File path="src\ast.d" />
-  <File path="src\cmdint.d" />
   <File path="src\common.d" />
   <File path="src\formatter.d" />
   <File path="src\localization.d" />
   <File path="src\main.d" />
+  <File path="src\program.d" />
   <File path="src\settings.d" />
   <File path="std.gel" />
   <File path="test.gel" />

@@ -4,7 +4,7 @@ import std.stdio, std.range, std.array, std.range, std.algorithm, std.conv,
     std.string, std.utf, std.path;
 import std.file : readText, exists, isFile;
 import common, settings, formatter, parse.ast, parse.parser, parse.tokenizer, validate.remarks,
-    validate.validation, interpret.preparer, interpret.evaluator;
+    validate.validation, interpret.preparer, interpret.evaluator, program;
 
 
 final class TestInterpreterContext : IInterpreterContext
@@ -12,9 +12,9 @@ final class TestInterpreterContext : IInterpreterContext
     private
     {
         uint remarkCounter;
-        bool hasBlocker;
+        bool hasBlockerField;
         Remark[] remarks;
-        dstring[] exceptions;
+        Exp[] exs;
     }
 
 
@@ -26,6 +26,10 @@ final class TestInterpreterContext : IInterpreterContext
 
     dstring readln () { return "TODO?"; }
 
+    @property bool hasBlocker () { return hasBlockerField; }
+
+    @property Exp[] exceptions () { return exs; }
+
 
     void remark (Remark remark)
     {
@@ -35,14 +39,14 @@ final class TestInterpreterContext : IInterpreterContext
         auto svr = remark.severity;
 
         if (svr == RemarkSeverity.blocker)
-            hasBlocker = true;
+            hasBlockerField = true;
 
         remarks ~= remark;
     }
 
     void except (dstring ex)
     {
-        exceptions ~= ex;
+        exs ~= new ValueText(null, ex);
     }
 }
 
@@ -234,7 +238,8 @@ bool test (string filePath)
 
         try
         {
-            auto astFile = parseString(context, fullCode);
+            auto p = new Program(fullCode);
+            auto res = p.run(context);
 
             if (context.hasBlocker)
             {
@@ -243,41 +248,10 @@ bool test (string filePath)
                 continue;
             }
 
-            auto tt = astFile.tokensText;
-            if (tokensExpected.length)
-                tokensParsed = '|' ~ ttfv.visit(astFile) ~ '|';
-            else
-            {
-                tokensExpected = '|' ~ fullCode ~ '|';
-                tokensParsed ='|' ~ astFile.tokensText ~ '|';
-            }
-
-            auto prep = new PreparerForEvaluator(context);
-            prep.prepareFile(astFile);
-
-            if (context.hasBlocker)
-            {
-                ++testsFailed;
-                errPrint(fullCode, context);
-                continue;
-            }
-            
-            
-            auto val = new Validator(context);
-            val.visit(astFile);
-
-            if (context.hasBlocker)
-            {
-                ++testsFailed;
-                errPrint(fullCode, context);
-                continue;
-            }
-
-            auto ev = new Evaluator(context);
-            auto res = ev.eval(astFile);
-            
             if (res is null && expected == "\\0")
                 continue;
+
+            auto tt = p.files[0].tokensText;
 
             auto resStr = res.str(tfv);
 
@@ -285,6 +259,14 @@ bool test (string filePath)
 
             if (tokensExpected != tokensParsed || tokenFailed || evalFailed || context.remarks || context.exceptions)
             {
+                if (tokensExpected.length)
+                    tokensParsed = '|' ~ ttfv.visit(p.files[0]) ~ '|';
+                else
+                {
+                    tokensExpected = '|' ~ fullCode ~ '|';
+                    tokensParsed ='|' ~ p.files[0].tokensText ~ '|';
+                }
+
                 ++testsFailed;
                 errPrint(fullCode, context, expectedStr, resStr, tokensExpected, tokensParsed);
                 continue;

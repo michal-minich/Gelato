@@ -2,7 +2,7 @@
 
 
 import std.stdio, std.algorithm, std.conv, std.path;
-import common, settings, formatter, cmdint;
+import common, settings, formatter, program;
 
 
 int main (string[] args)
@@ -23,10 +23,8 @@ int main (string[] args)
     }
     else
     {
-        auto task = InterpretTask.parse (args);
-
-        auto ci = new ConsoleInterpreter;
-        auto r = ci.process (task);
+        auto p = parseCmdArgs (args);
+        auto r = p.runInConsole();
         readln();
         return r;
     }

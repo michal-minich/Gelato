@@ -10,51 +10,41 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
     IValidationContext vctx;
     private ValueFn currentFn;
     private uint currentExpIndex;
-
+    private bool isStartFile;
 
     this (IValidationContext validationContex) { vctx = validationContex; }
 
 
-    void prepareFile (ValueStruct file)
+    void prepareFile (ValueStruct file, bool isStartFile)
     {
+        this.isStartFile = isStartFile;
         initBuiltinFns();
-        makeStartFunction (file);
         visit (file);
     }
 
-
-    private @trusted void makeStartFunction (ValueStruct file)
-    {
-        auto start = findDeclr(file.exps, "start");
-
-        if (!start)
-        {
-            vctx.remark(MissingStartFunction(null));
-            auto i = new ExpIdent(file, "start");
-            auto d = new ExpAssign(file, i);
-            auto fn = new ValueFn(file);
-            fn.exps = file.exps;
-            d.value = fn;
-            file.exps = [d];
-        }
-    }
 
 
 
     void visit (ValueStruct s)
     {
-        Exp[] ds;
-
-        foreach (e; s.exps)
+        if (isStartFile && !s.parent)
         {
-            if (cast(ExpAssign)e)
-            {
-                ds ~= e;
+            foreach (e; s.exps)
                 e.prepare(this);
-            }
         }
-
-        s.exps = ds;
+        else
+        {
+            Exp[] ds;
+            foreach (e; s.exps)
+            {
+                if (cast(ExpAssign)e)
+                {
+                    ds ~= e;
+                    e.prepare(this);
+                }
+            }
+            s.exps = ds;
+        }
     }
 
 

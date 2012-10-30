@@ -14,9 +14,10 @@ validate/remarks.d
 validate/validation.d
 
 ast.d
-cmdint.d
 common.d
 formatter.d
 localization.d
 main.d
+program.d
 settings.d
+tester.d

@@ -120,61 +120,16 @@ interface IPrinterContext
     void println (dstring);
 
     dstring readln ();
+
+    @property bool hasBlocker ();
 }
 
 
 interface IInterpreterContext : IValidationContext, IPrinterContext
 {
+    @property Exp[] exceptions ();
+
     nothrow void except (dstring ex);
-}
-
-
-struct InterpretTask
-{
-    string[] files;
-
-    static InterpretTask parse (string[] args)
-    {
-        InterpretTask task;
-
-        foreach (a; args[1..$])
-        {
-            if (a.endsWith(".gel"))
-            {
-                immutable f = a.buildNormalizedPath();
-                if (f.exists())
-                {
-                    if (f.isFile())
-                    {
-                        task.files ~= f;
-                    }
-                    else
-                    {
-                        cmdError ("Path \"", a, "\" not a file. It is folder or block device.",
-                                  " Full path is \"", f, "\".");
-                    }
-                }
-                else
-                {
-                    cmdError ("File \"", a, "\" could not be found. Full path is \"", f, "\".");
-                }
-            }
-            else
-            {
-                if (a[0] == '-' || a[0] == '/')
-                {
-                    cmdError ("Unknown command line parameter \"", a, "\".");
-                }
-                else
-                {
-                    cmdError ("Olny \"*.gel\" files are supported as input.",
-                              " Parameters can be prefixed with \"-\", \"--\" or \"/\".");
-                }
-            }
-        }
-
-        return task;
-    }
 }
 
 
