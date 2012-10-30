@@ -62,7 +62,16 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
                 Exp[] ea;
                 foreach (a; fna.args)
                     ea ~= a.eval(this);
-                return bfn.func(context, ea);
+                
+                try
+                {
+                    return bfn.func(context, ea);
+                }
+                catch (Exception ex)
+                {
+                    // TODO handle properly
+                    return ValueUnknown.single;
+                }
             }
 
             auto s = cast(ValueStruct)exp;
@@ -159,11 +168,11 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 
         auto st = cast(ValueStruct)record;
 
-        assert (!st, "struct must be constructed before accessing member (" ~ dot.member.to!string() ~ ")");
+        assert (!st, "struct must be constructed before accessing member (" ~ dot.member.toString() ~ ")");
 
         auto sc = cast(ExpScope)record;
 
-        assert (sc, "only struct can have members (" ~ dot.member.to!string() ~ ")");
+        assert (sc, "only struct can have members (" ~ dot.member.toString() ~ ")");
         
         foreach (ix, d; sc.assigments)
             if ((cast(ExpIdent)d.slot).text == dot.member)

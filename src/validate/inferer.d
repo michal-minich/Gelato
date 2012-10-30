@@ -46,28 +46,28 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (ValueUnknown u)
     {
-        u.infType = new TypeVoid;
+        u.infType = TypeVoid.single;
         return u.infType;
     }
 
 
     Exp visit (ValueNum n)
     {
-        n.infType = new TypeNum;
+        n.infType = TypeNum.single;
         return n.infType;
     }
 
 
     Exp visit (ValueText t)
     {
-        t.infType = new TypeText;
+        t.infType = TypeText.single;
         return t.infType;
     }
 
 
     Exp visit (ValueChar ch)
     {
-        ch.infType = new TypeChar;
+        ch.infType = TypeChar.single;
         return ch.infType;
     }
 
@@ -88,7 +88,7 @@ final class TypeInferer : IAstVisitor!(Exp)
         foreach (e; fn.params)
             paramTypes ~= e.infer(this);
 
-         fn.infType  = new TypeFn(null, paramTypes, new TypeVoid);
+         fn.infType  = new TypeFn(null, paramTypes, TypeVoid.single);
 
         foreach (e; fn.exps)
         {
@@ -131,7 +131,7 @@ final class TypeInferer : IAstVisitor!(Exp)
 
         i.infType = i.declaredBy.value
             ? i.declaredBy.value.infer(this)
-            : new TypeAny;
+            : TypeAny.single;
         return i.infType;
     }
 
@@ -141,7 +141,7 @@ final class TypeInferer : IAstVisitor!(Exp)
         if (d.infType)
             return d.infType;
 
-        d.infType = d.value ? d.value.infer(this) : new TypeAny;
+        d.infType = d.value ? d.value.infer(this) : TypeAny.single;
         return d.infType;
     }
 
@@ -158,14 +158,14 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (StmLabel l)
     {
-        l.infType = new TypeVoid;
+        l.infType = TypeVoid.single;
         return l.infType;
     }
 
 
     Exp visit (StmGoto gt)
     {
-        gt.infType = new TypeVoid;
+        gt.infType = TypeVoid.single;
         return gt.infType;
     }
 
@@ -179,7 +179,7 @@ final class TypeInferer : IAstVisitor!(Exp)
              ? infType
              : mergeTypes(*fnRetType, infType);
 
-        r.infType = new TypeVoid;
+        r.infType = TypeVoid.single;
         return r.infType;
     }
 
@@ -188,7 +188,7 @@ final class TypeInferer : IAstVisitor!(Exp)
     {
         i.infType = i.then.length == 1 && i.otherwise.length == 1
             ? mergeTypes(i.then[0].infer(this), i.otherwise[0].infer(this))
-            : new TypeVoid;
+            : TypeVoid.single;
 
         return i.infType;
     }
@@ -196,11 +196,11 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (ExpDot dot)
     {
-        return new ValueUnknown(null);
+        return ValueUnknown.single;
     }
 
 
-    Exp visit (ExpScope) { return new ValueUnknown(null); }
+    Exp visit (ExpScope) { return ValueUnknown.single; }
 
     Exp visit (TypeType tt) { return new TypeType(null, tt); }
 

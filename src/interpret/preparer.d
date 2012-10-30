@@ -17,6 +17,7 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
 
     void prepareFile (ValueStruct file)
     {
+        initBuiltinFns();
         makeStartFunction (file);
         visit (file);
     }
@@ -125,7 +126,7 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
             foreach (o; i.otherwise)
                 o.prepare(this);
         else
-            i.otherwise = [new ValueUnknown(i)];
+            i.otherwise = [ValueUnknown.single];
     }
 
 
@@ -157,7 +158,7 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
     { 
         ident.declaredBy = getIdentDeclaredBy(ident);
 
-        assert (ident.declaredBy, "undefined identifier " ~ ident.text.to!string());
+        assert (ident.declaredBy, "undefined identifier " ~ ident.text.toString());
     }
 
     void visit (ExpScope) { assert (false, "ExpScope prepare"); }

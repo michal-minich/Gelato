@@ -31,7 +31,7 @@ VALIDATOR -----------------------------
 
 
 PREPARER -----------------------------
-! chained assigments
+! chained assignments
   operators priority
   prepare functions on firs call
   remark undefined identifiers
@@ -56,6 +56,7 @@ TYPE INFERENCE / CHECK -----------------------------
 
 
 INTERPRETER -----------------------------
+! overridable std functions (check builtins after ident is not found)
 ! goto from and inside if/then/else
 ! built-ins with qualified name
 ! variable length fn params

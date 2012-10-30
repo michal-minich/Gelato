@@ -117,7 +117,8 @@ abstract class Exp
     Exp parent;
     debug string typeName;
 
-    this (Exp parent)
+
+    this (Exp parent = null)
     {
         debug typeName = typeid(this).name;
         this.parent = parent; 
@@ -153,7 +154,9 @@ abstract class Exp
 final class ValueUnknown : Exp
 {
     mixin visitImpl;
-    this (Exp parent) { super(parent); }
+    private this () {}
+    static typeof(this) single;
+    static this () { single = new typeof(this); }
 }
 
 
@@ -162,7 +165,7 @@ final class ValueStruct : Exp
     mixin visitImpl;
     Exp[] exps;
     ValueFn constructor;
-    this (Exp parent) { super(parent); }
+    nothrow this (Exp parent) { super(parent); }
 }
 
 
@@ -170,7 +173,7 @@ final class ValueNum : Exp
 {
     mixin visitImpl;
     long value;
-    this (Exp parent, long value) { super(parent); this.value = value; }
+    nothrow this (Exp parent, long value) { super(parent); this.value = value; }
 }
 
 
@@ -178,7 +181,7 @@ final class ValueText : Exp
 {
     mixin visitImpl;
     dstring value;
-    this (Exp parent, dstring value) { super(parent); this.value = value; }
+    nothrow this (Exp parent, dstring value) { super(parent); this.value = value; }
 }
 
 
@@ -186,7 +189,7 @@ final class ValueChar : Exp
 {
     mixin visitImpl;
     dchar value;
-    this (Exp parent, dchar val)
+    nothrow this (Exp parent, dchar val)
     {
         super(parent);
         value = val;
@@ -200,7 +203,7 @@ final class ValueFn : Exp
     ExpAssign[] params;
     Exp[] exps;
     bool isPrepared;
-    this (Exp parent) { super(parent); }
+    nothrow this (Exp parent) { super(parent); }
 }
 
 
@@ -226,7 +229,7 @@ final class ExpAssign : Exp
     Exp type;
     Exp value;
     size_t paramIndex = typeof(paramIndex).max;
-    this (Exp parent, Exp slot) { super(parent); this.slot = slot; }
+    nothrow this (Exp parent, Exp slot) { super(parent); this.slot = slot; }
 }
 
 class ExpScope : Exp
@@ -234,7 +237,7 @@ class ExpScope : Exp
     mixin visitImpl;
     ExpAssign[] assigments;
     Exp[] values;
-    this (ExpScope ps, ExpAssign[] declrs) { super (ps); assigments = declrs; }
+    nothrow this (ExpScope ps, ExpAssign[] declrs) { super (ps); assigments = declrs; }
 }
 
 
@@ -243,7 +246,7 @@ final class ExpLambda : ExpScope
     mixin visitImpl;
     ValueFn fn;
     uint currentExpIndex;
-    this (ExpScope ps, ValueFn fn) { super (ps, fn.params); this.fn = fn; }
+    nothrow this (ExpScope ps, ValueFn fn) { super (ps, fn.params); this.fn = fn; }
 }
 
 
@@ -252,7 +255,7 @@ final class ExpFnApply : Exp
     mixin visitImpl;
     Exp applicable;
     Exp[] args;
-    this (Exp parent, Exp applicable, Exp[] args)
+    nothrow this (Exp parent, Exp applicable, Exp[] args)
     {
         super(parent);
         this.applicable = applicable;
@@ -266,7 +269,7 @@ final class ExpIdent : Exp
     mixin visitImpl;
     dstring text;
     ExpAssign declaredBy;
-    this (Exp parent, dstring identfier) { super(parent); text = identfier; }
+    nothrow this (Exp parent, dstring identfier) { super(parent); text = identfier; }
 }
 
 
@@ -276,7 +279,7 @@ final class ExpIf : Exp
     Exp when;
     Exp[] then;
     Exp[] otherwise;
-    this (Exp parent) { super(parent); }
+    nothrow this (Exp parent) { super(parent); }
 }
 
 
@@ -285,7 +288,7 @@ final class ExpDot : Exp
     mixin visitImpl;
     Exp record;
     dstring member;
-    this (Exp parent, Exp record, dstring member)
+    nothrow this (Exp parent, Exp record, dstring member)
     {
         super(parent);
         this.record = record;
@@ -308,7 +311,7 @@ final class StmGoto : Exp
     mixin visitImpl;
     dstring label;
     uint labelExpIndex = uint.max;
-    this (Exp parent, dstring label) { super(parent); this.label = label; }
+    nothrow this (Exp parent, dstring label) { super(parent); this.label = label; }
 }
 
 
@@ -316,7 +319,7 @@ final class StmReturn : Exp
 {
     mixin visitImpl;
     Exp exp;
-    this (Exp parent) { super(parent); }
+    nothrow this (Exp parent) { super(parent); }
 }
 
 
@@ -325,21 +328,25 @@ final class TypeType : Exp
 {
     mixin visitImpl;
     Exp type;
-    this (Exp parent, Exp type) { super(parent); this.type = type; }
+    nothrow this (Exp parent, Exp type) { super(parent); this.type = type; }
 }
 
 
 final class TypeAny : Exp
 {
     mixin visitImpl;
-    this (Exp parent = null) { super(parent); }
+    private this () {}
+    static typeof(this) single;
+    static this () { single = new typeof(this); }
 }
 
 
 final class TypeVoid : Exp
 {
     mixin visitImpl;
-    this (Exp parent = null) { super(parent); }
+    private this () {}
+    static typeof(this) single;
+    static this () { single = new typeof(this); }
 }
 
 
@@ -347,7 +354,7 @@ final class TypeOr : Exp
 {
     mixin visitImpl;
     Exp[] types;
-    this (Exp parent, Exp[] types) { super(parent); this.types = types; }
+    nothrow this (Exp parent, Exp[] types) { super(parent); this.types = types; }
 }
 
 
@@ -356,7 +363,7 @@ final class TypeFn : Exp
     mixin visitImpl;
     Exp[] types;
     Exp retType;
-    this (Exp parent, Exp[] types, Exp retType)
+    nothrow this (Exp parent, Exp[] types, Exp retType)
     {
         super(parent);
         this.types = types;
@@ -369,26 +376,32 @@ final class TypeStruct: Exp
 {
     mixin visitImpl;
     Exp value;
-    this (Exp parent, Exp value) { super(parent); this.value = value; }
+    nothrow this (Exp parent, Exp value) { super(parent); this.value = value; }
 }
 
 
 final class TypeNum : Exp
 {
     mixin visitImpl;
-    this (Exp parent = null) { super(parent); }
+    private this () {}
+    static typeof(this) single;
+    static this () { single = new typeof(this); }
 }
 
 
 final class TypeText : Exp
 {
     mixin visitImpl;
-    this (Exp parent = null) { super(parent); }
+    private this () {}
+    static typeof(this) single;
+    static this () { single = new typeof(this); }
 }
 
 
 final class TypeChar: Exp
 {
     mixin visitImpl;
-    this (Exp parent = null) { super(parent); }
+    private this () {}
+    static typeof(this) single;
+    static this () { single = new typeof(this); }
 }

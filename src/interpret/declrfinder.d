@@ -3,6 +3,7 @@ module interpret.declrfinder;
 import std.algorithm, std.array, std.conv;
 import common, parse.ast, validate.remarks, interpret.preparer, interpret.builtins;
 
+nothrow:
 
 @safe ExpAssign findDeclr (Exp[] exps, dstring name)
 {
@@ -36,8 +37,8 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     auto d = findIdentDelr (ident.parent, ident);
     if (!d)
     {
-        d = new ExpAssign(ident.parent, ident);
-        d.value = new ValueUnknown(ident);
+        d = new ExpAssign(null, ident);
+        d.value = ValueUnknown.single;
     }
 
     return d;

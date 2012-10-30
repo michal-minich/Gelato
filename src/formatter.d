@@ -29,9 +29,6 @@ import common, parse.ast;
 
     dstring visit (ExpAssign e)
     {
-        if (printOriginalParse && !e.parent)
-            return e.value.str(this);
-
         auto t = useInferredTypes ? e.infType : e.type;
 
         if (!t && !e.value) return e.slot.str(this);

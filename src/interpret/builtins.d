@@ -7,19 +7,29 @@ import common, parse.ast, validate.remarks, tester;
 ValueBuiltinFn[dstring] builtinFns;
 
 
-static this ()
+@trusted nothrow void initBuiltinFns ()
 {
-    builtinFns = [
-    "print"   : new ValueBuiltinFn(&customPrint, new TypeFn(null, [new TypeAny], new TypeVoid))
-   ,"readln"  : new ValueBuiltinFn(&customReadln, new TypeFn(null, [], new TypeText))
-   ,"toNum"   : new ValueBuiltinFn(&toNum, new TypeFn(null, [new TypeText], new TypeNum))
-   ,"inc"     : new ValueBuiltinFn(&incNum, new TypeFn(null, [new TypeNum], new TypeNum))
-   ,"dec"     : new ValueBuiltinFn(&decNum, new TypeFn(null, [new TypeNum], new TypeNum))
-   ,"=="      : new ValueBuiltinFn(&eq, new TypeFn(null, [new TypeAny, new TypeAny], new TypeNum))
-   ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn(null, [new TypeAny, new TypeAny], new TypeNum))
-   ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn(null, [new TypeNum, new TypeNum], new TypeNum))
-   ,"["       : new ValueBuiltinFn(&array3test, new TypeFn(null, [new TypeAny, new TypeAny, new TypeAny], new TypeNum))
-    ];
+    try
+    {
+        if (builtinFns.length)
+            return;
+
+        builtinFns = [
+        "print"   : new ValueBuiltinFn(&customPrint, new TypeFn(null, [TypeAny.single], TypeVoid.single))
+       ,"readln"  : new ValueBuiltinFn(&customReadln, new TypeFn(null, [], TypeText.single))
+       ,"toNum"   : new ValueBuiltinFn(&toNum, new TypeFn(null, [TypeText.single], TypeNum.single))
+       ,"inc"     : new ValueBuiltinFn(&incNum, new TypeFn(null, [TypeNum.single], TypeNum.single))
+       ,"dec"     : new ValueBuiltinFn(&decNum, new TypeFn(null, [TypeNum.single], TypeNum.single))
+       ,"=="      : new ValueBuiltinFn(&eq, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeNum.single))
+       ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeNum.single))
+       ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn(null, [TypeNum.single, TypeNum.single], TypeNum.single))
+       ,"["       : new ValueBuiltinFn(&array3test, new TypeFn(null, [TypeAny.single, TypeAny.single, TypeAny.single], TypeNum.single))
+        ];
+    }
+    catch
+    {
+        assert (false);
+    }
 }
 
 
@@ -48,7 +58,7 @@ Exp customReadln (IInterpreterContext context, Exp[] exps)
 Exp toNum (IInterpreterContext context, Exp[] exps)
 {
     auto n = sureCast!ValueText(exps[0]);
-    return new ValueNum(n.parent, n.value.to!long());
+    return new ValueNum(null, n.value.to!long());
 }
 
 

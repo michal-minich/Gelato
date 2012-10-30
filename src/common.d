@@ -43,6 +43,19 @@ enum newLine = "\r\n";
 }
 
 
+@trusted nothrow string toString(dstring str)
+{
+    try
+    {
+        return str.to!string();
+    }
+    catch (Exception ex)
+    {
+        return ex.msg;
+    }
+}
+
+
 @safe @property O[] of (O, I) (I[] objs)
 {
     O[] res;
@@ -112,7 +125,7 @@ interface IPrinterContext
 
 interface IInterpreterContext : IValidationContext, IPrinterContext
 {
-    void except (dstring ex);
+    nothrow void except (dstring ex);
 }
 
 

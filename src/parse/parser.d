@@ -211,7 +211,7 @@ final class Parser
         if (!operand2)
         {
             vctx.remark(textRemark("second operand is missing"));
-            operand2 = new ValueUnknown(parent);
+            operand2 = ValueUnknown.single;
         }
 
         auto fna = new ExpFnApply(parent, op, [operand1, operand2]);
@@ -238,7 +238,7 @@ final class Parser
         else
         {
             vctx.remark(textRemark("unsupported brace op apply"));
-            return new ValueUnknown(parent);
+            return ValueUnknown.single;
         }
     }
 
@@ -292,28 +292,28 @@ final class Parser
     TypeAny parseTypeAny (Exp parent)
     {
         nextTok();
-        return new TypeAny(parent);
+        return TypeAny.single;
     }
 
 
     TypeVoid parseTypeVoid (Exp parent)
     {
         nextTok();
-        return new TypeVoid(parent);
+        return TypeVoid.single;
     }
 
 
     TypeNum parseTypeNum (Exp parent)
     {
         nextTok();
-        return new TypeNum(parent);
+        return TypeNum.single;
     }
 
 
     TypeChar parseTypeChar (Exp parent)
     {
         nextTok();
-        return new TypeChar(parent);
+        return TypeChar.single;
     }
 
 
@@ -345,7 +345,7 @@ final class Parser
     TypeText parseTypeText (Exp parent)
     {
         nextTok();
-        auto t = new TypeText(parent);
+        auto t = TypeText.single;
         nextTok();
         return t;
     }
@@ -522,7 +522,7 @@ final class Parser
 
     ValueUnknown parseUnknown (Exp parent)
     {
-        auto u = new ValueUnknown(parent);
+        auto u = ValueUnknown.single;
         nextTok();
         return u;
     }
@@ -561,7 +561,7 @@ final class Parser
         {
             if (!d)
                 d = new ExpAssign(parent, exp); // it could be also assignment
-            exp.parent = d;
+            //exp.parent = d;
             nextTok();
             d.value = parse(d);
             return d;

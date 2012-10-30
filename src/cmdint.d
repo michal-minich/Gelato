@@ -40,9 +40,16 @@ final class ConsoleInterpreterContext : IInterpreterContext
         writeln();
     }
 
-    void except (dstring ex)
+    nothrow void except (dstring ex)
     {
-        writeln("exception\t", ex);
+        try
+        {
+            return writeln("exception\t", ex);
+        }
+        catch (Exception ex)
+        {
+            assert (false, ex.msg);
+        }
     }
 }
 
