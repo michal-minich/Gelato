@@ -67,7 +67,6 @@ interface IAstVisitor (R)
     R visit (ValueNum);
     R visit (ValueText);
     R visit (ValueChar);
-    R visit (ValueFile);
     R visit (ValueStruct);
     R visit (ValueFn);
     R visit (BuiltinFn);
@@ -267,16 +266,6 @@ final class TypeStruct: Exp
     this (Exp value) { this(null, value); }
 
     this (Exp parent, Exp value) { super(parent); this.value = value; }
-
-    mixin visitImpl;
-}
-
-
-final class ValueFile : Exp
-{
-    Exp[] exps;
-
-    this () { super(null); }
 
     mixin visitImpl;
 }

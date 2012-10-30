@@ -27,12 +27,6 @@ import common, parse.ast;
     }
 
 
-    dstring visit (ValueFile e)
-    {
-        return e.exps.map!(d => d.str(this))().join(newLine);
-    }
-
-
     dstring visit (StmDeclr e)
     {
         if (printOriginalParse && !e.parent)
@@ -50,6 +44,9 @@ import common, parse.ast;
 
     dstring visit (ValueStruct e)
     {
+        if (!e.parent)
+            return e.exps.map!(d => d.str(this))().join(newLine);
+
         auto exps = e.exps.map!(d => d.str(this))().join(newLine ~ tab);
 
         if (printOriginalParse && !e.parent)

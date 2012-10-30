@@ -30,15 +30,15 @@ final class Parser
     }
 
 
-    ValueFile parseAll ()
+    ValueStruct parseAll ()
     {
-        auto f = new ValueFile;
-        f.tokens = toks2;
+        auto s = new ValueStruct(null);
+        s.tokens = toks2;
         Exp e;
         skipWhite();
-        while ((e = parse(f)) !is null)
-            f.exps ~= e;
-        return f;
+        while ((e = parse(s)) !is null)
+            s.exps ~= e;
+        return s;
     }
 
 

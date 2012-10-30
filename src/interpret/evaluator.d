@@ -22,7 +22,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    @trusted Exp visit (ValueFile file)
+    @trusted Exp eval (ValueStruct file)
     {
         auto start = findDeclr(file.exps, "start");
         auto fn = cast(ValueFn)start.value;

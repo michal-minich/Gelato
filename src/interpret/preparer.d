@@ -15,6 +15,31 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
     this (IValidationContext validationContex) { vctx = validationContex; }
 
 
+    void prepareFile (ValueStruct file)
+    {
+        makeStartFunction (file);
+        visit (file);
+    }
+
+
+    private @trusted void makeStartFunction (ValueStruct file)
+    {
+        auto start = findDeclr(file.exps, "start");
+
+        if (!start)
+        {
+            vctx.remark(MissingStartFunction(null));
+            auto i = new ExpIdent(file, "start");
+            auto d = new StmDeclr(file, i);
+            auto fn = new ValueFn(file);
+            fn.exps = file.exps;
+            d.value = fn;
+            file.exps = [d];
+        }
+    }
+
+
+
     void visit (ValueStruct s)
     {
         Exp[] ds;
@@ -110,26 +135,6 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
 
         foreach (a; fna.args)
             a.prepare(this);
-    }
-
-
-    @trusted void visit (ValueFile file)
-    {
-        auto start = findDeclr(file.exps, "start");
-
-        if (!start)
-        {
-            vctx.remark(MissingStartFunction(null));
-            auto i = new ExpIdent(file, "start");
-            auto d = new StmDeclr(file, i);
-            auto fn = new ValueFn(file);
-            fn.exps = file.exps;
-            d.value = fn;
-            file.exps = [d];
-        }
-
-        foreach (e; file.exps)
-            e.prepare(this);
     }
 
 

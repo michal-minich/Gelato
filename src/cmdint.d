@@ -80,7 +80,7 @@ final class ConsoleInterpreter
 
             debug writeln("PREPARE");
             auto prep = new PreparerForEvaluator(context);
-            prep.visit(astFile);
+            prep.prepareFile(astFile);
 
             if (context.hasBlocker)
                 return 1;
@@ -98,7 +98,7 @@ final class ConsoleInterpreter
 
             debug writeln("EVALUATE");
             auto ev = new Evaluator(context);
-            auto res = ev.visit(astFile);
+            auto res = ev.eval(astFile);
 
             if (res)
                 writeln("RESULT: " ~ res.str(fv));

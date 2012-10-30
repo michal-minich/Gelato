@@ -53,8 +53,6 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (AstUnknown e) { return "AstUnknown"; }
 
-    const dstring visit (ValueFile e) { return "ValueFile"; }
-
     const dstring visit (StmDeclr e) { return "StmDeclr"; }
 
     const dstring visit (ValueStruct e) { return "ValueStruct"; }
@@ -110,8 +108,6 @@ final class TestInterpreterContext : IInterpreterContext
     const dstring visit (ValueNum e) { return e.tokensText ~ "|"; }
 
     const dstring visit (AstUnknown e) { return e.tokensText ~ "|"; }
-
-    dstring visit (ValueFile e) { return e.tokensText ~ "|" ~ e.exps.map!(e2 => e2.str(this))().join(); }
 
     dstring visit (StmDeclr d)
     { 
@@ -257,7 +253,7 @@ bool test (string filePath)
             }
 
             auto prep = new PreparerForEvaluator(context);
-            prep.visit(astFile);
+            prep.prepareFile(astFile);
 
             if (context.hasBlocker)
             {
@@ -278,7 +274,7 @@ bool test (string filePath)
             }
 
             auto ev = new Evaluator(context);
-            auto res = ev.visit(astFile);
+            auto res = ev.eval(astFile);
             
             if (res is null && expected == "\\0")
                 continue;

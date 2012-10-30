@@ -83,10 +83,6 @@ else
 {
     Exp[] exps;
 
-    auto f = cast(ValueFile)e;
-    if (f)
-        exps = f.exps;
-
     auto s = cast(ValueStruct)e;
     if (s)
         exps = s.exps;

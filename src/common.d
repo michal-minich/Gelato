@@ -80,13 +80,13 @@ Token[] tokenizeFile (string filePath)
 }
 
 
-ValueFile parseString (IValidationContext vctx, const dstring src)
+ValueStruct parseString (IValidationContext vctx, const dstring src)
 {
     return (new Parser(vctx, (new Tokenizer(src)).array())).parseAll();
 }
 
 
-ValueFile parseFile (IValidationContext vctx, string filePath)
+ValueStruct parseFile (IValidationContext vctx, string filePath)
 {
     return (new Parser(vctx, tokenizeFile(filePath))).parseAll();
 }

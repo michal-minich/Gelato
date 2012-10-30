@@ -104,14 +104,6 @@ final class Validator : IAstVisitor!(void)
     }
 
 
-
-    void visit (ValueFile f)
-    {
-        foreach (e; f.exps)
-            e.validate(this);
-    }
-
-
     void visit (ValueStruct s)
     {
         foreach (e; s.exps)

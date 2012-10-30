@@ -146,14 +146,6 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (ValueFile f)
-    {
-        foreach (e; f.exps)
-            e.infer(this);
-        return f.infType;
-    }
-
-
     Exp visit (ValueStruct s)
     {
         foreach (e; s.exps)
