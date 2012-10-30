@@ -11,7 +11,7 @@ Exp mergeTypes (Exp[] types...)
     foreach (t; types)
         possible ~= flatternType(t);
     auto ts = possible.sort!typeIdLess().uniq!typeIdEq().array();
-    return ts.length == 1 ? ts[0] : new TypeOr(ts);
+    return ts.length == 1 ? ts[0] : new TypeOr(null, ts);
 }
 
 
@@ -88,7 +88,7 @@ final class TypeInferer : IAstVisitor!(Exp)
         foreach (e; fn.params)
             paramTypes ~= e.infer(this);
 
-         fn.infType  = new TypeFn(paramTypes, new TypeVoid);
+         fn.infType  = new TypeFn(null, paramTypes, new TypeVoid);
 
         foreach (e; fn.exps)
         {

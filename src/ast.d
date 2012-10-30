@@ -1,6 +1,6 @@
 module parse.ast;
 
-import std.algorithm, std.array, std.conv;
+import std.conv;
 import common;
 import formatter, validate.validation, validate.inferer, interpret.preparer, interpret.evaluator;
 
@@ -97,17 +97,16 @@ interface IAstVisitor (R)
 alias IAstVisitor!(dstring) IFormatVisitor;
 
 
+@system alias Exp function (IInterpreterContext, Exp[]) BuiltinFunc;
+
+
 mixin template visitImpl ()
 {
-    override dstring str (IFormatVisitor v) { return v.visit(this); }
-
-    override Exp eval (Evaluator v) { return v.visit(this); }
-
-    override void prepare (PreparerForEvaluator v) { return v.visit(this); }
-
-    override void validate (Validator v) { return v.visit(this); }
-
-    override Exp infer (TypeInferer v) { return v.visit(this); }
+    override dstring str      (IFormatVisitor v)       { return v.visit(this); }
+    override Exp     eval     (Evaluator v)            { return v.visit(this); }
+    override void    prepare  (PreparerForEvaluator v) {        v.visit(this); }
+    override void    validate (Validator v)            {        v.visit(this); }
+    override Exp     infer    (TypeInferer v)          { return v.visit(this); }
 }
 
 
@@ -143,342 +142,253 @@ abstract class Exp
 
 
     abstract dstring str (IFormatVisitor);
-
     abstract Exp eval (Evaluator);
-
     abstract void prepare (PreparerForEvaluator);
-
     abstract void validate (Validator);
-
     abstract Exp infer (TypeInferer);
 }
 
 
-@system alias Exp function (IInterpreterContext, Exp[]) BuiltinFunc;
-
-
-
+// =================================================== Values
 final class ValueUnknown : Exp
 {
+    mixin visitImpl;
     this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
-}
-
-
-final class TypeType : Exp
-{
-    Exp type;
-
-    this (Exp parent, Exp type) { super(parent); this.type = type; }
-
-    mixin visitImpl;
-}
-
-
-final class TypeAny : Exp
-{
-    this () { super(null); }
-
-    this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
-}
-
-
-final class TypeVoid : Exp
-{
-    this () { super(null); }
-
-    this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
-}
-
-
-final class TypeOr : Exp
-{
-    Exp[] types;
-
-    this (Exp[] types) { this(null, types);  }
-
-    this (Exp parent, Exp[] types) { super(parent); this.types = types; }
-
-    mixin visitImpl;
-}
-
-
-final class TypeFn : Exp
-{
-    Exp[] types;
-    Exp retType;
-
-    this (Exp[] types) { this(null, types, null);  }
-
-    this (Exp[] types, Exp retType) { this(null, types, retType); }
-
-    this (Exp parent, Exp[] types, Exp retType)
-    {
-        super(parent);
-        this.types = types;
-        this.retType = retType;
-    }
-
-    mixin visitImpl;
-}
-
-
-final class TypeNum : Exp
-{
-    this () { super(null); }
-
-    this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
-}
-
-
-final class TypeText : Exp
-{
-    this () { super(null); }
-
-    this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
-}
-
-
-final class TypeChar: Exp
-{
-    this () { super(null); }
-
-    this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
-}
-
-
-final class TypeStruct: Exp
-{
-    Exp value;
-
-    this (Exp value) { this(null, value); }
-
-    this (Exp parent, Exp value) { super(parent); this.value = value; }
-
-    mixin visitImpl;
 }
 
 
 final class ValueStruct : Exp
 {
+    mixin visitImpl;
     Exp[] exps;
     ValueFn constructor;
-
     this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
 }
 
 
 final class ValueNum : Exp
 {
-    long value;
-
-    this (Exp parent, long val)
-    {
-        super(parent);
-        value = val;
-    }
-
     mixin visitImpl;
+    long value;
+    this (Exp parent, long value) { super(parent); this.value = value; }
 }
 
 
 final class ValueText : Exp
 {
-    dstring value;
-
-    this (Exp parent, dstring val)
-    {
-        super(parent);
-        value = val;
-    }
-
     mixin visitImpl;
+    dstring value;
+    this (Exp parent, dstring value) { super(parent); this.value = value; }
 }
 
 
 final class ValueChar : Exp
 {
+    mixin visitImpl;
     dchar value;
-
     this (Exp parent, dchar val)
     {
         super(parent);
         value = val;
     }
-
-    mixin visitImpl;
 }
 
 
 final class ValueFn : Exp
 {
+    mixin visitImpl;
     ExpAssign[] params;
     Exp[] exps;
     bool isPrepared;
-
     this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
 }
 
 
 final class ValueBuiltinFn : Exp
 {
+    mixin visitImpl;
     TypeFn signature;
     BuiltinFunc func;
-
     this (BuiltinFunc func, TypeFn signature)
     {
         super (null);
         this.func = func;
         this.signature = signature;
     }
-
-    mixin visitImpl;
 }
 
 
+// =================================================== Expressions
+final class ExpAssign : Exp
+{
+    mixin visitImpl;
+    Exp slot;
+    Exp type;
+    Exp value;
+    size_t paramIndex = typeof(paramIndex).max;
+    this (Exp parent, Exp slot) { super(parent); this.slot = slot; }
+}
+
 class ExpScope : Exp
 {
+    mixin visitImpl;
     ExpAssign[] assigments;
     Exp[] values;
-
     this (ExpScope ps, ExpAssign[] declrs) { super (ps); assigments = declrs; }
-
-    mixin visitImpl;
 }
 
 
 final class ExpLambda : ExpScope
 {
+    mixin visitImpl;
     ValueFn fn;
     uint currentExpIndex;
-
     this (ExpScope ps, ValueFn fn) { super (ps, fn.params); this.fn = fn; }
-
-    mixin visitImpl;
 }
 
 
 final class ExpFnApply : Exp
 {
+    mixin visitImpl;
     Exp applicable;
     Exp[] args;
-
     this (Exp parent, Exp applicable, Exp[] args)
     {
         super(parent);
         this.applicable = applicable;
         this.args = args;
     }
-
-    mixin visitImpl;
 }
 
 
 final class ExpIdent : Exp
 {
+    mixin visitImpl;
     dstring text;
     ExpAssign declaredBy;
-
-    this (Exp parent, dstring identfier)
-    {
-        super(parent);
-        text = identfier;
-    }
-
-    mixin visitImpl;
+    this (Exp parent, dstring identfier) { super(parent); text = identfier; }
 }
 
 
 final class ExpIf : Exp
 {
+    mixin visitImpl;
     Exp when;
     Exp[] then;
     Exp[] otherwise;
-
     this (Exp parent) { super(parent); }
-
-    mixin visitImpl;
 }
 
 
 final class ExpDot : Exp
 {
+    mixin visitImpl;
     Exp record;
     dstring member;
-
     this (Exp parent, Exp record, dstring member)
     {
         super(parent);
         this.record = record;
         this.member = member;
     }
-
-    mixin visitImpl;
 }
 
 
+// =================================================== Statements
 final class StmLabel : Exp
 {
-    dstring label;
-
-    this (Exp parent, dstring lbl)
-    {
-        super(parent);
-        label = lbl;
-    }
-
     mixin visitImpl;
+    dstring label;
+    this (Exp parent, dstring label) { super(parent); this.label = label; }
 }
 
 
 final class StmGoto : Exp
 {
+    mixin visitImpl;
     dstring label;
     uint labelExpIndex = uint.max;
-
-    this (Exp parent, dstring lbl)
-    {
-        super(parent);
-        label = lbl;
-    }
-
-    mixin visitImpl;
+    this (Exp parent, dstring label) { super(parent); this.label = label; }
 }
 
 
 final class StmReturn : Exp
 {
-    Exp exp;
-
-    this (Exp parent) { super(parent); }
-
     mixin visitImpl;
+    Exp exp;
+    this (Exp parent) { super(parent); }
 }
 
 
-final class ExpAssign : Exp
+// =================================================== Types
+final class TypeType : Exp
 {
-    Exp slot;
-    Exp type;
-    Exp value;
-    size_t paramIndex = typeof(paramIndex).max;
-
-    this (Exp parent, Exp slot) { super(parent); this.slot = slot; }
-
     mixin visitImpl;
+    Exp type;
+    this (Exp parent, Exp type) { super(parent); this.type = type; }
+}
+
+
+final class TypeAny : Exp
+{
+    mixin visitImpl;
+    this (Exp parent = null) { super(parent); }
+}
+
+
+final class TypeVoid : Exp
+{
+    mixin visitImpl;
+    this (Exp parent = null) { super(parent); }
+}
+
+
+final class TypeOr : Exp
+{
+    mixin visitImpl;
+    Exp[] types;
+    this (Exp parent, Exp[] types) { super(parent); this.types = types; }
+}
+
+
+final class TypeFn : Exp
+{
+    mixin visitImpl;
+    Exp[] types;
+    Exp retType;
+    this (Exp parent, Exp[] types, Exp retType)
+    {
+        super(parent);
+        this.types = types;
+        this.retType = retType;
+    }
+}
+
+
+final class TypeStruct: Exp
+{
+    mixin visitImpl;
+    Exp value;
+    this (Exp parent, Exp value) { super(parent); this.value = value; }
+}
+
+
+final class TypeNum : Exp
+{
+    mixin visitImpl;
+    this (Exp parent = null) { super(parent); }
+}
+
+
+final class TypeText : Exp
+{
+    mixin visitImpl;
+    this (Exp parent = null) { super(parent); }
+}
+
+
+final class TypeChar: Exp
+{
+    mixin visitImpl;
+    this (Exp parent = null) { super(parent); }
 }

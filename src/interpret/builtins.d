@@ -10,15 +10,15 @@ ValueBuiltinFn[dstring] builtinFns;
 static this ()
 {
     builtinFns = [
-    "print"   : new ValueBuiltinFn(&customPrint, new TypeFn([new TypeAny], new TypeVoid))
-   ,"readln"  : new ValueBuiltinFn(&customReadln, new TypeFn([], new TypeText))
-   ,"toNum"   : new ValueBuiltinFn(&toNum, new TypeFn([new TypeText], new TypeNum))
-   ,"inc"     : new ValueBuiltinFn(&incNum, new TypeFn([new TypeNum], new TypeNum))
-   ,"dec"     : new ValueBuiltinFn(&decNum, new TypeFn([new TypeNum], new TypeNum))
-   ,"=="      : new ValueBuiltinFn(&eq, new TypeFn([new TypeAny, new TypeAny], new TypeNum))
-   ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn([new TypeAny, new TypeAny], new TypeNum))
-   ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn([new TypeNum, new TypeNum], new TypeNum))
-   ,"["       : new ValueBuiltinFn(&array3test, new TypeFn([new TypeAny, new TypeAny, new TypeAny], new TypeNum))
+    "print"   : new ValueBuiltinFn(&customPrint, new TypeFn(null, [new TypeAny], new TypeVoid))
+   ,"readln"  : new ValueBuiltinFn(&customReadln, new TypeFn(null, [], new TypeText))
+   ,"toNum"   : new ValueBuiltinFn(&toNum, new TypeFn(null, [new TypeText], new TypeNum))
+   ,"inc"     : new ValueBuiltinFn(&incNum, new TypeFn(null, [new TypeNum], new TypeNum))
+   ,"dec"     : new ValueBuiltinFn(&decNum, new TypeFn(null, [new TypeNum], new TypeNum))
+   ,"=="      : new ValueBuiltinFn(&eq, new TypeFn(null, [new TypeAny, new TypeAny], new TypeNum))
+   ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn(null, [new TypeAny, new TypeAny], new TypeNum))
+   ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn(null, [new TypeNum, new TypeNum], new TypeNum))
+   ,"["       : new ValueBuiltinFn(&array3test, new TypeFn(null, [new TypeAny, new TypeAny, new TypeAny], new TypeNum))
     ];
 }
 
