@@ -89,6 +89,7 @@ final class Validator : IAstVisitor!(void)
 
     void visit (ExpDot dot)
     {
+        dot.record.validate(this);
     }
 
 

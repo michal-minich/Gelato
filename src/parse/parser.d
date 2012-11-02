@@ -162,22 +162,30 @@ final class Parser
             default: break;
         }
 
-        sepPassed = skipSep() || sepPassed;
+        typeof(current.index) prevIndex;
 
-        if (exp)
-            exp.tokens = toks2[startIndex .. current.index + 1];
+        do
+        {
+            prevIndex = current.index;
 
-        if (!exp && current.type == TokenType.braceStart)
-            exp = parseBracedExp(parent);
+            sepPassed = skipSep() || sepPassed;
 
-        while (current.type == TokenType.braceStart)
-            exp = new ExpFnApply(parent, exp, parseBracedExpList(parent));
+            if (exp)
+                exp.tokens = toks2[startIndex .. current.index + 1];
 
-        if (current.type == TokenType.op)
-            exp = parseOp(parent, exp);
+            if (!exp && current.type == TokenType.braceStart)
+                exp = parseBracedExp(parent);
 
-        if (current.type == TokenType.dot)
-            exp = parseOpDot(parent, exp);
+            while (current.type == TokenType.braceStart)
+                exp = new ExpFnApply(parent, exp, parseBracedExpList(parent));
+
+            if (current.type == TokenType.op)
+                exp = parseOp(parent, exp);
+
+            if (current.type == TokenType.dot)
+                exp = parseOpDot(parent, exp);
+
+        } while (prevIndex != current.index);
 
         if (exp)
             exp.tokens = toks2[startIndex .. current.index + 1];

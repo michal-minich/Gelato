@@ -14,57 +14,6 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
     this (IValidationContext validationContex) { vctx = validationContex; }
 
 
-    ExpAssign prepareFile (IInterpreterContext context, ValueStruct file, dstring fileName,
-                           bool isFirstFile, out ExpAssign start, ValueStruct parent)
-    {
-        initBuiltinFns();
-
-        start = getStartFunction (context, file, isFirstFile);
-
-        file.parent = parent;
-        auto fna = new ExpFnApply(parent, file, null);
-        auto i = new ExpIdent(parent, fileName);
-        auto a = new ExpAssign(parent, i);
-        a.value = fna;
-
-        if (isFirstFile)
-            foreach (e; file.exps)
-                e.prepare(this);
-        else
-            visit (file);
-
-        return a;
-    }
-
-
-
-    private @trusted ExpAssign getStartFunction (IInterpreterContext context, ValueStruct file,
-                                                 bool makeStartIfNotExists)
-    {
-        auto start = findDeclr(file.exps, "start");
-
-        if (start) 
-            return start;
-
-        if (!makeStartIfNotExists)
-            return null;
-
-        context.remark(MissingStartFunction(null));
-
-        auto i = new ExpIdent(file, "start");
-        auto a = new ExpAssign(file, i);
-        auto fn = new ValueFn(file);
-        fn.exps = file.exps;
-        foreach (fne; fn.exps)
-            fne.parent = fn;
-        // todo set parents recursively (it is needed to set for ExpIdent, so declfinder find their delcaration  ie incNum
-        // a = 1, print (a + 10)  -- second a has parent file, but should have parent fn
-        a.value = fn;
-        file.exps = [a];
-        return a;
-    }
-
-
     void visit (ValueStruct s)
     {
         Exp[] ds;

@@ -1,5 +1,5 @@
+a = 10
 start = fn ()
 {
-	a = 10
-	print (std.id(a) + 1)
+	print (std.id(test.a) + 1)
 }

@@ -5,7 +5,7 @@ import std.stdio, std.algorithm, std.string, std.array, std.conv, std.file, std.
 import std.file : readText, exists, isFile;
 import common, settings, formatter, validate.remarks, validate.validation,
     parse.tokenizer, parse.parser, parse.ast, interpret.evaluator, interpret.preparer,
-    validate.inferer, interpret.declrfinder;
+    validate.inferer, interpret.declrfinder, interpret.builtins;
 
 
 final class Program
@@ -79,8 +79,19 @@ final class Program
     {
         foreach (ix, f; files)
         {
-            auto m = prepareData(context, f, ix == 0);
-            prog.exps ~= m;
+            auto m = prepareData(context, f, filePaths[ix].baseName().stripExtension().to!dstring(), ix == 0);
+        }
+
+        auto prep = new PreparerForEvaluator(context);
+        foreach (ix, m; prog.exps)
+        {
+            if (ix == 0)
+            {
+                auto file = cast(ValueStruct)((cast(ExpAssign)m).slot).parent;
+                file.prepare(prep);
+            }
+            else
+                m.prepare(prep);
         }
     }
 
@@ -138,12 +149,11 @@ final class Program
     }
 
 
-    private ExpAssign prepareData (IInterpreterContext context, ValueStruct astFile, bool isStartFile)
+    private ExpAssign prepareData (IInterpreterContext context, ValueStruct astFile, dstring fileName, bool isStartFile)
     {  
         debug context.println("PREPARE");
-        auto prep = new PreparerForEvaluator(context);
         ExpAssign start;
-        auto m = prep.prepareFile(context, astFile, fileName, isStartFile, /*out*/ start, prog);
+        auto m = prepareFile(context, astFile, fileName, isStartFile, /*out*/ start, prog);
         if (start)
             starts ~= start;
 
@@ -160,6 +170,51 @@ final class Program
         */
 
         return m;
+    }
+
+
+    static ExpAssign prepareFile (IInterpreterContext context, ValueStruct file, dstring fileName,
+                           bool isFirstFile, out ExpAssign start, ValueStruct parent)
+    {
+        initBuiltinFns();
+
+        start = getStartFunction (context, file, isFirstFile);
+
+        file.parent = parent;
+        auto fna = new ExpFnApply(parent, file, null);
+        auto i = new ExpIdent(parent, fileName);
+        auto a = new ExpAssign(parent, i);
+        parent.exps ~= a;
+        a.value = fna;
+        return a;
+    }
+
+
+
+    static private @trusted ExpAssign getStartFunction (IInterpreterContext context, ValueStruct file,
+                                                 bool makeStartIfNotExists)
+    {
+        auto start = findDeclr(file.exps, "start");
+
+        if (start) 
+            return start;
+
+        if (!makeStartIfNotExists)
+            return null;
+
+        context.remark(MissingStartFunction(null));
+
+        auto i = new ExpIdent(file, "start");
+        auto a = new ExpAssign(file, i);
+        auto fn = new ValueFn(file);
+        fn.exps = file.exps;
+        foreach (fne; fn.exps)
+            fne.parent = fn;
+        // todo set parents recursively (it is needed to set for ExpIdent, so declfinder find their delcaration  ie incNum
+        // a = 1, print (a + 10)  -- second a has parent file, but should have parent fn
+        a.value = fn;
+        file.exps = [a];
+        return a;
     }
 }
 

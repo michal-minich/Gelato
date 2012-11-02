@@ -1,8 +1,4 @@
-packages / modules / import / project file
-built-ins with qualified name
-overridable std functions (check builtins after ident is not found)
-struct tests fixes
-chained assignments
+op dot priority
 goto from and inside if/then/else
 
 
@@ -30,7 +26,6 @@ VALIDATOR -----------------------------
 
 
 PREPARER -----------------------------
-! op dot priority
   operators priority
   prepare functions on firs call
   remark undefined identifiers
@@ -55,6 +50,9 @@ TYPE INFERENCE / CHECK -----------------------------
 
 
 INTERPRETER -----------------------------
+! import names form scope to scope
+! built-ins with qualified name
+! overridable std functions (check builtins after ident is not found)
 ! variable length fn params
 ! types, type parameters
 ! array (empty, first, rest)
@@ -63,6 +61,7 @@ INTERPRETER -----------------------------
 ! ref
 ! throw
 ! try catch
+ chained assignments (check if they work with types)
   built-in for stack trace
   built-in in for env
   dynamic and static typing versions
@@ -81,5 +80,6 @@ AUTOFIXER -----------------------------
   formatting / syntax
 
 
-INTERACTIVE -----------------------------
-  first version
+CMD / INTERACTIVE -----------------------------
+  project file
+  interactive - first version
