@@ -54,7 +54,10 @@ final class Program
     Exp run (IInterpreterContext context)
     {
         if (!files.length)
-            prepareFiles(context);
+        {
+            parseAndValidateDataAll(context);
+            prepareDataAll(context);
+        }
 
         if (!prog.exps.length)
             return null;
@@ -71,44 +74,48 @@ final class Program
         return res;
     }
 
+
+    private void prepareDataAll (IInterpreterContext context)
+    {
+        foreach (ix, f; files)
+        {
+            auto m = prepareData(context, f, ix == 0);
+            prog.exps ~= m;
+        }
+    }
+
     
-    private void prepareFiles (IInterpreterContext context)
+    private void parseAndValidateDataAll (IInterpreterContext context)
     {
         if (fileData.length)
         {
-            files.length = 0;
-            auto m = prepareData(context, fileData, fileName, true);
+            files = [parseAndValidateData(context, fileData, fileName)];
 
             if (context.hasBlocker)
             {
                 context.except("context has blocker");
                 return;
             }
-
-             prog.exps ~= cast(ExpAssign)m;
         }
         else if (filePaths.length)
         {
+            files.length = 0;
             foreach (ix, f; filePaths)
             {
                 auto fileData = toUTF32(readText!string(f));
-                auto m = prepareData(context, fileData, f.baseName().stripExtension().to!dstring(), ix == 0);
+                files ~= parseAndValidateData(context, fileData, f.baseName().stripExtension().to!dstring());
 
                 if (context.hasBlocker)
                 {
                     context.except("context has blocker");
                     return;
                 }
-
-                prog.exps ~= cast(ExpAssign)m;
             }
         }
     }
 
 
-
-    private Exp prepareData (IInterpreterContext context, dstring fileData, dstring fileName,
-                             bool isStartFile)
+    private ValueStruct parseAndValidateData (IInterpreterContext context, dstring fileData, dstring fileName)
     {  
         debug context.println("TOKENIZE");
         auto toks =  (new Tokenizer(fileData)).array();
@@ -127,6 +134,12 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
+        return astFile;
+    }
+
+
+    private ExpAssign prepareData (IInterpreterContext context, ValueStruct astFile, bool isStartFile)
+    {  
         debug context.println("PREPARE");
         auto prep = new PreparerForEvaluator(context);
         ExpAssign start;

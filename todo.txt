@@ -30,6 +30,7 @@ VALIDATOR -----------------------------
 
 
 PREPARER -----------------------------
+! op dot priority
   operators priority
   prepare functions on firs call
   remark undefined identifiers
