@@ -12,13 +12,26 @@ final class Program
 {
     string[] filePaths;
     ValueStruct[] files;
+    private dstring fileName;
     private dstring fileData;
-    private ExpAssign start;
+    private ExpAssign[] starts;
+    ValueStruct prog;
 
 
-    this (string[] filePaths) { this.filePaths = filePaths; }
+    this (string[] filePaths)
+    {
+        prog = new ValueStruct (null);
+        this.filePaths ~= filePaths;
+        this.filePaths ~= "std.gel";
+    }
 
-    this (dstring fileData) { this.fileData = fileData; }
+
+    this (dstring fileName, dstring fileData)
+    { 
+        prog = new ValueStruct (null);
+        this.fileName = fileName;
+        this.fileData = fileData;
+    }
 
 
     int runInConsole ()
@@ -43,76 +56,59 @@ final class Program
         if (!files.length)
             prepareFiles(context);
 
-        if (!files.length)
+        if (!prog.exps.length)
             return null;
+
+        if (starts.length > 1)
+            context.remark(textRemark("more starts functions"));
 
         debug context.println("EVALUATE");
         auto ev = new Evaluator(context);
-        auto res = ev.eval(files[0]);
+        auto res = ev.eval(starts[0]);
 
         debug if (res) context.println("RESULT: " ~ res.str(fv));
 
         return res;
     }
 
-
+    
     private void prepareFiles (IInterpreterContext context)
     {
         if (fileData.length)
         {
             files.length = 0;
-            files ~= prepareData(context, fileData, true);
-
-            start = getStartFunction(context);
+            auto m = prepareData(context, fileData, fileName, true);
 
             if (context.hasBlocker)
             {
                 context.except("context has blocker");
                 return;
             }
+
+             prog.exps ~= cast(ExpAssign)m;
         }
         else if (filePaths.length)
         {
             foreach (ix, f; filePaths)
             {
                 auto fileData = toUTF32(readText!string(f));
-                files ~= prepareData(context, fileData, ix == 0);
-
-                if (ix == 0)
-                    start = getStartFunction(context);
+                auto m = prepareData(context, fileData, f.baseName().stripExtension().to!dstring(), ix == 0);
 
                 if (context.hasBlocker)
                 {
                     context.except("context has blocker");
                     return;
                 }
+
+                prog.exps ~= cast(ExpAssign)m;
             }
         }
     }
 
 
-    private @trusted ExpAssign getStartFunction (IInterpreterContext context)
-    {
-        foreach (f; files)
-        {
-            auto start = findDeclr(f.exps, "start");
-            if (start) 
-                return start;
-        }
 
-        auto f = files[0];
-        context.remark(MissingStartFunction(null));
-        auto i = new ExpIdent(f, "start");
-        auto a = new ExpAssign(f, i);
-        auto fn = new ValueFn(f);
-        fn.exps = f.exps;
-        a.value = fn;
-        f.exps = [a];
-        return a;
-    }
-
-
-    private ValueStruct prepareData (IInterpreterContext context, dstring fileData, bool isStartFile)
+    private Exp prepareData (IInterpreterContext context, dstring fileData, dstring fileName,
+                             bool isStartFile)
     {  
         debug context.println("TOKENIZE");
         auto toks =  (new Tokenizer(fileData)).array();
@@ -133,10 +129,13 @@ final class Program
 
         debug context.println("PREPARE");
         auto prep = new PreparerForEvaluator(context);
-        prep.prepareFile(astFile, isStartFile); 
+        ExpAssign start;
+        auto m = prep.prepareFile(context, astFile, fileName, isStartFile, /*out*/ start, prog);
+        if (start)
+            starts ~= start;
 
         if (context.hasBlocker)
-            return astFile;
+            return m;
         
         /*
         debug context.println("TYPE INFER");
@@ -147,7 +146,7 @@ final class Program
             return astFile;
         */
 
-        return astFile;
+        return m;
     }
 }
 

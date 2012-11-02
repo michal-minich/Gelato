@@ -70,8 +70,3 @@ final class Settings
         return s;
     }
 }
-
-private @property dstring txtval (Exp e)
-{
-    return (cast(ValueText)e).value;
-}

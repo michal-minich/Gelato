@@ -1,7 +1,8 @@
 module interpret.evaluator;
 
 import std.algorithm, std.array, std.conv;
-import common, parse.ast, validate.remarks, interpret.preparer, interpret.builtins, interpret.declrfinder;
+import common, parse.ast, validate.remarks, interpret.preparer, interpret.builtins, 
+    interpret.declrfinder;
 
 
 
@@ -22,9 +23,8 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     }
 
 
-    @trusted Exp eval (ValueStruct file)
+    @trusted Exp eval (ExpAssign start)
     {
-        auto start = findDeclr(file.exps, "start");
         auto fn = cast(ValueFn)start.value;
         auto s = fn ? new ExpLambda(null, fn) : start.value;
         return s.eval(this);
@@ -168,7 +168,8 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
 
         auto st = cast(ValueStruct)record;
 
-        assert (!st, "struct must be constructed before accessing member (" ~ dot.member.toString() ~ ")");
+        assert (!st, "struct must be constructed before accessing member (" 
+                ~ dot.member.toString() ~ ")");
 
         auto sc = cast(ExpScope)record;
 

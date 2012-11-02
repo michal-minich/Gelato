@@ -1,28 +1,27 @@
 packages / modules / import / project file
-interactive
-goto from and inside if/then/else
 built-ins with qualified name
+overridable std functions (check builtins after ident is not found)
 struct tests fixes
+chained assignments
+goto from and inside if/then/else
 
-variable length fn params
-array
 
 TOKENIZER -----------------------------
   cancel unclosed text after escape on first line
   cancel unclosed comment on first line
   decimal numbers
   hex decimals
-  hex escapes
-  decimal unicode escapes
+  text hex escapes
+  text unicode escapes
   nested comment
   documentation comments
 
 
 PARSER -----------------------------
+! comments
 ! custom brace op apply
-! cleanup and reliability fixes
-! generate remarks
-  comments
+  cleanup and reliability fixes
+  generate remarks
 
 
 VALIDATOR -----------------------------
@@ -31,7 +30,6 @@ VALIDATOR -----------------------------
 
 
 PREPARER -----------------------------
-! chained assignments
   operators priority
   prepare functions on firs call
   remark undefined identifiers
@@ -56,11 +54,9 @@ TYPE INFERENCE / CHECK -----------------------------
 
 
 INTERPRETER -----------------------------
-! overridable std functions (check builtins after ident is not found)
-! goto from and inside if/then/else
-! built-ins with qualified name
 ! variable length fn params
-! array object (empty, first, rest)
+! types, type parameters
+! array (empty, first, rest)
 ! text is array
 ! var / mutable variables
 ! ref
@@ -82,10 +78,6 @@ FORMATTER -----------------------------
 
 AUTOFIXER -----------------------------
   formatting / syntax
-
-
-CMD LINE -----------------------------
-! project file, multi file support
 
 
 INTERACTIVE -----------------------------

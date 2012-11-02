@@ -263,7 +263,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
   <runCv2pdb>1</runCv2pdb>
   <pathCv2pdb>$(VisualDInstallDir)cv2pdb\cv2pdb.exe</pathCv2pdb>
   <cv2pdbPre2043>0</cv2pdbPre2043>
-  <cv2pdbNoDemangle>0</cv2pdbNoDemangle>
+  <cv2pdbNoDemangle>1</cv2pdbNoDemangle>
   <cv2pdbEnumType>0</cv2pdbEnumType>
   <cv2pdbOptions />
   <objfiles />

@@ -35,6 +35,7 @@ nothrow:
     }
 
     auto d = findIdentDelr (ident.parent, ident);
+
     if (!d)
     {
         d = new ExpAssign(null, ident);
@@ -51,20 +52,8 @@ nothrow:
     d = findIdentDelrInExpOrParent(e, ident.text);
     if (d)
         return d;
-else
-        assert (false, ident.text.to!string() ~ " identifer is undefined");
+    assert (false, ident.text.to!string() ~ " identifier is undefined");
 
-    /*idents = idents[1 .. $];
-    e = d;
-    while (e && idents.length)
-    {
-    d = findIdentDelrInExp(idents[0], e);
-    if (d)
-    return d;
-    idents = idents[1 .. $];
-    e = d.value;
-    }
-    return d;*/
 }
 
 

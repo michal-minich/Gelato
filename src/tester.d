@@ -238,7 +238,7 @@ bool test (string filePath)
 
         try
         {
-            auto p = new Program(fullCode);
+            auto p = new Program("test", fullCode);
             auto res = p.run(context);
 
             if (context.hasBlocker)
@@ -251,7 +251,7 @@ bool test (string filePath)
             if (res is null && expected == "\\0")
                 continue;
 
-            auto tt = p.files[0].tokensText;
+            auto tt = p.prog.exps[0].tokensText;
 
             auto resStr = res.str(tfv);
 
@@ -260,11 +260,11 @@ bool test (string filePath)
             if (tokensExpected != tokensParsed || tokenFailed || evalFailed || context.remarks || context.exceptions)
             {
                 if (tokensExpected.length)
-                    tokensParsed = '|' ~ ttfv.visit(p.files[0]) ~ '|';
+                    tokensParsed = '|' ~ p.prog.exps[0].str(ttfv) ~ '|';
                 else
                 {
                     tokensExpected = '|' ~ fullCode ~ '|';
-                    tokensParsed ='|' ~ p.files[0].tokensText ~ '|';
+                    tokensParsed ='|' ~ p.prog.exps[0].tokensText ~ '|';
                 }
 
                 ++testsFailed;

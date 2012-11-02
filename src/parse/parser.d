@@ -188,15 +188,15 @@ final class Parser
 
     ExpDot parseOpDot (Exp parent, Exp operand1)
     {
-        nextTok();
+        nextNonWhiteTok();
 
         if (current.type != TokenType.ident)
         {
             vctx.remark(textRemark("second operand must be identifier"));
-            return new ExpDot(parent, operand1, "missingIdentifier");
+            return new ExpDot(operand1, operand1, "missingIdentifier");
         }
 
-        auto dot = new ExpDot(parent, operand1, current.text);
+        auto dot = new ExpDot(operand1, operand1, current.text);
         nextNonWhiteTok();
         return dot;
     }
@@ -547,7 +547,8 @@ final class Parser
 
     Exp parseIdentOrDeclr (Exp parent)
     {
-        auto exp = parseIdentOrOpDot (parent);
+        auto exp = new ExpIdent(parent, current.text);
+        nextNonWhiteTok();
         ExpAssign d;
 
         if (exp && current.text == ":")
@@ -568,28 +569,5 @@ final class Parser
         }
 
         return d ? d : exp;
-    }
-
-
-    Exp parseIdentOrOpDot (Exp parent)
-    {
-        Exp res = new ExpIdent(parent, current.text);
-        nextNonWhiteTok();
-/*
-        while (true)
-        {
-            nextNonWhiteTok();
-            if (current.type != TokenType.dot)
-                break;
-
-            auto d = new ExpDot(parent, res, null);
-            res = d;
-            nextNonWhiteTok();
-            if (current.type != TokenType.ident)
-                assert (false, "identifier expected after dot");
-            d.member = current.text;
-        }
-*/
-        return res;
     }
 }

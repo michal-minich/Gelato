@@ -131,8 +131,8 @@
 "1"			"fn (a) { struct { x = a }   }(1)().x"
 
 @"cons = fn (h, t) { struct { head = h, tail = t } () }, "
---"1"			"start = fn () { c = cons(1, 2), return c.	head }"
---"2"			"start = fn () { c = cons(1, 2), return c.tail }"
+"1"			"start = fn () { c = cons(1, 2), return c  .  head }"
+"2"			"start = fn () { c = cons(1, 2), return c.tail }"
 --"2"			"start = fn () { c = cons(1, cons(2, 3)), return c.tail.head }"
 --"3"			"start = fn () { c = cons(1, cons(2, 3)), return c.tail.tail }"
 --"2"			"start = fn () { t = cons(2, 3), c = cons(1, t), return c.tail.head }"
@@ -152,7 +152,6 @@
 "13"		"(10 + 1) + 2"
 "13"		"(10 + (1) + 2)"
 "13"		"a = 10, start = fn () { a + 1 + 2 }"
-
 
 "1"			"1 == 1"
 "0"			"1 == 2"
