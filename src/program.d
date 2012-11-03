@@ -79,7 +79,8 @@ final class Program
     {
         foreach (ix, f; files)
         {
-            auto m = prepareData(context, f, filePaths[ix].baseName().stripExtension().to!dstring(), ix == 0);
+            auto fn = fileName.length ? fileName : filePaths[ix].baseName().stripExtension().to!dstring();
+            auto m = prepareData(context, f, fn, ix == 0);
         }
 
         auto prep = new PreparerForEvaluator(context);
@@ -163,10 +164,10 @@ final class Program
         /*
         debug context.println("TYPE INFER");
         auto inf = new TypeInferer(context);
-        inf.visit(astFile);
+        inf.visit(m);
 
         if (context.hasBlocker)
-            return astFile;
+            return m;
         */
 
         return m;
