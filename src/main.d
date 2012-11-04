@@ -8,24 +8,14 @@ import common, settings, formatter, program;
 int main (string[] args)
 {
     fv = new FormatVisitor;
+
     sett = Settings.beforeLoad;
-    sett = Settings.load (new ConsoleInterpreterContext, dirName(buildNormalizedPath(args[0])));
+    sett = Settings.load (new ConsoleInterpreterContext, args[0].buildNormalizedPath().dirName());
 
-    version (unittest)
-    {
-        import tester;
-        auto success = test("tests.txt");
-
-        //if (!success)
-        //    readln();
-
-        return 0;
-    }
-    else
-    {
-        auto p = parseCmdArgs (args);
-        auto r = p.runInConsole();
-        readln();
-        return r;
-    }
+    auto p = parseCmdArgs (args);
+    if (!p)
+        return 1;
+    auto r = p.runInConsole();
+    readln();
+    return r;
 }

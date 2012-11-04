@@ -16,13 +16,15 @@ final class Program
     private dstring fileData;
     private ExpAssign[] starts;
     ValueStruct prog;
+    bool runTests;
 
 
-    this (string[] filePaths)
+    this (string[] filePaths, bool runTests)
     {
         prog = new ValueStruct (null);
         this.filePaths ~= filePaths;
         this.filePaths ~= "std.gel";
+        this.runTests = runTests;
     }
 
 
@@ -36,6 +38,20 @@ final class Program
 
     int runInConsole ()
     {
+        if (runTests)
+        {
+            import tester;
+            bool success = true;
+
+            foreach (f; filePaths)
+                success = success & test(f);
+
+            //if (!success)
+            //    readln();
+
+            return 0;
+        }
+
         auto context = new ConsoleInterpreterContext;
         auto res = run (context);
 
@@ -223,12 +239,14 @@ final class Program
 static Program parseCmdArgs (string[] args)
 {
     string[] filePaths;
+    bool runTests;
+    bool isError;
 
     foreach (a; args[1..$])
     {
-        if (a.endsWith(".gel"))
+        if (a.endsWith(".gel") || a.endsWith(".txt"))
         {
-            immutable f = a.buildNormalizedPath();
+            immutable f = a.absolutePath().buildNormalizedPath();
             if (f.exists())
             {
                 if (f.isFile())
@@ -237,30 +255,41 @@ static Program parseCmdArgs (string[] args)
                 }
                 else
                 {
+                    isError = true;
                     cmdError ("Path \"", a, "\" not a file. It is folder or block device.",
                               " Full path is \"", f, "\".");
                 }
             }
             else
             {
+                isError = true;
                 cmdError ("File \"", a, "\" could not be found. Full path is \"", f, "\".");
             }
+        }
+        else if (a =="-test")
+        {
+            runTests = true;
         }
         else
         {
             if (a[0] == '-' || a[0] == '/')
             {
+                isError = true;
                 cmdError ("Unknown command line parameter \"", a, "\".");
             }
             else
             {
+                isError = true;
                 cmdError ("Olny \"*.gel\" files are supported as input.",
                           " Parameters can be prefixed with \"-\", \"--\" or \"/\".");
             }
         }
     }
 
-    return new Program(filePaths);
+    if (isError)
+        return null;
+
+    return new Program(filePaths, runTests);
 }
 
 
