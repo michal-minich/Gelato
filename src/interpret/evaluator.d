@@ -249,4 +249,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     Exp visit (TypeChar) { return null; }
 
     Exp visit (TypeStruct) { return null; }
+
+    // BUG: todo should return value of most recent expression (or not be evaluated - removed in prearer)
+    Exp visit (WhiteSpace ws) { return null; }
 }

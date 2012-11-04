@@ -310,7 +310,7 @@ TokenResult parseComment (const dstring src)
     size_t l;
     while (true)
     {
-        auto l1 = lengthUntilIncluding!(ch => isNewLine(ch) || ch == '-')(src[l .. $]);
+        auto l1 = lengthWhile!(ch => !(isNewLine(ch) || ch == '-'))(src[l .. $]);
         if (!l1)
             return TokenResult.error(TokenType.commentMulti, src.length, ParseContext.comment);
         l = l + l1;

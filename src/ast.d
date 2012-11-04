@@ -91,6 +91,8 @@ interface IAstVisitor (R)
     R visit (TypeText);
     R visit (TypeChar);
     R visit (TypeStruct);
+
+    R visit (WhiteSpace);
 }
 
 
@@ -405,4 +407,18 @@ final class TypeChar: Exp
     private this () {}
     static typeof(this) single;
     static this () { single = new typeof(this); }
+}
+
+
+class WhiteSpace: Exp
+{
+    mixin visitImpl;
+    this () { }
+}
+
+
+final class Comment: WhiteSpace
+{
+    mixin visitImpl;
+    this () { }
 }

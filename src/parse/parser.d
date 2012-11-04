@@ -17,6 +17,7 @@ final class Parser
         IValidationContext vctx;
         Token current;
         bool sepPassed;
+        Comment comment;
     }
 
 
@@ -51,7 +52,7 @@ final class Parser
         {
             toks.popFront();
             if (!finished)
-            current = toks.front;
+                current = toks.front;
         }
     }
 
@@ -115,8 +116,10 @@ final class Parser
     }
 
 
-    Exp parse (Exp parent)
+    @trusted Exp parse (Exp parent)
     {
+        skipComment:
+
         auto startIndex = current.index;
         if (finished)
             return null;
@@ -159,7 +162,18 @@ final class Parser
             case TokenType.typeText: exp = parseTypeText(parent); break;
             case TokenType.typeChar: exp = parseTypeChar(parent); break;
 
-            default: break;
+            case TokenType.braceStart: exp = parseBracedExp(parent); break;
+
+            case TokenType.commentLine: comment = parseCommentLine(parent); break;
+            case TokenType.commentMultiStart: comment = parseCommentMulti(parent); break;
+
+            default: assert (false, "parsing of this token type not implemented yet - " ~ text(current.type));
+        }
+
+        if (comment)
+        {
+            comment = null;
+            goto skipComment;
         }
 
         typeof(current.index) prevIndex;
@@ -172,9 +186,6 @@ final class Parser
 
             if (exp)
                 exp.tokens = toks2[startIndex .. current.index + 1];
-
-            if (!exp && current.type == TokenType.braceStart)
-                exp = parseBracedExp(parent);
 
             while (current.type == TokenType.braceStart)
                 exp = new ExpFnApply(parent, exp, parseBracedExpList(parent));
@@ -191,6 +202,36 @@ final class Parser
             exp.tokens = toks2[startIndex .. current.index + 1];
 
         return exp;
+    }
+
+
+    Comment parseCommentLine (Exp parent)
+    {
+        auto c = new Comment;
+        while (!(current.type == TokenType.newLine || current.type == TokenType.empty))
+        {
+            nextTok();
+        }
+        nextTok();
+        return c;
+    }
+
+
+    Comment parseCommentMulti (Exp parent)
+    {
+        auto c = new Comment;
+        while (current.type != TokenType.commentMultiEnd)
+        {
+            if (current.type == TokenType.empty)
+            {
+                vctx.remark(textRemark("unclosed multiline comment"));
+                break;
+            }
+
+            nextTok();
+        }
+        nextTok();
+        return c;
     }
 
 
@@ -325,6 +366,13 @@ final class Parser
     }
 
 
+    TypeText parseTypeText (Exp parent)
+    {
+        nextTok();
+        return TypeText.single;
+    }
+
+
     TypeType parseTypeType (Exp parent)
     {
         nextNonWhiteTok();
@@ -348,14 +396,6 @@ final class Parser
         nextNonWhiteTok();
         auto types = parseBracedExpList(parent);
         return new TypeFn(parent, types[0.. $ - 1], types[0]);
-    }
-
-    TypeText parseTypeText (Exp parent)
-    {
-        nextTok();
-        auto t = TypeText.single;
-        nextTok();
-        return t;
     }
 
 
@@ -555,27 +595,27 @@ final class Parser
 
     Exp parseIdentOrDeclr (Exp parent)
     {
-        auto exp = new ExpIdent(parent, current.text);
+        auto e = new ExpIdent(parent, current.text);
         nextNonWhiteTok();
         ExpAssign d;
 
-        if (exp && current.text == ":")
+        if (e && current.text == ":")
         {
-            d = new ExpAssign(parent, exp);
-            exp.parent = d;
+            d = new ExpAssign(parent, e);
+            e.parent = d;
             nextTok();
             d.type = parse(d);
         }
-        if (exp && current.text == "=") // on assignment i is not required
+        if (e && current.text == "=") // on assignment i is not required
         {
             if (!d)
-                d = new ExpAssign(parent, exp); // it could be also assignment
-            //exp.parent = d;
+                d = new ExpAssign(parent, e); // it could be also assignment
+            //e.parent = d;
             nextTok();
             d.value = parse(d);
             return d;
         }
 
-        return d ? d : exp;
+        return d ? d : e;
     }
 }

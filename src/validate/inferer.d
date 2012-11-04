@@ -219,4 +219,6 @@ final class TypeInferer : IAstVisitor!(Exp)
     Exp visit (TypeChar tch) { return new TypeType(null, tch); }
 
     Exp visit (TypeStruct s) { return new TypeType(null, s); }
+
+    Exp visit (WhiteSpace ws) { return null; }
 }

@@ -46,9 +46,6 @@ final class Program
             foreach (f; filePaths)
                 success = success & test(f);
 
-            //if (!success)
-            //    readln();
-
             return 0;
         }
 
@@ -145,8 +142,11 @@ final class Program
 
     private ValueStruct parseAndValidateData (IInterpreterContext context, dstring fileData, dstring fileName)
     {  
+        debug context.println(": " ~ fileName);
         debug context.println("TOKENIZE");
         auto toks =  (new Tokenizer(fileData)).array();
+
+        // debug foreach (t; toks) context.println(t.toDebugString());
 
         debug context.println("PARSE");
         auto par = new Parser(context, toks);
@@ -154,6 +154,8 @@ final class Program
 
         if (context.hasBlocker)
             return astFile;
+
+        // debug context.println(astFile.str(fv));
 
         debug context.println("VALIDATE");
         auto val = new Validator(context);

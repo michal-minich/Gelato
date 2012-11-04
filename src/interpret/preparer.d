@@ -169,4 +169,6 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
     void visit (TypeChar) { }
 
     void visit (TypeStruct) { }
+
+    void visit (WhiteSpace ws) { }
 }

@@ -191,6 +191,9 @@ import common, parse.ast;
     {
         return dtext("Fn(", (tfn.types ~ tfn.retType).map!(t => t.str(this))().join(", "), ")");
     }
+
+
+    const dstring visit (WhiteSpace ws) { return ws.tokensText; }
 }
 
 

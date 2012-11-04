@@ -104,6 +104,8 @@ final class TestInterpreterContext : IInterpreterContext
     const dstring visit (TypeOr tor) { return "TypeOr"; }
 
     const dstring visit (TypeFn tfn) { return "TypeFn"; }
+
+    const dstring visit (WhiteSpace ws) { return "WhiteSpace"; }
 }
 
 
@@ -176,6 +178,8 @@ final class TestInterpreterContext : IInterpreterContext
     const dstring visit (TypeOr tor) { return tor.tokensText ~ "|"; }
 
     const dstring visit (TypeFn tfn) { return tfn.tokensText ~ "|"; }
+
+    const dstring visit (WhiteSpace ws) { return ws.tokensText ~ "|"; }
 }
 
 

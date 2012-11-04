@@ -1,7 +1,6 @@
 op dot priority
 goto from and inside if/then/else
 
-
 TOKENIZER -----------------------------
   cancel unclosed text after escape on first line
   cancel unclosed comment on first line
@@ -12,27 +11,23 @@ TOKENIZER -----------------------------
   nested comment
   documentation comments
 
-
 PARSER -----------------------------
-! comments
 ! custom brace op apply
   cleanup and reliability fixes
   generate remarks
-
 
 VALIDATOR -----------------------------
   syntax
   indentation level
 
-
 PREPARER -----------------------------
+! call functions as members of first parameter
   operators priority
   prepare functions on firs call
   remark undefined identifiers
   remark multiply defined identifiers
   remark unused identifiers
   tail call
-
 
 TYPE INFERENCE / CHECK -----------------------------
 ! infer identifier by usage in fn (not only by def)
@@ -48,20 +43,20 @@ TYPE INFERENCE / CHECK -----------------------------
   infer on fn apply / op apply: throws, ...
   infer on fn pure, deterministic throws, modify global, ..
 
-
 INTERPRETER -----------------------------
 ! import names form scope to scope
 ! built-ins with qualified name
+! built-ins - typeof
 ! overridable std functions (check builtins after ident is not found)
 ! variable length fn params
-! types, type parameters
 ! array (empty, first, rest)
 ! text is array
+! types, type parameters
 ! var / mutable variables
 ! ref
 ! throw
 ! try catch
- chained assignments (check if they work with types)
+  chained assignments (check if they work with types)
   built-in for stack trace
   built-in in for env
   dynamic and static typing versions
@@ -71,14 +66,11 @@ INTERPRETER -----------------------------
   cast
   arrays / mem allocation
 
-
 FORMATTER -----------------------------
   configuration profiles
 
-
 AUTOFIXER -----------------------------
   formatting / syntax
-
 
 CMD / INTERACTIVE -----------------------------
   project file

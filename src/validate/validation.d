@@ -161,4 +161,6 @@ final class Validator : IAstVisitor!(void)
     void visit (TypeStruct) { }
 
     void visit (ValueBuiltinFn) { }
+
+    void visit (WhiteSpace ws) { }
 }
