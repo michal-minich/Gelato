@@ -1,5 +1,7 @@
-goto from and inside if/then/else
+identifier lookup fixes: fn args, mutable vars
+anonymous scope
 mutable variables
+goto from and inside if/then/else
 import names form scope to scope (also selective) - import std (id, second), module2
 import all modules by default
 public attribute

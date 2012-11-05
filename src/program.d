@@ -44,7 +44,8 @@ final class Program
             bool success = true;
 
             foreach (f; filePaths)
-                success = success & test(f);
+                if (f.endsWith(".txt"))
+                    success = success & test(f);
 
             return 0;
         }
