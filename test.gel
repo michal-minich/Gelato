@@ -1,5 +1,5 @@
 a = 10
 start = fn ()
 {
-	print (id)
+	print (toNum("1"))
 }

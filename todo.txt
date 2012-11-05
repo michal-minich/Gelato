@@ -1,3 +1,6 @@
+import names form scope to scope (also selective) - import std (id, second), module2
+import all modules by default
+public attribute
 op dot priority
 goto from and inside if/then/else
 
@@ -44,14 +47,12 @@ TYPE INFERENCE / CHECK -----------------------------
   infer on fn pure, deterministic throws, modify global, ..
 
 INTERPRETER -----------------------------
-! import all modules by default
-! import names form scope to scope
-! built-ins with qualified name
-! overridable std functions (check builtins after ident is not found)
+! built-ins with qualified name (also overridable)
 ! built-ins - typeof
 ! variable length fn params
 ! array (empty, first, rest)
 ! text is array
+! user overridable struct functions - construct, destruct, clone, ...
 ! types, type parameters
 ! var / mutable variables
 ! ref
@@ -63,9 +64,6 @@ INTERPRETER -----------------------------
   dynamic and static typing versions
   contracts
   finally / scope guars
-  user overridable struct functions - construct, destruct, clone, ...
-  cast
-  arrays / mem allocation
 
 FORMATTER -----------------------------
   configuration profiles

@@ -285,7 +285,7 @@ static Program parseCmdArgs (string[] args)
                 cmdError ("File \"", a, "\" could not be found. Full path is \"", f, "\".");
             }
         }
-        else if (a =="-test")
+        else if (a == "-test")
         {
             runTests = true;
         }

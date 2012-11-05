@@ -11,21 +11,18 @@ ExpAssign setIdentDeclaredBy (ExpIdent ident)
     if (ident.declaredBy)
         return ident.declaredBy;
 
-    auto bfn = ident.text in builtinFns;
-    if (bfn)
-    {
-        auto d = new ExpAssign(null, null);
-        d.value = *bfn;
-        ident.declaredBy = d;
-        return d;
-    }
-
-    auto d = findIdentDelr (ident.parent, ident);
-
+    auto d = findIdentDelrInExpOrParent(ident.parent, ident.text);
     if (!d)
     {
-        d = new ExpAssign(null, ident);
-        d.value = new ValueUnknown(ident);
+        auto bfn = ident.text in builtinFns;
+        if (!bfn)
+        {
+            d = new ExpAssign(null, ident);
+            d.value = new ValueUnknown(ident);
+        }
+
+        d = new ExpAssign(null, null);
+        d.value = *bfn;
     }
 
     ident.declaredBy = d;
@@ -36,39 +33,26 @@ ExpAssign setIdentDeclaredBy (ExpIdent ident)
 private:
 
 
-ExpAssign findIdentDelr (Exp e, ExpIdent ident)
-{
-    ExpAssign d;
-    d = findIdentDelrInExpOrParent(e, ident.text);
-    if (d)
-        return d;
-    return null;
-}
-
 
 ExpAssign findIdentDelrInExpOrParent (Exp e, dstring ident)
 {
-    ExpAssign d;
-    while (e && !d)
+    while (e)
     {
-        d = findIdentDelrInExp(e, ident);
+        auto d = findIdentDelrInExp(e, ident);
+        if (d)
+            return d;
         e = e.parent;
     }
-    return d;
+    return null;
 }
 
 
 ExpAssign findIdentDelrInExp (Exp e, dstring ident)
 {
-    Exp[] exps;
-
     auto s = cast(ValueStruct)e;
     if (s)
-        exps = s.exps;
-
-    if (exps.length)
     {
-        foreach (e2; exps)
+        foreach (e2; s.exps)
         {
             auto d = cast(ExpAssign)e2;
             if (d)
@@ -80,6 +64,8 @@ ExpAssign findIdentDelrInExp (Exp e, dstring ident)
         }
         return null;
     }
+
+    Exp[] exps;
 
     auto fn = cast(ValueFn)e;
     if (!fn)
