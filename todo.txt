@@ -1,6 +1,6 @@
 identifier lookup fixes: lambda/struct, forward lookup, in struct accept identifier as declaration struct {x}
 anonymous scope
-mutable variables
+mutable variables (allow only var as mutable)
 goto from and inside if/then/else
 import names form scope to scope (also selective) - import std (id, second), module2
 import all modules by default
@@ -54,7 +54,9 @@ INTERPRETER -----------------------------
 ! built-ins - typeof
 ! variable length fn params
 ! array (empty, first, rest)
+! overloaded built-in functions
 ! text is array
+! overloaded functions
 ! user overridable struct functions - construct, destruct, clone, ...
 ! types, type parameters
 ! ref

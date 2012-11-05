@@ -1,0 +1,1 @@
+Debug\Gelato.exe -test tests.txt
