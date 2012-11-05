@@ -3,101 +3,160 @@ module interpret.declrfinder;
 import common, parse.ast, validate.remarks, interpret.builtins;
 
 
-@safe nothrow:
+@safe:
 
 
-ExpAssign setIdentDeclaredBy (ExpIdent ident)
+final class Env
 {
-    if (ident.declaredBy)
-        return ident.declaredBy;
+    nothrow:
 
-    auto d = findIdentDelrInExpOrParent(ident.parent, ident.text);
-    if (!d)
+    private ExpAssign[dstring] declrs;
+    private Env parent;
+
+
+    this (Env parent) { this.parent = parent; }
+
+
+    ExpAssign get (dstring name)
     {
-        auto bfn = ident.text in builtinFns;
-        if (!bfn)
-        {
-            d = new ExpAssign(null, ident);
-            d.value = new ValueUnknown(ident);
-        }
-
-        d = new ExpAssign(null, null);
-        d.value = *bfn;
+        auto d = name in declrs;
+        return d ? *d : parent ? parent.get(name) : null;
     }
 
-    ident.declaredBy = d;
-    return d;
+
+    void opIndexAssign (ExpAssign a, dstring name) { declrs[name] = a; }
 }
 
 
-private:
-
-
-
-ExpAssign findIdentDelrInExpOrParent (Exp e, dstring ident)
+final class DeclrFinder : IAstVisitor!(void)
 {
-    while (e)
-    {
-        auto d = findIdentDelrInExp(e, ident);
-        if (d)
-            return d;
-        e = e.parent;
-    }
-    return null;
-}
+    Env env;
+    IValidationContext context;
 
 
-ExpAssign findIdentDelrInExp (Exp e, dstring ident)
-{
-    auto s = cast(ValueStruct)e;
-    if (s)
+    this (IValidationContext context) { this.context = context; }
+
+
+    void visit (ValueStruct s)
     {
-        foreach (e2; s.exps)
-        {
-            auto d = cast(ExpAssign)e2;
-            if (d)
-            {
-                auto i = cast(ExpIdent)d.slot;
-                if (i && i.text == ident)
-                    return d;
-            }
-        }
-        return null;
+        env = new Env(env);
+
+        foreach (e; s.exps)
+            e.findDeclr(this);
     }
 
-    Exp[] exps;
 
-    auto fn = cast(ValueFn)e;
-    if (!fn)
+    void visit (ValueFn fn)
     {
-        auto lambda = (cast(ExpLambda)e);
+        env = new Env(env);
 
-        if (lambda)
-        fn = lambda.fn;
-    }
-
-    if (fn)
-    {
         foreach (p; fn.params)
-        {
-            auto i = cast(ExpIdent)p.slot;
-                if (i && i.text == ident)
-                    return p;
-        }
+            p.findDeclr(this);
 
-        foreach (e2; fn.exps)
+        foreach (e; fn.exps)
+            e.findDeclr(this);
+    }
+
+
+    @trusted void visit (ExpIdent i)
+    {
+        if (i.declaredBy)
+            return;
+
+        auto d = env.get(i.text);
+        if (d)
         {
-            if (e2 is e)
-                break;
-            auto d = cast(ExpAssign)e2;
-            if (d)
+            i.declaredBy = d;
+        }
+        else
+        {
+            auto bfn = i.text in builtinFns;
+            if (bfn)
             {
-                auto i = cast(ExpIdent)d.slot;
-                if (i && i.text == ident)
-                    return d;
+                d = new ExpAssign(null, null);
+                d.value = *bfn;
+                i.declaredBy = d;
+            }
+            else
+            {
+                context.remark(textRemark("identifier " ~ i.text ~ " is not defined"));
+                d = new ExpAssign(null, i);
+                d.value = new ValueUnknown(i);
+                i.declaredBy = d;
             }
         }
     }
 
-    return null;
+
+    void visit (ExpFnApply fna)
+    {
+        fna.applicable.findDeclr(this);
+
+        foreach (a; fna.args)
+            a.findDeclr(this);
+    }
+
+
+    void visit (ExpIf i)
+    {        
+        i.when.findDeclr(this);
+
+        foreach (t; i.then)
+            t.findDeclr(this);
+
+        foreach (o; i.otherwise)
+            o.findDeclr(this);
+    }
+
+
+    void visit (ExpDot d) { d.record.findDeclr(this); }
+
+
+    void visit (ExpAssign a)
+    {
+        if (a.type)
+            a.type.findDeclr(this);
+
+        if (a.value)
+            a.value.findDeclr(this);
+
+        auto i = cast(ExpIdent)a.slot;
+        env[i.text] = a;
+    }
+
+
+    void visit (ExpLambda)
+    {
+    }
+
+
+    void visit (ExpScope)
+    {
+    }
+
+
+    void visit (StmReturn r) { r.exp.findDeclr(this); }
+
+
+    void visit (StmLabel) { }
+    void visit (StmGoto) { }
+
+    void visit (ValueBuiltinFn) { }
+    void visit (ValueUnknown) { }
+
+    void visit (ValueNum) { }
+    void visit (ValueText) { }
+    void visit (ValueChar) { }
+
+    void visit (TypeType) { }
+    void visit (TypeAny) { }
+    void visit (TypeVoid) { }
+    void visit (TypeOr) { }
+    void visit (TypeFn) { }
+    void visit (TypeNum) { }
+    void visit (TypeText) { }
+    void visit (TypeChar) { }
+    void visit (TypeStruct) { }
+
+    void visit (WhiteSpace) { }
 }

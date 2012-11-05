@@ -1,4 +1,4 @@
-identifier lookup fixes: fn args, mutable vars
+identifier lookup fixes: lambda/struct, forward lookup, in struct accept identifier as declaration struct {x}
 anonymous scope
 mutable variables
 goto from and inside if/then/else

@@ -165,6 +165,14 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
+        debug context.println("FIND DECLARATIONS");
+        initBuiltinFns();
+        auto df = new DeclrFinder(context);
+        df.visit(astFile);
+
+        if (context.hasBlocker)
+            return astFile;
+
         return astFile;
     }
 
@@ -196,8 +204,6 @@ final class Program
     static ExpAssign prepareFile (IInterpreterContext context, ValueStruct file, dstring fileName,
                            bool isFirstFile, out ExpAssign start, ValueStruct parent)
     {
-        initBuiltinFns();
-
         start = getStartFunction (context, file, isFirstFile);
 
         file.parent = parent;

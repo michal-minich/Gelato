@@ -123,15 +123,6 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
         if (d.value)
             d.value.prepare(this);
     }
-
-
-    @trusted void visit (ExpIdent ident)
-    { 
-        setIdentDeclaredBy(ident);
-
-        assert (ident.declaredBy, "undefined identifier " ~ ident.text.toString());
-    }
-
     void visit (ExpScope) { assert (false, "ExpScope prepare"); }
 
     void visit (ExpLambda l) { assert (false, "ExpLambda prepare"); }
@@ -139,6 +130,8 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
     void visit (ExpDot dot) { dot.record.prepare(this); }
 
     void visit (StmReturn r) { r.exp.prepare(this);}
+
+    void visit (ExpIdent) { }
 
     void visit (StmLabel) { }
 
