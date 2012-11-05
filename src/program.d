@@ -213,6 +213,7 @@ final class Program
     static private @trusted ExpAssign getStartFunction (IInterpreterContext context, ValueStruct file,
                                                  bool makeStartIfNotExists)
     {
+        // todo find all starts
         auto start = findDeclr(file.exps, "start");
 
         if (start) 
@@ -234,6 +235,22 @@ final class Program
         a.value = fn;
         file.exps = [a];
         return a;
+    }
+
+    // todo find all starts
+    static private @safe ExpAssign findDeclr (Exp[] exps, dstring name)
+    {
+        foreach (e; exps)
+        {
+            auto d = cast(ExpAssign)e;
+            if (d)
+            {
+                auto i = cast(ExpIdent)d.slot;
+                if (i && i.text == name)
+                    return d;
+            }
+        }
+        return null;
     }
 }
 

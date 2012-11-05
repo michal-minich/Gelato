@@ -155,8 +155,10 @@ abstract class Exp
 // =================================================== Values
 final class ValueUnknown : Exp
 {
+    ExpIdent ident;
     mixin visitImpl;
-    private this () {}
+    nothrow this (ExpIdent ident) { this.ident = ident; }
+    private this () { }
     static typeof(this) single;
     static this () { single = new typeof(this); }
 }

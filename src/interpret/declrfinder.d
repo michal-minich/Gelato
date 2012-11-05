@@ -1,27 +1,12 @@
 module interpret.declrfinder;
 
-import std.algorithm, std.array, std.conv;
-import common, parse.ast, validate.remarks, interpret.preparer, interpret.builtins;
-
-nothrow:
-
-@safe ExpAssign findDeclr (Exp[] exps, dstring name)
-{
-    foreach (e; exps)
-    {
-        auto d = cast(ExpAssign)e;
-        if (d)
-        {
-            auto i = cast(ExpIdent)d.slot;
-            if (i && i.text == name)
-                return d;
-        }
-    }
-    return null;
-}
+import common, parse.ast, validate.remarks, interpret.builtins;
 
 
-@safe ExpAssign getIdentDeclaredBy (ExpIdent ident)
+@safe nothrow:
+
+
+ExpAssign setIdentDeclaredBy (ExpIdent ident)
 {
     if (ident.declaredBy)
         return ident.declaredBy;
@@ -31,6 +16,7 @@ nothrow:
     {
         auto d = new ExpAssign(null, null);
         d.value = *bfn;
+        ident.declaredBy = d;
         return d;
     }
 
@@ -39,25 +25,28 @@ nothrow:
     if (!d)
     {
         d = new ExpAssign(null, ident);
-        d.value = ValueUnknown.single;
+        d.value = new ValueUnknown(ident);
     }
 
+    ident.declaredBy = d;
     return d;
 }
 
 
-@trusted private ExpAssign findIdentDelr (Exp e, ExpIdent ident)
+private:
+
+
+ExpAssign findIdentDelr (Exp e, ExpIdent ident)
 {
     ExpAssign d;
     d = findIdentDelrInExpOrParent(e, ident.text);
     if (d)
         return d;
-    assert (false, ident.text.to!string() ~ " identifier is undefined");
-
+    return null;
 }
 
 
-@safe ExpAssign findIdentDelrInExpOrParent (Exp e, dstring ident)
+ExpAssign findIdentDelrInExpOrParent (Exp e, dstring ident)
 {
     ExpAssign d;
     while (e && !d)
@@ -69,7 +58,7 @@ nothrow:
 }
 
 
-@trusted private ExpAssign findIdentDelrInExp (Exp e, dstring ident)
+ExpAssign findIdentDelrInExp (Exp e, dstring ident)
 {
     Exp[] exps;
 

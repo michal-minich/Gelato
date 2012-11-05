@@ -127,7 +127,7 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
 
     @trusted void visit (ExpIdent ident)
     { 
-        ident.declaredBy = getIdentDeclaredBy(ident);
+        setIdentDeclaredBy(ident);
 
         assert (ident.declaredBy, "undefined identifier " ~ ident.text.toString());
     }

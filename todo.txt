@@ -44,10 +44,11 @@ TYPE INFERENCE / CHECK -----------------------------
   infer on fn pure, deterministic throws, modify global, ..
 
 INTERPRETER -----------------------------
+! import all modules by default
 ! import names form scope to scope
 ! built-ins with qualified name
-! built-ins - typeof
 ! overridable std functions (check builtins after ident is not found)
+! built-ins - typeof
 ! variable length fn params
 ! array (empty, first, rest)
 ! text is array

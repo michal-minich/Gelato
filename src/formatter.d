@@ -23,7 +23,7 @@ import common, parse.ast;
 
     dstring visit (ValueUnknown e)
     {
-        return e.tokens ? e.tokens.map!(t => t.text)().join() : "<unknown>";
+        return e.tokens ? e.tokens.map!(t => t.text)().join() : "<unknown(" ~ (e.ident ? e.ident.text : "") ~ ")>";
     }
 
 
