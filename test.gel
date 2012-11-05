@@ -1,5 +1,6 @@
 a = 10
 start = fn ()
 {
-	print (toNum("1"))
+	var a = "2"
+	print (toNum(a))
 }

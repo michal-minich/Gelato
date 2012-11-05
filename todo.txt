@@ -1,8 +1,9 @@
+goto from and inside if/then/else
+mutable variables
 import names form scope to scope (also selective) - import std (id, second), module2
 import all modules by default
 public attribute
 op dot priority
-goto from and inside if/then/else
 
 TOKENIZER -----------------------------
   cancel unclosed text after escape on first line
@@ -54,7 +55,6 @@ INTERPRETER -----------------------------
 ! text is array
 ! user overridable struct functions - construct, destruct, clone, ...
 ! types, type parameters
-! var / mutable variables
 ! ref
 ! throw
 ! try catch

@@ -56,6 +56,7 @@ enum TokenType
     keyStruct,
     keyThrow,
     keyVar,
+    keyImport,
     typeType, typeAny, typeVoid, typeOr, typeFn, typeNum, typeText, typeChar,
 }
 

@@ -148,7 +148,7 @@ final class Parser
 
             case TokenType.keyStruct: exp = parseStruct(parent); break;
             //case TokenType.keyThrow: exp = parserThrow(parent); break;
-            //case TokenType.keyVar: exp = parserVar(parent); break;
+            case TokenType.keyVar: exp = parseVar(parent); break;
 
             case TokenType.unknown: exp = parseUnknown(parent); break;
             case TokenType.empty: assert (false, "empty token");
@@ -202,6 +202,23 @@ final class Parser
             exp.tokens = toks2[startIndex .. current.index + 1];
 
         return exp;
+    }
+
+
+    Exp parseVar (Exp parent)
+    {
+        nextTok(); 
+        auto e = parse (parent);
+        auto a = cast(ExpAssign)e;
+        if (a)
+        {
+            return a;
+        }
+        else
+        {
+            vctx.remark(textRemark("var can be only used before declaration"));
+            return e;
+        }
     }
 
 
