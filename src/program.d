@@ -23,7 +23,7 @@ final class Program
     {
         prog = new ValueStruct (null);
         this.filePaths ~= filePaths;
-        this.filePaths ~= "std.gel";
+        //this.filePaths ~= "std.gel";
         this.runTests = runTests;
     }
 
@@ -70,7 +70,7 @@ final class Program
         if (!files.length)
         {
             parseAndValidateDataAll(context);
-            prepareDataAll(context);
+            findDeclarationsAll(context);
         }
 
         if (!prog.exps.length)
@@ -89,25 +89,10 @@ final class Program
     }
 
 
-    private void prepareDataAll (IInterpreterContext context)
+    private void findDeclarationsAll (IInterpreterContext context)
     {
         foreach (ix, f; files)
-        {
-            auto fn = fileName.length ? fileName : filePaths[ix].baseName().stripExtension().to!dstring();
-            auto m = prepareData(context, f, fn, ix == 0);
-        }
-
-        auto prep = new PreparerForEvaluator(context);
-        foreach (ix, m; prog.exps)
-        {
-            if (ix == 0)
-            {
-                auto file = cast(ValueStruct)((cast(ExpAssign)m).slot).parent;
-                file.prepare(prep);
-            }
-            else
-                m.prepare(prep);
-        }
+            auto m = findDeclarations(context, f);
     }
 
     
@@ -115,7 +100,7 @@ final class Program
     {
         if (fileData.length)
         {
-            files = [parseAndValidateData(context, fileData, fileName)];
+            files = [prepareData(context, fileData, fileName, true)];
 
             if (context.hasBlocker)
             {
@@ -129,7 +114,7 @@ final class Program
             foreach (ix, f; filePaths)
             {
                 auto fileData = toUTF32(readText!string(f));
-                files ~= parseAndValidateData(context, fileData, f.baseName().stripExtension().to!dstring());
+                files ~= prepareData(context, fileData, f.baseName().stripExtension().to!dstring(), ix == 0);
 
                 if (context.hasBlocker)
                 {
@@ -141,7 +126,7 @@ final class Program
     }
 
 
-    private ValueStruct parseAndValidateData (IInterpreterContext context, dstring fileData, dstring fileName)
+    private ValueStruct prepareData (IInterpreterContext context, dstring fileData, dstring fileName, bool isStartFile)
     {  
         debug context.println(": " ~ fileName);
         debug context.println("TOKENIZE");
@@ -165,10 +150,20 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
-        debug context.println("FIND DECLARATIONS");
-        initBuiltinFns();
-        auto df = new DeclrFinder(context);
-        df.visit(astFile);
+        debug context.println("PREPARE");
+        ExpAssign start;
+        auto m = prepareFile(context, astFile, fileName, isStartFile, /*out*/ start, prog);
+        if (start)
+            starts ~= start;
+
+        auto prep = new PreparerForEvaluator(context);
+        if (isStartFile)
+        {
+            auto file = cast(ValueStruct)((cast(ExpAssign)m).slot).parent;
+            file.prepare(prep);
+        }
+        else
+            m.prepare(prep);
 
         if (context.hasBlocker)
             return astFile;
@@ -177,16 +172,15 @@ final class Program
     }
 
 
-    private ExpAssign prepareData (IInterpreterContext context, ValueStruct astFile, dstring fileName, bool isStartFile)
+    private ValueStruct findDeclarations (IInterpreterContext context, ValueStruct astFile)
     {  
-        debug context.println("PREPARE");
-        ExpAssign start;
-        auto m = prepareFile(context, astFile, fileName, isStartFile, /*out*/ start, prog);
-        if (start)
-            starts ~= start;
+        debug context.println("FIND DECLARATIONS");
+        initBuiltinFns();
+        auto df = new DeclrFinder(context);
+        df.visit(astFile);
 
         if (context.hasBlocker)
-            return m;
+            return astFile;
         
         /*
         debug context.println("TYPE INFER");
@@ -197,7 +191,7 @@ final class Program
             return m;
         */
 
-        return m;
+        return astFile;
     }
 
 
@@ -209,9 +203,8 @@ final class Program
         file.parent = parent;
         auto fna = new ExpFnApply(parent, file, null);
         auto i = new ExpIdent(parent, fileName);
-        auto a = new ExpAssign(parent, i);
+        auto a = new ExpAssign(parent, i, fna);
         parent.exps ~= a;
-        a.value = fna;
         return a;
     }
 
@@ -232,7 +225,7 @@ final class Program
         context.remark(MissingStartFunction(null));
 
         auto i = new ExpIdent(file, "start");
-        auto a = new ExpAssign(file, i);
+        auto a = new ExpAssign(file, i, null);
         auto fn = new ValueFn(file);
         fn.exps = file.exps;
         foreach (fne; fn.exps)

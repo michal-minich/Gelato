@@ -6,21 +6,22 @@ import common, parse.ast, validate.remarks, interpret.builtins;
 @safe:
 
 
-final class Env
+private final class Env
 {
     nothrow:
 
-    private ExpAssign[dstring] declrs;
-    private Env parent;
+    ExpAssign[dstring] declrs;
+    Env parent;
+    ExpIdent[] missing;
 
 
     this (Env parent) { this.parent = parent; }
 
 
-    ExpAssign get (dstring name)
+    ExpAssign get (ExpIdent i)
     {
-        auto d = name in declrs;
-        return d ? *d : parent ? parent.get(name) : null;
+        auto d = i.text in declrs;
+        return d ? *d : parent ? parent.get(i) : null;
     }
 
 
@@ -37,12 +38,33 @@ final class DeclrFinder : IAstVisitor!(void)
     this (IValidationContext context) { this.context = context; }
 
 
-    void visit (ValueStruct s)
+    @trusted void visit (ValueStruct s)
     {
         env = new Env(env);
 
         foreach (e; s.exps)
             e.findDeclr(this);
+
+        foreach (m; env.missing)
+        {
+            auto a = m.text in env.declrs;
+            if (a)
+            {
+                m.declaredBy = *a;
+            }
+            else if (env.parent)
+            {
+                env.parent.missing ~= m;
+            }
+            else
+            {
+                context.remark(textRemark("identifier " ~ m.text ~ " is not defined"));
+                m.declaredBy = new ExpAssign(null, m, new ValueUnknown(m));
+            }
+        }
+
+        env = env.parent;
+
     }
 
 
@@ -55,6 +77,12 @@ final class DeclrFinder : IAstVisitor!(void)
 
         foreach (e; fn.exps)
             e.findDeclr(this);
+
+        if (env.parent)
+            foreach (m; env.missing)
+                env.parent.missing ~= m;
+
+        env = env.parent;
     }
 
 
@@ -63,27 +91,15 @@ final class DeclrFinder : IAstVisitor!(void)
         if (i.declaredBy)
             return;
 
-        auto d = env.get(i.text);
-        if (d)
-        {
-            i.declaredBy = d;
-        }
-        else
+        i.declaredBy = env.get(i);
+
+        if (!i.declaredBy)
         {
             auto bfn = i.text in builtinFns;
             if (bfn)
-            {
-                d = new ExpAssign(null, null);
-                d.value = *bfn;
-                i.declaredBy = d;
-            }
+                i.declaredBy = new ExpAssign(null, null, *bfn);
             else
-            {
-                context.remark(textRemark("identifier " ~ i.text ~ " is not defined"));
-                d = new ExpAssign(null, i);
-                d.value = new ValueUnknown(i);
-                i.declaredBy = d;
-            }
+                env.missing ~= i;
         }
     }
 
@@ -125,18 +141,11 @@ final class DeclrFinder : IAstVisitor!(void)
     }
 
 
-    void visit (ExpLambda)
-    {
-    }
-
-
-    void visit (ExpScope)
-    {
-    }
-
-
     void visit (StmReturn r) { r.exp.findDeclr(this); }
 
+
+    void visit (RtExpLambda) { }
+    void visit (RtExpScope) { }
 
     void visit (StmLabel) { }
     void visit (StmGoto) { }

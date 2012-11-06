@@ -116,7 +116,7 @@ final class Parser
     }
 
 
-    @trusted Exp parse (Exp parent)
+    @trusted Exp parse (ValueScope parent)
     {
         skipComment:
 
@@ -205,7 +205,7 @@ final class Parser
     }
 
 
-    Exp parseVar (Exp parent)
+    Exp parseVar (ValueScope parent)
     {
         nextTok(); 
         auto e = parse (parent);
@@ -222,7 +222,7 @@ final class Parser
     }
 
 
-    Comment parseCommentLine (Exp parent)
+    Comment parseCommentLine (ValueScope parent)
     {
         auto c = new Comment;
         while (!(current.type == TokenType.newLine || current.type == TokenType.empty))
@@ -234,7 +234,7 @@ final class Parser
     }
 
 
-    Comment parseCommentMulti (Exp parent)
+    Comment parseCommentMulti (ValueScope parent)
     {
         auto c = new Comment;
         while (current.type != TokenType.commentMultiEnd)
@@ -252,23 +252,23 @@ final class Parser
     }
 
 
-    ExpDot parseOpDot (Exp parent, Exp operand1)
+    ExpDot parseOpDot (ValueScope parent, Exp operand1)
     {
         nextNonWhiteTok();
 
         if (current.type != TokenType.ident)
         {
             vctx.remark(textRemark("second operand must be identifier"));
-            return new ExpDot(operand1, operand1, "missingIdentifier");
+            return new ExpDot(parent, operand1, "missingIdentifier");
         }
 
-        auto dot = new ExpDot(operand1, operand1, current.text);
+        auto dot = new ExpDot(parent, operand1, current.text);
         nextNonWhiteTok();
         return dot;
     }
 
 
-    ExpFnApply parseOp (Exp parent, Exp operand1)
+    ExpFnApply parseOp (ValueScope parent, Exp operand1)
     {
         auto op = new ExpIdent(parent, current.text);
         nextNonWhiteTok();
@@ -285,7 +285,7 @@ final class Parser
     }
 
 
-    Exp parseBracedExp (Exp parent)
+    Exp parseBracedExp (ValueScope parent)
     {
         if (current.text == "(")
         {
@@ -309,7 +309,7 @@ final class Parser
     }
 
 
-    Exp[] parseBracedExpList (Exp parent)
+    Exp[] parseBracedExpList (ValueScope parent)
     {
         Exp[] list;
         immutable opposite = oppositeBrace(current.text);
@@ -355,42 +355,42 @@ final class Parser
     }
 
 
-    TypeAny parseTypeAny (Exp parent)
+    TypeAny parseTypeAny (ValueScope parent)
     {
         nextTok();
         return TypeAny.single;
     }
 
 
-    TypeVoid parseTypeVoid (Exp parent)
+    TypeVoid parseTypeVoid (ValueScope parent)
     {
         nextTok();
         return TypeVoid.single;
     }
 
 
-    TypeNum parseTypeNum (Exp parent)
+    TypeNum parseTypeNum (ValueScope parent)
     {
         nextTok();
         return TypeNum.single;
     }
 
 
-    TypeChar parseTypeChar (Exp parent)
+    TypeChar parseTypeChar (ValueScope parent)
     {
         nextTok();
         return TypeChar.single;
     }
 
 
-    TypeText parseTypeText (Exp parent)
+    TypeText parseTypeText (ValueScope parent)
     {
         nextTok();
         return TypeText.single;
     }
 
 
-    TypeType parseTypeType (Exp parent)
+    TypeType parseTypeType (ValueScope parent)
     {
         nextNonWhiteTok();
         auto types = parseBracedExpList(parent);
@@ -400,7 +400,7 @@ final class Parser
     }
 
 
-    TypeOr parseTypeOr (Exp parent)
+    TypeOr parseTypeOr (ValueScope parent)
     {
         nextNonWhiteTok();
         auto types = parseBracedExpList(parent);
@@ -408,7 +408,7 @@ final class Parser
     }
 
 
-    TypeFn parseTypeFn (Exp parent)
+    TypeFn parseTypeFn (ValueScope parent)
     {
         nextNonWhiteTok();
         auto types = parseBracedExpList(parent);
@@ -416,13 +416,13 @@ final class Parser
     }
 
 
-    ExpIf parseIf (Exp parent)
+    ExpIf parseIf (ValueScope parent)
     {
         uint startIndex = current.index;
         nextTok();
 
         auto i = new ExpIf(parent);
-        i.when = parse(i);
+        i.when = parse(parent);
 
         if (current.type == TokenType.keyThen)
         {
@@ -431,7 +431,7 @@ final class Parser
 
             while (current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
             {
-                i.then ~= parse(i);
+                i.then ~= parse(parent);
             }
 
             if (current.type == TokenType.keyElse)
@@ -440,7 +440,7 @@ final class Parser
 
                 while (current.type != TokenType.keyEnd)
                 {
-                    i.otherwise ~= parse(i);
+                    i.otherwise ~= parse(parent);
                 }
             }
 
@@ -459,7 +459,7 @@ final class Parser
     }
 
 
-    ValueStruct parseStruct (Exp parent)
+    ValueStruct parseStruct (ValueScope parent)
     {
         auto s = new ValueStruct(parent);
         nextNonWhiteTok();
@@ -468,7 +468,7 @@ final class Parser
     }
 
 
-    Exp parserFn (Exp parent)
+    Exp parserFn (ValueScope parent)
     {
         auto f = new ValueFn(parent);
         nextNonWhiteTok();
@@ -480,7 +480,7 @@ final class Parser
             {
                 auto i = cast(ExpIdent)p;
                 if (i)
-                    d = new ExpAssign(f, i);
+                    d = new ExpAssign(f, i, null);
             }
 
             if (d)
@@ -500,18 +500,18 @@ final class Parser
     }
 
 
-    StmReturn parserReturn (Exp parent)
+    StmReturn parserReturn (ValueScope parent)
     {
         nextNonWhiteTokOnSameLine();
         auto r = new StmReturn(parent);
-        r.exp = parse(r);
+        r.exp = parse(parent);
         if (!r.exp)
             vctx.remark(textRemark("return without expression"));
         return r;
     }
 
 
-    StmGoto parserGoto (Exp parent)
+    StmGoto parserGoto (ValueScope parent)
     {
         nextNonWhiteTokOnSameLine();
         if (current.type == TokenType.ident)
@@ -529,7 +529,7 @@ final class Parser
     }
 
 
-    StmLabel parserLabel (Exp parent)
+    StmLabel parserLabel (ValueScope parent)
     {
         nextNonWhiteTokOnSameLine();
         if (current.type == TokenType.ident)
@@ -547,7 +547,7 @@ final class Parser
     }
 
 
-    Exp parseText (Exp parent)
+    Exp parseText (ValueScope parent)
     {
         Token[] ts;
         dstring txt;
@@ -585,7 +585,7 @@ final class Parser
     }
 
 
-    ValueUnknown parseUnknown (Exp parent)
+    ValueUnknown parseUnknown (ValueScope parent)
     {
         auto u = ValueUnknown.single;
         nextTok();
@@ -593,7 +593,7 @@ final class Parser
     }
 
 
-    ValueNum parseNum (Exp parent)
+    ValueNum parseNum (ValueScope parent)
     {
         long num;
         immutable s = current.text.replace("_", "");
@@ -610,7 +610,7 @@ final class Parser
     }
 
 
-    Exp parseIdentOrDeclr (Exp parent)
+    Exp parseIdentOrDeclr (ValueScope parent)
     {
         auto e = new ExpIdent(parent, current.text);
         nextNonWhiteTok();
@@ -618,18 +618,18 @@ final class Parser
 
         if (e && current.text == ":")
         {
-            d = new ExpAssign(parent, e);
-            e.parent = d;
+            d = new ExpAssign(parent, e, null);
+            e.parent = parent;
             nextTok();
-            d.type = parse(d);
+            d.type = parse(parent);
         }
-        if (e && current.text == "=") // on assignment i is not required
+        if (e && current.text == "=")
         {
             if (!d)
-                d = new ExpAssign(parent, e); // it could be also assignment
+                d = new ExpAssign(parent, e, null);
             //e.parent = d;
             nextTok();
-            d.value = parse(d);
+            d.value = parse(parent);
             return d;
         }
 

@@ -1,6 +1,6 @@
-identifier lookup fixes: lambda/struct, forward lookup, in struct accept identifier as declaration struct {x}
-anonymous scope
-mutable variables (allow only var as mutable)
+struct assignment (identifier even) is var implicitly ?
+check  chained assignments - are they var ?
+mutable variables - allow only var as mutable
 goto from and inside if/then/else
 import names form scope to scope (also selective) - import std (id, second), module2
 import all modules by default
@@ -68,6 +68,7 @@ INTERPRETER -----------------------------
   dynamic and static typing versions
   contracts
   finally / scope guars
+  anonymous scope ?
 
 FORMATTER -----------------------------
   configuration profiles

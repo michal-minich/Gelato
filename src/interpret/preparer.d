@@ -19,10 +19,23 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
         Exp[] ds;
         foreach (e; s.exps)
         {
-            if (cast(ExpAssign)e)
+            auto a = cast(ExpAssign)e;
+            if (a)
             {
-                ds ~= e;
-                e.prepare(this);
+                ds ~= a;
+                a.prepare(this);
+                if (!a.value)
+                    a.value = ValueUnknown.single;
+            }
+            else
+            {
+                auto i = cast(ExpIdent)e;
+                if (i)
+                {
+                    a = new ExpAssign(s, i, ValueUnknown.single);
+                    a.prepare(this);
+                    ds ~= a;
+                }
             }
         }
         s.exps = ds;
@@ -123,9 +136,11 @@ import common, parse.ast, validate.remarks, interpret.builtins, interpret.declrf
         if (d.value)
             d.value.prepare(this);
     }
-    void visit (ExpScope) { assert (false, "ExpScope prepare"); }
 
-    void visit (ExpLambda l) { assert (false, "ExpLambda prepare"); }
+
+    void visit (RtExpScope) { assert (false, "RtExpScope prepare"); }
+
+    void visit (RtExpLambda l) { assert (false, "RtExpLambda prepare"); }
 
     void visit (ExpDot dot) { dot.record.prepare(this); }
 

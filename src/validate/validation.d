@@ -74,7 +74,7 @@ final class Validator : IAstVisitor!(void)
     }
 
 
-    void visit (ExpLambda l)
+    void visit (RtExpLambda l)
     {
         assert (false, "validate lambda");
     }
@@ -140,7 +140,7 @@ final class Validator : IAstVisitor!(void)
     }
 
 
-    void visit (ExpScope) { }
+    void visit (RtExpScope) { }
 
     void visit (TypeType) { }
 

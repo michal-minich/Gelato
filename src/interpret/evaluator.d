@@ -12,7 +12,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     {
         IInterpreterContext context;
         PreparerForEvaluator prep;
-        ExpScope currentScope;
+        RtExpScope currentScope;
     }
 
 
@@ -26,12 +26,12 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     @trusted Exp eval (ExpAssign start)
     {
         auto fn = cast(ValueFn)start.value;
-        auto s = fn ? new ExpLambda(null, fn) : start.value;
+        auto s = fn ? new RtExpLambda(null, null, fn) : start.value;
         return s.eval(this);
     }
 
 
-    Exp visit (ExpLambda lambda)
+    Exp visit (RtExpLambda lambda)
     {
         auto exps = lambda.fn.exps;
         lambda.currentExpIndex = 0;
@@ -78,7 +78,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
             if (s)
             {
                 auto assigments = cast(ExpAssign[])s.exps; // sure cast
-                auto sc = new ExpScope(currentScope, assigments);
+                auto sc = new RtExpScope(currentScope.parent, currentScope, assigments);
 
                 foreach (a; assigments)
                     sc.values ~= a.value.eval(this);
@@ -86,14 +86,15 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
                 return sc;
             }
 
-            assert (false, "only fn, built in fn or struct can be applied");
+            assert (false, "only fn, built in fn or struct can be applied (" 
+                    ~ exp.str(fv).toString() ~ ", " ~ typeid(exp).name ~ ")");
         }
 
         auto fn = cast(ValueFn)f;
 
         assert (fn, "cannot apply undefined fn");
 
-        auto lambda = new ExpLambda(currentScope, fn);
+        auto lambda = new RtExpLambda(currentScope.parent, currentScope, fn);
 
         if (fn.params)
         {
@@ -127,9 +128,9 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         }
         else
         {
-            auto fn = new ValueFn (i);
+            auto fn = new ValueFn (currentScope.parent);
             fn.exps = when.value ? i.then : i.otherwise;
-            return visit(new ExpLambda(currentScope, fn));
+            return visit(new RtExpLambda(currentScope.parent, currentScope, fn));
         }
     }
 
@@ -143,10 +144,10 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         auto s = currentScope;
         while (s)
         {
-            auto l = cast(ExpLambda)s;
+            auto l = cast(RtExpLambda)s;
             if (l && d.parent is l.fn)
                 return s.values[d.paramIndex];
-            s = cast(ExpScope)s.parent; // sureCast
+            s = s.parentScope;
         }
 
         assert (false);
@@ -171,7 +172,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
         assert (!st, "struct must be constructed before accessing member (" 
                 ~ dot.member.toString() ~ ")");
 
-        auto sc = cast(ExpScope)record;
+        auto sc = cast(RtExpScope)record;
 
         assert (sc, "only struct can have members (" ~ dot.member.toString() ~ ")");
         
@@ -186,7 +187,7 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
     @trusted Exp visit (StmReturn ret)
     {
         auto r = ret.exp.eval(this);
-        auto currentLambda = cast(ExpLambda)currentScope;
+        auto currentLambda = cast(RtExpLambda)currentScope;
         currentLambda.currentExpIndex = cast(uint)currentLambda.fn.exps.length;
         return r;
     }
@@ -198,25 +199,31 @@ import common, parse.ast, validate.remarks, interpret.preparer, interpret.builti
             context.except("goto skipped because it has no matching label");
         else
         {
-            auto currentLambda = cast(ExpLambda)currentScope;
+            auto currentLambda = cast(RtExpLambda)currentScope;
             currentLambda.currentExpIndex = gt.labelExpIndex;
         }
 
         return null;
     }
 
-    Exp visit (ExpAssign d)
+    Exp visit (ExpAssign a)
     { 
-        if (d.value)
+        if (a.value)
         {
-            d.value = d.value.eval(this);
-            return d.value;
+            auto v = a.value.eval(this);
+            auto s = a.slot;//.eval(this);
+            auto i = cast(ExpIdent)s;
+            if (i)
+                i.declaredBy.value = v;
+            else
+                assert(false, "value is not assignable");
+            return v;
         }
 
         return null;
     }
 
-    Exp visit (ExpScope sc) { return sc; }
+    Exp visit (RtExpScope sc) { return sc; }
 
     Exp visit (ValueText text) { return text; }
 

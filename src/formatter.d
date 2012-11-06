@@ -147,13 +147,13 @@ import common, parse.ast;
     }
 
 
-    dstring visit (ExpLambda e)
+    dstring visit (RtExpLambda e)
     {
         return e.fn.str(this);
     }
 
 
-    dstring visit (ExpScope sc) 
+    dstring visit (RtExpScope sc) 
     {
         dstring bdy;
         foreach (ix, d; sc.assigments)
