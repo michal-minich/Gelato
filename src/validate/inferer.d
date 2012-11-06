@@ -2,7 +2,7 @@ module validate.inferer;
 
 
 import std.algorithm, std.array;
-import common, parse.ast, parse.parser, validate.remarks;
+import common, ast, parse.parser, validate.remarks;
 
 
 Exp mergeTypes (Exp[] types...)

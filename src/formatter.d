@@ -1,7 +1,7 @@
 module formatter;
 
 import std.algorithm, std.array, std.conv;
-import common, parse.ast;
+import common, ast;
 
 
 @trusted pure final class FormatVisitor : IFormatVisitor

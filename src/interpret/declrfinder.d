@@ -1,6 +1,6 @@
 module interpret.declrfinder;
 
-import common, parse.ast, validate.remarks, interpret.builtins;
+import common, ast, validate.remarks, interpret.builtins;
 
 
 @safe:

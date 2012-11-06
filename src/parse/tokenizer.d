@@ -1,7 +1,7 @@
 module parse.tokenizer;
 
 import std.array, std.algorithm, std.conv;
-import common, parse.ast;
+import common, ast;
 
 
 @safe:

@@ -4,7 +4,7 @@ module common;
 import std.stdio, std.range, std.array, std.range, std.algorithm, std.conv,
     std.string, std.utf, std.path;
 import std.file : readText, exists, isFile;
-import settings, formatter, parse.ast, parse.parser, parse.tokenizer, validate.remarks,
+import settings, formatter, ast, parse.parser, parse.tokenizer, validate.remarks,
     interpret.evaluator;
 
 

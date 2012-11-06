@@ -2,7 +2,7 @@ module parse.parser;
 
 
 import std.algorithm, std.array, std.conv;
-import common, validate.remarks, parse.ast;
+import common, validate.remarks, ast;
 
 
 nothrow:

@@ -1,7 +1,7 @@
 module interpret.builtins;
 
 import std.algorithm, std.array, std.conv, std.string;
-import common, parse.ast, validate.remarks, tester;
+import common, ast, validate.remarks, tester;
 
 
 ValueBuiltinFn[dstring] builtinFns;

@@ -1,7 +1,7 @@
 module validate.validation;
 
 import std.algorithm, std.exception;
-import common, parse.ast, parse.parser, validate.remarks;
+import common, ast, parse.parser, validate.remarks;
 
 
 @safe nothrow:

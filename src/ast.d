@@ -1,4 +1,4 @@
-module parse.ast;
+module ast;
 
 import std.conv;
 import common;
@@ -158,8 +158,8 @@ abstract class Exp
 // =================================================== Values
 final class ValueUnknown : Exp
 {
-    ExpIdent ident;
     mixin visitImpl;
+    ExpIdent ident;
     nothrow this (ExpIdent ident) { this.ident = ident; }
     private this () { }
     static typeof(this) single;

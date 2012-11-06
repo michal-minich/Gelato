@@ -4,7 +4,7 @@ module program;
 import std.stdio, std.algorithm, std.string, std.array, std.conv, std.file, std.path, std.utf, std.path;
 import std.file : readText, exists, isFile;
 import common, settings, formatter, validate.remarks, validate.validation,
-    parse.tokenizer, parse.parser, parse.ast, interpret.evaluator, interpret.preparer,
+    parse.tokenizer, parse.parser, ast, interpret.evaluator, interpret.preparer,
     validate.inferer, interpret.declrfinder, interpret.builtins;
 
 
