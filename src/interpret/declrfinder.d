@@ -8,24 +8,17 @@ import common, ast, validate.remarks, interpret.builtins;
 
 private final class Env
 {
-    nothrow:
-
     ExpAssign[dstring] declrs;
     Env parent;
     ExpIdent[] missing;
 
+    nothrow this (Env parent) { this.parent = parent; }
 
-    this (Env parent) { this.parent = parent; }
-
-
-    ExpAssign get (ExpIdent i)
+    nothrow ExpAssign get (ExpIdent i)
     {
         auto d = i.text in declrs;
         return d ? *d : parent ? parent.get(i) : null;
     }
-
-
-    void opIndexAssign (ExpAssign a, dstring name) { declrs[name] = a; }
 }
 
 
@@ -64,7 +57,6 @@ final class DeclrFinder : IAstVisitor!(void)
         }
 
         env = env.parent;
-
     }
 
 
@@ -137,7 +129,7 @@ final class DeclrFinder : IAstVisitor!(void)
             a.value.findDeclr(this);
 
         auto i = cast(ExpIdent)a.slot;
-        env[i.text] = a;
+        env.declrs[i.text] = a;
     }
 
 

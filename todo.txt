@@ -1,11 +1,15 @@
 struct assignment (identifier even) is var implicitly ?
 check  chained assignments - are they var ?
 mutable variables - allow only var as mutable
-goto from and inside if/then/else
+remark multiply defined identifiers
+remark unused identifiers
+
 import names form scope to scope (also selective) - import std (id, second), module2
 import all modules by default
 public attribute
+
 op dot priority
+goto from and inside if/then/else
 
 TOKENIZER -----------------------------
   cancel unclosed text after escape on first line
@@ -18,7 +22,7 @@ TOKENIZER -----------------------------
   documentation comments
 
 PARSER -----------------------------
-! custom brace op apply
+  custom brace op apply
   cleanup and reliability fixes
   generate remarks
 
@@ -30,9 +34,6 @@ PREPARER -----------------------------
 ! call functions as members of first parameter
   operators priority
   prepare functions on firs call
-  remark undefined identifiers
-  remark multiply defined identifiers
-  remark unused identifiers
   tail call
 
 TYPE INFERENCE / CHECK -----------------------------
@@ -51,18 +52,18 @@ TYPE INFERENCE / CHECK -----------------------------
 
 INTERPRETER -----------------------------
 ! built-ins with qualified name (also overridable)
-! built-ins - typeof
 ! variable length fn params
 ! array (empty, first, rest)
-! overloaded built-in functions
 ! text is array
+! types
+! built-ins - TypeOf
+! type parameters
 ! overloaded functions
+! overloaded built-in functions
 ! user overridable struct functions - construct, destruct, clone, ...
-! types, type parameters
 ! ref
 ! throw
 ! try catch
-  chained assignments (check if they work with types)
   built-in for stack trace
   built-in in for env
   dynamic and static typing versions
