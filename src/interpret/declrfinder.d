@@ -138,7 +138,7 @@ final class DeclrFinder : IAstVisitor!(void)
 
 
     void visit (RtExpLambda) { }
-    void visit (RtExpScope) { }
+    void visit (Closure) { }
 
     void visit (StmLabel) { }
     void visit (StmGoto) { }

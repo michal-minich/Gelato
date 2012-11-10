@@ -81,7 +81,7 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (RtExpLambda e) { return "RtExpLambda"; }
 
-    const dstring visit (RtExpScope sc) { return "RtExpScope"; }
+    const dstring visit (Closure sc) { return "Closure"; }
 
     const dstring visit (ExpDot dot) { return "ExpDot"; }
 
@@ -155,7 +155,7 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (RtExpLambda l) { return l.tokensText ~ "|"; }
 
-    const dstring visit (RtExpScope sc) { return sc.tokensText ~ "|"; }
+    const dstring visit (Closure sc) { return sc.tokensText ~ "|"; }
 
     const dstring visit (ExpDot dot) { return dot.tokensText ~ "|"; }
 

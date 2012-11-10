@@ -140,7 +140,7 @@ final class Validator : IAstVisitor!(void)
     }
 
 
-    void visit (RtExpScope) { }
+    void visit (Closure) { }
 
     void visit (TypeType) { }
 

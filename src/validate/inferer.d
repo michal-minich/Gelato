@@ -119,7 +119,7 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (RtExpLambda l)
     {
-        visit(l.fn);
+        l.parent.infer(this);
         return l.infType;
     }
 
@@ -200,7 +200,7 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (RtExpScope) { return ValueUnknown.single; }
+    Exp visit (Closure) { return ValueUnknown.single; }
 
     Exp visit (TypeType tt) { return new TypeType(null, tt); }
 

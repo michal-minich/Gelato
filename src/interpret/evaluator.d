@@ -12,7 +12,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
     {
         IInterpreterContext context;
         PreparerForEvaluator prep;
-        RtExpScope currentScope;
+        Closure currentClosure;
     }
 
 
@@ -26,20 +26,20 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
     @trusted Exp eval (ExpAssign start)
     {
         auto fn = cast(ValueFn)start.value;
-        auto s = fn ? new RtExpLambda(null, null, fn) : start.value;
+        auto s = fn ? new RtExpLambda(fn, null) : start.value;
         return s.eval(this);
     }
 
 
     Exp visit (RtExpLambda lambda)
     {
-        auto exps = lambda.fn.exps;
+        auto exps = lambda.parent.exps;
         lambda.currentExpIndex = 0;
         Exp lastExp;
         Exp e;
         while (lambda.currentExpIndex < exps.length)
         {
-            currentScope = lambda;
+            currentClosure = lambda;
             lastExp = exps[lambda.currentExpIndex];
             e = lastExp.eval(this);
             ++lambda.currentExpIndex;
@@ -52,9 +52,9 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
     @trusted Exp visit (ExpFnApply fna)
     {
         auto exp = fna.applicable.eval(this);
-        auto f = cast(ValueFn)exp;
+        auto fn = cast(ValueFn)exp;
 
-        if (!f)
+        if (!fn)
         {
             auto bfn = cast(ValueBuiltinFn)exp;
             if (bfn)
@@ -77,10 +77,10 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
             auto s = cast(ValueStruct)exp;
             if (s)
             {
-                auto assigments = cast(ExpAssign[])s.exps; // sure cast
-                auto sc = new RtExpScope(currentScope.parent, currentScope, assigments);
+                auto declarations = cast(ExpAssign[])s.exps; // sure cast
+                auto sc = new Closure(currentClosure.parent, currentClosure, declarations);
 
-                foreach (a; assigments)
+                foreach (a; declarations)
                     sc.values ~= a.value.eval(this);
 
                 return sc;
@@ -90,11 +90,9 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
                     ~ exp.str(fv).toString() ~ ", " ~ typeid(exp).name ~ ")");
         }
 
-        auto fn = cast(ValueFn)f;
-
         assert (fn, "cannot apply undefined fn");
 
-        auto lambda = new RtExpLambda(currentScope.parent, currentScope, fn);
+        auto lambda = new RtExpLambda(fn, currentClosure);
 
         if (fn.params)
         {
@@ -128,9 +126,9 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
         }
         else
         {
-            auto fn = new ValueFn (currentScope.parent);
+            auto fn = new ValueFn (currentClosure.parent);
             fn.exps = when.value ? i.then : i.otherwise;
-            return visit(new RtExpLambda(currentScope.parent, currentScope, fn));
+            return visit(new RtExpLambda(fn, currentClosure));
         }
     }
 
@@ -141,14 +139,13 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
         if (d.paramIndex == typeof(d.paramIndex).max)
             return d.value.eval(this);
 
-        auto s = currentScope;
-        while (s)
+        auto c = currentClosure;
+        do
         {
-            auto l = cast(RtExpLambda)s;
-            if (l && d.parent is l.fn)
-                return s.values[d.paramIndex];
-            s = s.parentScope;
-        }
+            if (d.parent is c.parent)
+                return c.values[d.paramIndex];
+            c = c.closure;
+        } while (c);
 
         assert (false);
     }
@@ -172,11 +169,11 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
         assert (!st, "struct must be constructed before accessing member (" 
                 ~ dot.member.toString() ~ ")");
 
-        auto sc = cast(RtExpScope)record;
+        auto sc = cast(Closure)record;
 
         assert (sc, "only struct can have members (" ~ dot.member.toString() ~ ")");
         
-        foreach (ix, d; sc.assigments)
+        foreach (ix, d; sc.declarations)
             if ((cast(ExpIdent)d.slot).text == dot.member)
                 return sc.values[ix].eval(this);
 
@@ -187,8 +184,8 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
     @trusted Exp visit (StmReturn ret)
     {
         auto r = ret.exp.eval(this);
-        auto currentLambda = cast(RtExpLambda)currentScope;
-        currentLambda.currentExpIndex = cast(uint)currentLambda.fn.exps.length;
+        auto currentLambda = cast(RtExpLambda)currentClosure;
+        currentLambda.currentExpIndex = cast(uint)currentClosure.parent.exps.length;
         return r;
     }
 
@@ -199,7 +196,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
             context.except("goto skipped because it has no matching label");
         else
         {
-            auto currentLambda = cast(RtExpLambda)currentScope;
+            auto currentLambda = cast(RtExpLambda)currentClosure;
             currentLambda.currentExpIndex = gt.labelExpIndex;
         }
 
@@ -218,7 +215,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
         return v;
     }
 
-    Exp visit (RtExpScope sc) { return sc; }
+    Exp visit (Closure sc) { return sc; }
 
     Exp visit (ValueText text) { return text; }
 

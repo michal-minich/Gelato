@@ -140,7 +140,7 @@ import common, ast, validate.remarks, interpret.builtins, interpret.declrfinder;
     }
 
 
-    void visit (RtExpScope) { assert (false, "RtExpScope prepare"); }
+    void visit (Closure) { assert (false, "Closure prepare"); }
 
     void visit (RtExpLambda l) { assert (false, "RtExpLambda prepare"); }
 

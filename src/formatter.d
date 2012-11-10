@@ -149,14 +149,14 @@ import common, ast;
 
     dstring visit (RtExpLambda e)
     {
-        return e.fn.str(this);
+        return e.parent.str(this);
     }
 
 
-    dstring visit (RtExpScope sc) 
+    dstring visit (Closure sc) 
     {
         dstring bdy;
-        foreach (ix, d; sc.assigments)
+        foreach (ix, d; sc.declarations)
             bdy ~= newLine ~ tab ~ d.slot.str(this) ~ " = " ~ sc.values[ix].str(this);
 
         return "{ "~ bdy ~ " }"; 

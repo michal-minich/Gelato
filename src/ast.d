@@ -77,7 +77,7 @@ interface IAstVisitor (R)
     R visit (ExpDot);
     R visit (ExpAssign);
     R visit (RtExpLambda);
-    R visit (RtExpScope);
+    R visit (Closure);
 
     R visit (StmLabel);
     R visit (StmGoto);
@@ -197,6 +197,7 @@ final class ValueChar : Exp
 
 abstract class ValueScope : Exp
 {
+    Exp[] exps;
     nothrow this (ValueScope parent) { super(parent); }
 }
 
@@ -204,7 +205,6 @@ abstract class ValueScope : Exp
 final class ValueStruct : ValueScope
 {
     mixin visitImpl;
-    Exp[] exps;
     ValueFn constructor;
     nothrow this (ValueScope parent) { super(parent); }
 }
@@ -214,7 +214,6 @@ final class ValueFn : ValueScope
 {
     mixin visitImpl;
     ExpAssign[] params;
-    Exp[] exps;
     bool isPrepared;
     nothrow this (ValueScope parent) { super(parent); }
 }
@@ -301,27 +300,26 @@ final class ExpDot : Exp
 
 
 // =================================================== Runtime Expressions
-class RtExpScope : Exp
+class Closure : Exp
 {
     mixin visitImpl;
-    ExpAssign[] assigments;
+    Closure closure;
+    ExpAssign[] declarations;
     Exp[] values;
-    RtExpScope parentScope;
-    nothrow this (ValueScope parent, RtExpScope parentScope, ExpAssign[] declrs)
+    nothrow this (ValueScope parent, Closure closure, ExpAssign[] declarations)
     {
         super (parent);
-        this.parentScope = parentScope;
-        assigments = declrs;
+        this.closure = closure;
+        this.declarations = declarations;
     }
 }
 
 
-final class RtExpLambda : RtExpScope
+final class RtExpLambda : Closure
 {
     mixin visitImpl;
-    ValueFn fn;
     uint currentExpIndex;
-    nothrow this (ValueScope parent, RtExpScope parentScope, ValueFn fn) { super (parent, parentScope, fn.params); this.fn = fn; }
+    nothrow this (ValueFn parent, Closure closure) { super (parent, closure, parent.params); }
 }
 
 

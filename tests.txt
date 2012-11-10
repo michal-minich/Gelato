@@ -122,7 +122,7 @@
 "ValueStruct"	"Point = struct { x = 1, y = 2 }"
 
 @"Point = struct { x = 1, y = 2, z = struct { x = 3 } () }, "
-"RtExpScope"	"start = fn () { Point() }"
+"Closure"	"start = fn () { Point() }"
 "2"			"start = fn () { Point().y }"
 "3"			"start = fn () { Point().z.x }"
 
