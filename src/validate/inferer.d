@@ -117,13 +117,6 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (RtExpLambda l)
-    {
-        l.parent.infer(this);
-        return l.infType;
-    }
-
-
     Exp visit (ExpIdent i)
     {
         if (i.infType)

@@ -79,8 +79,6 @@ final class TestInterpreterContext : IInterpreterContext
 
     const nothrow dstring visit (StmGoto e) { return "StmGoto"; }
 
-    const dstring visit (RtExpLambda e) { return "RtExpLambda"; }
-
     const dstring visit (Closure sc) { return "Closure"; }
 
     const dstring visit (ExpDot dot) { return "ExpDot"; }
@@ -152,8 +150,6 @@ final class TestInterpreterContext : IInterpreterContext
     const dstring visit (ExpIf e) { return e.tokensText ~ "|"; }
 
     const dstring visit (StmGoto e) { return e.tokensText ~ "|"; }
-
-    const dstring visit (RtExpLambda l) { return l.tokensText ~ "|"; }
 
     const dstring visit (Closure sc) { return sc.tokensText ~ "|"; }
 

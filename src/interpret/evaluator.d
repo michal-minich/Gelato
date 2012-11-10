@@ -13,6 +13,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
         IInterpreterContext context;
         PreparerForEvaluator prep;
         Closure currentClosure;
+        uint gotoIndex;
     }
 
 
@@ -26,23 +27,30 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
     @trusted Exp eval (ExpAssign start)
     {
         auto fn = cast(ValueFn)start.value;
-        auto s = fn ? new RtExpLambda(fn, null) : start.value;
-        return s.eval(this);
+        if (fn) 
+            return evalLambda(new Closure(fn, null, fn.params));
+        else
+            return start.value.eval(this);
     }
 
 
-    Exp visit (RtExpLambda lambda)
+    Exp evalLambda (Closure lambda)
     {
         auto exps = lambda.parent.exps;
-        lambda.currentExpIndex = 0;
         Exp lastExp;
         Exp e;
-        while (lambda.currentExpIndex < exps.length)
+        uint expIndex;
+        while (expIndex < exps.length)
         {
             currentClosure = lambda;
-            lastExp = exps[lambda.currentExpIndex];
+            lastExp = exps[expIndex];
             e = lastExp.eval(this);
-            ++lambda.currentExpIndex;
+            if (gotoIndex)
+            {
+                expIndex = gotoIndex;
+                gotoIndex = 0;
+            }
+            ++expIndex;
         }
 
         return exps.length == 1 || cast(StmReturn)lastExp ? e : null;
@@ -92,7 +100,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
 
         assert (fn, "cannot apply undefined fn");
 
-        auto lambda = new RtExpLambda(fn, currentClosure);
+        auto lambda = new Closure(fn, currentClosure, fn.params);
 
         if (fn.params)
         {
@@ -106,7 +114,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
             }
         }
 
-        return visit(lambda);
+        return evalLambda(lambda);
     }
 
 
@@ -128,7 +136,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
         {
             auto fn = new ValueFn (currentClosure.parent);
             fn.exps = when.value ? i.then : i.otherwise;
-            return visit(new RtExpLambda(fn, currentClosure));
+            return evalLambda(new Closure(fn, currentClosure, fn.params));
         }
     }
 
@@ -184,8 +192,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
     @trusted Exp visit (StmReturn ret)
     {
         auto r = ret.exp.eval(this);
-        auto currentLambda = cast(RtExpLambda)currentClosure;
-        currentLambda.currentExpIndex = cast(uint)currentClosure.parent.exps.length;
+        gotoIndex = cast(uint)currentClosure.parent.exps.length;
         return r;
     }
 
@@ -195,10 +202,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
         if (gt.labelExpIndex == typeof(gt.labelExpIndex).max)
             context.except("goto skipped because it has no matching label");
         else
-        {
-            auto currentLambda = cast(RtExpLambda)currentClosure;
-            currentLambda.currentExpIndex = gt.labelExpIndex;
-        }
+            gotoIndex = gt.labelExpIndex;
 
         return null;
     }

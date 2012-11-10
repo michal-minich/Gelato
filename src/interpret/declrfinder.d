@@ -137,7 +137,6 @@ final class DeclrFinder : IAstVisitor!(void)
     void visit (StmReturn r) { r.exp.findDeclr(this); }
 
 
-    void visit (RtExpLambda) { }
     void visit (Closure) { }
 
     void visit (StmLabel) { }

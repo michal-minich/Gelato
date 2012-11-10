@@ -76,7 +76,7 @@ interface IAstVisitor (R)
     R visit (ExpIf);
     R visit (ExpDot);
     R visit (ExpAssign);
-    R visit (RtExpLambda);
+
     R visit (Closure);
 
     R visit (StmLabel);
@@ -300,7 +300,7 @@ final class ExpDot : Exp
 
 
 // =================================================== Runtime Expressions
-class Closure : Exp
+final class Closure : Exp
 {
     mixin visitImpl;
     Closure closure;
@@ -312,14 +312,6 @@ class Closure : Exp
         this.closure = closure;
         this.declarations = declarations;
     }
-}
-
-
-final class RtExpLambda : Closure
-{
-    mixin visitImpl;
-    uint currentExpIndex;
-    nothrow this (ValueFn parent, Closure closure) { super (parent, closure, parent.params); }
 }
 
 

@@ -147,12 +147,6 @@ import common, ast;
     }
 
 
-    dstring visit (RtExpLambda e)
-    {
-        return e.parent.str(this);
-    }
-
-
     dstring visit (Closure sc) 
     {
         dstring bdy;

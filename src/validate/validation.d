@@ -74,12 +74,6 @@ final class Validator : IAstVisitor!(void)
     }
 
 
-    void visit (RtExpLambda l)
-    {
-        assert (false, "validate lambda");
-    }
-
-
 
     void visit (ExpIdent i)
     {
