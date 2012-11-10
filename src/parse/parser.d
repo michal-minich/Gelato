@@ -629,7 +629,8 @@ final class Parser
                 d = new ExpAssign(parent, e, null);
             //e.parent = d;
             nextTok();
-            d.value = parse(parent);
+            d.expValue = parse(parent);
+            d.value = d.expValue;
             return d;
         }
 

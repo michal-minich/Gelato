@@ -208,19 +208,14 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
 
     Exp visit (ExpAssign a)
     { 
-        if (a.value)
-        {
-            auto v = a.value.eval(this);
-            auto s = a.slot;//.eval(this);
-            auto i = cast(ExpIdent)s;
-            if (i)
-                i.declaredBy.value = v;
-            else
-                assert(false, "value is not assignable");
-            return v;
-        }
-
-        return null;
+        auto v = a.expValue.eval(this);
+        auto s = a.slot;//.eval(this);
+        auto i = cast(ExpIdent)s;
+        if (i)
+            i.declaredBy.value = v;
+        else
+            assert(false, "value is not assignable");
+        return v;
     }
 
     Exp visit (RtExpScope sc) { return sc; }

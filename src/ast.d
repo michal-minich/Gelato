@@ -241,11 +241,13 @@ final class ExpAssign : Exp
     Exp slot;
     Exp type;
     Exp value;
+    Exp expValue;
     size_t paramIndex = typeof(paramIndex).max;
     nothrow this (ValueScope parent, Exp slot, Exp value)
     {
         super(parent);
         this.slot = slot;
+        this.expValue = value;
         this.value = value;
     }
 }

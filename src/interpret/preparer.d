@@ -135,6 +135,8 @@ import common, ast, validate.remarks, interpret.builtins, interpret.declrfinder;
 
         if (d.value)
             d.value.prepare(this);
+        else
+            d.expValue = ValueUnknown.single;
     }
 
 

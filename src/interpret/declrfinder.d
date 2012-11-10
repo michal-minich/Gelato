@@ -129,7 +129,8 @@ final class DeclrFinder : IAstVisitor!(void)
             a.value.findDeclr(this);
 
         auto i = cast(ExpIdent)a.slot;
-        env.declrs[i.text] = a;
+        if (i.text !in env.declrs)
+            env.declrs[i.text] = a;
     }
 
 
