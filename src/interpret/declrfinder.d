@@ -1,5 +1,6 @@
 module interpret.declrfinder;
 
+import std.algorithm;
 import common, ast, validate.remarks, interpret.builtins;
 
 
@@ -11,12 +12,16 @@ private final class Env
     ExpAssign[dstring] declrs;
     Env parent;
     ExpIdent[] missing;
+    dstring[] used;
+    size_t closureItemIndex;
 
     nothrow this (Env parent) { this.parent = parent; }
 
     nothrow ExpAssign get (ExpIdent i)
     {
         auto d = i.text in declrs;
+        if (d)
+            used ~= i.text;
         return d ? *d : parent ? parent.get(i) : null;
     }
 }
@@ -29,6 +34,19 @@ final class DeclrFinder : IAstVisitor!(void)
 
 
     this (IValidationContext context) { this.context = context; }
+
+
+    @trusted void finalize ()
+    {
+        foreach (d; env.declrs)
+        {
+            auto name = (cast(ExpIdent)d.slot).text;
+            if (!(env.parent is null && name == "start") && !env.used.canFind(name))
+                context.remark(textRemark("declaration " ~ d.slot.str(fv) ~ " is not used"));
+        }
+
+        env = env.parent;
+    }
 
 
     @trusted void visit (ValueStruct s)
@@ -56,7 +74,7 @@ final class DeclrFinder : IAstVisitor!(void)
             }
         }
 
-        env = env.parent;
+        finalize();
     }
 
 
@@ -74,11 +92,11 @@ final class DeclrFinder : IAstVisitor!(void)
             foreach (m; env.missing)
                 env.parent.missing ~= m;
 
-        env = env.parent;
+        finalize();
     }
 
 
-    @trusted void visit (ExpIdent i)
+    void visit (ExpIdent i)
     {
         if (i.declaredBy)
             return;
@@ -129,8 +147,18 @@ final class DeclrFinder : IAstVisitor!(void)
             a.value.findDeclr(this);
 
         auto i = cast(ExpIdent)a.slot;
-        if (i.text !in env.declrs)
+        auto declr = i.text in env.declrs;
+        if (declr)
+        {
+            auto declrIdent = cast(ExpIdent)declr.slot;
+            i.closureItemIndex =  declrIdent.closureItemIndex;
+        }
+        else
+        {
             env.declrs[i.text] = a;
+            i.closureItemIndex =  env.closureItemIndex;
+            ++env.closureItemIndex;
+        }
     }
 
 

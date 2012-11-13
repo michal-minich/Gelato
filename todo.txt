@@ -2,7 +2,6 @@ struct assignment (identifier even) is var implicitly ?
 check  chained assignments - are they var ?
 mutable variables - allow only var as mutable
 remark multiply defined identifiers
-remark unused identifiers
 
 import names form scope to scope (also selective) - import std (id, second), module2
 import all modules by default

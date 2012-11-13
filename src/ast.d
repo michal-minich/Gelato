@@ -271,6 +271,7 @@ final class ExpIdent : Exp
     mixin visitImpl;
     dstring text;
     ExpAssign declaredBy;
+    size_t closureItemIndex;
     nothrow this (ValueScope parent, dstring identfier) { super(parent); text = identfier; }
 }
 
