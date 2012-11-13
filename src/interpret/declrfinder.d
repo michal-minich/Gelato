@@ -12,8 +12,8 @@ private final class Env
     ExpAssign[dstring] declrs;
     Env parent;
     ExpIdent[] missing;
-    dstring[] used;
     size_t closureItemIndex;
+    ExpAssign[] unused;
 
     nothrow this (Env parent) { this.parent = parent; }
 
@@ -21,8 +21,11 @@ private final class Env
     {
         auto d = i.text in declrs;
         if (d)
-            used ~= i.text;
-        return d ? *d : parent ? parent.get(i) : null;
+        {
+            d.usedBy ~= i;
+            return *d;
+        }
+        return parent ? parent.get(i) : null;
     }
 }
 
@@ -38,12 +41,13 @@ final class DeclrFinder : IAstVisitor!(void)
 
     @trusted void finalize ()
     {
-        foreach (d; env.declrs)
-        {
-            auto name = (cast(ExpIdent)d.slot).text;
-            if (!(env.parent is null && name == "start") && !env.used.canFind(name))
-                context.remark(textRemark("declaration " ~ d.slot.str(fv) ~ " is not used"));
-        }
+        if (env.parent)
+            foreach (d; env.declrs)
+            {
+                auto name = (cast(ExpIdent)d.slot).text;
+                if (!(env.parent is null && name == "start") && !d.usedBy)
+                    env.parent.unused ~= d;
+            }
 
         env = env.parent;
     }
@@ -69,10 +73,17 @@ final class DeclrFinder : IAstVisitor!(void)
             }
             else
             {
-                context.remark(textRemark("identifier " ~ m.text ~ " is not defined"));
+                //context.remark(textRemark("identifier " ~ m.text ~ " is not defined"));
                 m.declaredBy = new ExpAssign(null, m, new ValueUnknown(m));
             }
         }
+
+        /*
+        if (!env.parent)
+            foreach (d; env.unused)
+                if (!d.usedBy)
+                    context.remark(textRemark("declaration " ~ d.slot.str(fv) ~ " is not used"));
+        */
 
         finalize();
     }
@@ -135,7 +146,11 @@ final class DeclrFinder : IAstVisitor!(void)
     }
 
 
-    void visit (ExpDot d) { d.record.findDeclr(this); }
+    void visit (ExpDot d)
+    { 
+        d.record.findDeclr(this); 
+        d.member.findDeclr(this); 
+    }
 
 
     void visit (ExpAssign a)

@@ -157,7 +157,7 @@ import common, ast;
     }
 
 
-    dstring visit (ExpDot dot) { return dot.record.str(this) ~ "." ~ dot.member; }
+    dstring visit (ExpDot dot) { return dot.record.str(this) ~ "." ~ dot.member.text; }
 
     dstring visit (TypeType tt) { return dtext("Type(", tt.type.str(this) ,")"); }
 

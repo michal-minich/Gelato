@@ -259,10 +259,11 @@ final class Parser
         if (current.type != TokenType.ident)
         {
             vctx.remark(textRemark("second operand must be identifier"));
-            return new ExpDot(parent, operand1, "missingIdentifier");
+            return new ExpDot(parent, operand1, new ExpIdent(parent, "<missing identifier>"));
         }
 
-        auto dot = new ExpDot(parent, operand1, current.text);
+        auto dot = new ExpDot(parent, operand1, new ExpIdent(parent, current.text));
+        // parent of exp ident should be value scope of operand 1, but oprerand1 is of arbitrary expression ...
         nextNonWhiteTok();
         return dot;
     }

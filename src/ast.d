@@ -242,6 +242,7 @@ final class ExpAssign : Exp
     Exp value;
     Exp expValue;
     size_t paramIndex = typeof(paramIndex).max;
+    ExpIdent[] usedBy;
     nothrow this (ValueScope parent, Exp slot, Exp value)
     {
         super(parent);
@@ -290,8 +291,8 @@ final class ExpDot : Exp
 {
     mixin visitImpl;
     Exp record;
-    dstring member;
-    nothrow this (ValueScope parent, Exp record, dstring member)
+    ExpIdent member;
+    nothrow this (ValueScope parent, Exp record, ExpIdent member)
     {
         super(parent);
         this.record = record;

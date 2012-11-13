@@ -142,7 +142,11 @@ import common, ast, validate.remarks, interpret.builtins, interpret.declrfinder;
 
     void visit (Closure) { assert (false, "Closure prepare"); }
 
-    void visit (ExpDot dot) { dot.record.prepare(this); }
+    void visit (ExpDot dot)
+    { 
+        dot.record.prepare(this);
+        dot.member.prepare(this);
+    }
 
     void visit (StmReturn r) { r.exp.prepare(this);}
 

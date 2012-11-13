@@ -182,7 +182,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
         assert (sc, "only struct can have members (" ~ dot.member.toString() ~ ")");
         
         foreach (ix, d; sc.declarations)
-            if ((cast(ExpIdent)d.slot).text == dot.member)
+            if ((cast(ExpIdent)d.slot).text == dot.member.text)
                 return sc.values[ix].eval(this);
 
         assert (false, "struct has no member " ~ dot.member.to!string());
