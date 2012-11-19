@@ -121,23 +121,31 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
     Exp visit (ExpIf i)
     {
         auto e = i.when.eval(this);
-        if (!e)
-            throw new Exception ("if test expression must not evaluate to null.");
+        auto isTrue = isTrueForIf(e);
 
-        auto when = cast(ValueNum)e;
-        if (!when)
-            throw new Exception ("if test expression must evaluate to number.");
-
-        if (!when.value && !i.otherwise)
+        if (!isTrue && !i.otherwise)
         {
             return null;
         }
         else
         {
             auto fn = new ValueFn (currentClosure.parent);
-            fn.exps = when.value ? i.then : i.otherwise;
+            fn.exps = isTrue ? i.then : i.otherwise;
             return evalLambda(new Closure(fn, currentClosure, fn.params));
         }
+    }
+
+
+    static bool isTrueForIf (Exp e)
+    {
+        if (!e)
+        throw new Exception ("if test expression must not evaluate to null.");
+
+        auto when = cast(ValueNum)e;
+        if (!when)
+            throw new Exception ("if test expression must evaluate to number.");
+
+        return when.value != 0;
     }
 
 

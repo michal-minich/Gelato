@@ -18,6 +18,8 @@ final class TestInterpreterContext : IInterpreterContext
     }
 
 
+    Exp eval (Exp) { assert (false, "eval from TestInterpreterContext"); }
+
     void print (dstring str) { }
 
     void println () { }

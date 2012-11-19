@@ -2,7 +2,7 @@ module validate.inferer;
 
 
 import std.algorithm, std.array;
-import common, ast, parse.parser, validate.remarks;
+import common, ast, parse.parser, validate.remarks, interpret.evaluator;
 
 
 @trusted Exp mergeTypes (Exp[] types...)
@@ -36,12 +36,11 @@ Exp[] flatternType(Exp t)
 
 final class TypeInferer : IAstVisitor!(Exp)
 {
-    private IValidationContext vctx;
+    private IInterpreterContext context;
     private ValueFn currentFn;
 
 
-    this (IValidationContext validationContex) { vctx = validationContex; }
-
+    this (IInterpreterContext context) { this.context = context; }
 
 
     Exp visit (ValueUnknown u)
@@ -193,9 +192,25 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     @trusted Exp visit (ExpIf i)
     {
-        i.infType = i.then.length == 1 && i.otherwise.length == 1
-            ? mergeTypes(i.then[0].infer(this), i.otherwise[0].infer(this))
-            : TypeVoid.single;
+        if (i.then.length == 1 && i.otherwise.length == 1)
+        {
+            auto t = mergeTypes(i.then[0].infer(this), i.otherwise[0].infer(this));
+            auto tor = cast(TypeOr)t;
+            if (tor)
+            {
+                i.infType = Evaluator.isTrueForIf(context.eval(i.when))
+                   ? i.then[0].infType
+                   : i.otherwise[0].infType;
+            }
+            else
+            {
+                i.infType = t;
+            }
+        }
+        else
+        {   
+            i.infType = TypeVoid.single;
+        }
 
         return i.infType;
     }

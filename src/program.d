@@ -51,6 +51,7 @@ final class Program
         }
 
         auto context = new ConsoleInterpreterContext;
+        context.evaluator = new Evaluator(context);
         auto res = run (context);
 
         if (res)
@@ -79,15 +80,14 @@ final class Program
         if (starts.length > 1)
             context.remark(textRemark("more starts functions"));
 
-        /*
-        debug context.println("EVALUATE");
-        auto ev = new Evaluator(context);
-        auto res = ev.eval(starts[0]);
+        
+        //debug context.println("EVALUATE");
+        //auto res = context.eval(starts[0]);
 
-        debug if (res) context.println("RESULT: " ~ res.str(fv));
+        //debug if (res) context.println("RESULT: " ~ res.str(fv));
 
-        return res;
-        */
+        //return res;
+        
         return null;
     }
 
@@ -323,8 +323,11 @@ final class ConsoleInterpreterContext : IInterpreterContext
         uint remarkCounter;
         bool hasBlockerField;
         Exp[] exs;
+        Evaluator evaluator;
     }
 
+
+    Exp eval (Exp exp) { return exp.eval(evaluator); }
 
     void print (dstring str) { write (str); }
 

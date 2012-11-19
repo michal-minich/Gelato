@@ -38,8 +38,6 @@ PREPARER -----------------------------
 TYPE INFERENCE / CHECK -----------------------------
 ! infer identifier by usage in fn (not only by def)
 ! infer identifier by usage as fn arg
-! infer struct
-! infer array
   report type errors
   report declared vs. inferred type discrepancies
   infer definite assignment
@@ -52,7 +50,7 @@ TYPE INFERENCE / CHECK -----------------------------
 INTERPRETER -----------------------------
 ! built-ins with qualified name (also overridable)
 ! variable length fn params
-! array (empty, first, rest)
+! array operations (empty, first, rest)
 ! text is array
 ! types
 ! built-ins - TypeOf
@@ -79,3 +77,12 @@ AUTOFIXER -----------------------------
 CMD / INTERACTIVE -----------------------------
   project file
   interactive - first version
+
+
+pure    = determ + dont modify anyting outside funciton
+determ  = return value depends only on parameters
+
+
+
+
+

@@ -135,6 +135,8 @@ interface IPrinterContext
 
 interface IInterpreterContext : IValidationContext, IPrinterContext
 {
+    Exp eval (Exp exp);
+
     @property Exp[] exceptions ();
 
     nothrow void except (dstring ex);
