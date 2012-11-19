@@ -409,8 +409,8 @@ final class TypeFn : Exp
 final class TypeStruct: Exp
 {
     mixin visitImpl;
-    Exp value;
-    nothrow this (ValueScope parent, Exp value) { super(parent); this.value = value; }
+    ValueStruct value;
+    nothrow this (ValueScope parent, ValueStruct value) { super(parent); this.value = value; }
 }
 
 

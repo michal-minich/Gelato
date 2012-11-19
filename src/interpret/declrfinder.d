@@ -148,8 +148,8 @@ final class DeclrFinder : IAstVisitor!(void)
 
     void visit (ExpDot d)
     { 
-        d.record.findDeclr(this); 
-        d.member.findDeclr(this); 
+        d.record.findDeclr(this);
+        d.member.findDeclr(this);
     }
 
 

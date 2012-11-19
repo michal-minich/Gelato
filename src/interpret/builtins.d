@@ -24,6 +24,8 @@ ValueBuiltinFn[dstring] builtinFns;
        ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeNum.single))
        ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn(null, [TypeNum.single, TypeNum.single], TypeNum.single))
        ,"["       : new ValueBuiltinFn(&array, new TypeFn(null, [TypeAny.single], new TypeArray(null, null)))
+       ,"!"       : new ValueBuiltinFn(&arrayIndex, new TypeFn(null, [TypeAny.single],TypeAny.single))
+       ,"++"      : new ValueBuiltinFn(&arrayConcat, new TypeFn(null, [TypeAny.single],TypeAny.single))
        ,"TypeOf"  : new ValueBuiltinFn(&typeOf, new TypeFn(null, [TypeAny.single], new TypeType(null ,null)))
         ];
     }
@@ -107,6 +109,24 @@ Exp array (IInterpreterContext context, Exp[] exps)
 {
     return new ValueArray(null, exps);
 }
+
+
+Exp arrayIndex (IInterpreterContext context, Exp[] exps)
+{
+    auto arr = cast(ValueArray)exps[0];
+    auto ix = cast(ValueNum)exps[1];
+    return arr.items[cast(uint)ix.value];
+}
+
+
+
+Exp arrayConcat (IInterpreterContext context, Exp[] exps)
+{
+    auto arr1 = cast(ValueArray)exps[0];
+    auto arr2 = cast(ValueArray)exps[1];
+    return new ValueArray(null, arr1.items ~ arr2.items);
+}
+
 
 
 Exp typeOf (IInterpreterContext context, Exp[] exps)

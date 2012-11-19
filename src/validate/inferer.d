@@ -10,14 +10,14 @@ import common, ast, parse.parser, validate.remarks;
     Exp[] possible;
     foreach (t; types)
         possible ~= flatternType(t);
-    auto ts = possible.sort!typeIdLess().uniq!typeIdEq().array();
+    auto ts = possible.sort!typeIdLess().array().uniq!typeIdEq().array();
     return ts.length == 1 ? ts[0] : new TypeOr(null, ts);
 }
 
 
-bool typeIdLess (T) (T a, T b) { return typeid(a) < typeid(b); }
+bool typeIdLess (T) (T a, T b) { return &a < &b; }
 
-bool typeIdEq (T) (T a, T b) { return typeid(a) == typeid(b); }
+bool typeIdEq (T) (T a, T b) { return a.str(fv) == b.str(fv); }
 
 
 Exp[] flatternType(Exp t)
@@ -152,10 +152,13 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (ValueStruct s)
     {
+        if (s.infType)
+            return s.infType;
+
         foreach (e; s.exps)
             e.infer(this);
 
-        s.infType = new TypeStruct(null, s); // TODO: there should be identifier
+        s.infType = new TypeStruct(null, s);
         return s.infType;
     }
 
@@ -200,6 +203,23 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (ExpDot dot)
     {
+        dot.record.infer(this);
+
+        auto st = cast(TypeStruct)dot.record.infType;
+
+        assert (st, "only struct can have members");
+
+        foreach (m; st.value.exps)
+        {
+            auto a = cast(ExpAssign)m;
+            auto i = cast(ExpIdent)a.slot;
+            if (i.text == dot.member.text)
+            {
+                dot.member.infType = i.infer(this);
+                return i.infType;
+            }
+        }
+
         return ValueUnknown.single;
     }
 
