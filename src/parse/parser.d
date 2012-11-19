@@ -272,6 +272,7 @@ final class Parser
     ExpFnApply parseOp (ValueScope parent, Exp operand1)
     {
         auto op = new ExpIdent(parent, current.text);
+        op.tokens = [current];
         nextNonWhiteTok();
         auto operand2 = parse(parent);
 
@@ -298,6 +299,7 @@ final class Parser
         else if (current.text == "[")
         {
             auto op = new ExpIdent(parent, current.text);
+            op.tokens = [current];
             auto exps = parseBracedExpList (parent);
             auto fna = new ExpFnApply(parent, op, exps);
             return fna;

@@ -1,8 +1,5 @@
-start = fn ()
+start = fn ()	
 {
-	a = 1
-	b = 2
-	start = 3
-	print (c)
-	print (b)
+	a = [1, 2 + 4, 3]
+	return 1
 }

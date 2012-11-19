@@ -1,7 +1,7 @@
 module interpret.builtins;
 
 import std.algorithm, std.array, std.conv, std.string;
-import common, ast, validate.remarks, tester;
+import common, ast, validate.remarks, tester, validate.inferer;
 
 
 ValueBuiltinFn[dstring] builtinFns;
@@ -23,7 +23,8 @@ ValueBuiltinFn[dstring] builtinFns;
        ,"=="      : new ValueBuiltinFn(&eq, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeNum.single))
        ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeNum.single))
        ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn(null, [TypeNum.single, TypeNum.single], TypeNum.single))
-       ,"["       : new ValueBuiltinFn(&array3test, new TypeFn(null, [TypeAny.single, TypeAny.single, TypeAny.single], TypeNum.single))
+       ,"["       : new ValueBuiltinFn(&array, new TypeFn(null, [TypeAny.single], new TypeArray(null, null)))
+       ,"TypeOf"  : new ValueBuiltinFn(&typeOf, new TypeFn(null, [TypeAny.single], new TypeType(null ,null)))
         ];
     }
     catch
@@ -102,7 +103,14 @@ Exp plusNum (IInterpreterContext context, Exp[] exps)
 }
 
 
-Exp array3test (IInterpreterContext context, Exp[] exps)
+Exp array (IInterpreterContext context, Exp[] exps)
 {
-    return new ValueText(null, "array3test");
+    return new ValueArray(null, exps);
+}
+
+
+Exp typeOf (IInterpreterContext context, Exp[] exps)
+{
+    auto i = new TypeInferer(context);
+    return new TypeType(null, exps[0].infer(i));
 }

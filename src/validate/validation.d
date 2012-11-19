@@ -54,6 +54,13 @@ final class Validator : IAstVisitor!(void)
     }
 
 
+    void visit (ValueArray arr)
+    {
+        foreach (i; arr.items)
+            i.validate(this);
+    }
+
+
     void visit (ValueFn fn)
     {
         foreach (p; fn.params)
@@ -153,6 +160,8 @@ final class Validator : IAstVisitor!(void)
     void visit (TypeChar) { }
 
     void visit (TypeStruct) { }
+
+    void visit (TypeArray) { }
 
     void visit (ValueBuiltinFn) { }
 

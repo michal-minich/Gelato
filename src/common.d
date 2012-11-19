@@ -2,7 +2,7 @@ module common;
 
 
 import std.stdio, std.range, std.array, std.range, std.algorithm, std.conv,
-    std.string, std.utf, std.path;
+    std.string, std.utf, std.path, std.traits, std.exception;
 import std.file : readText, exists, isFile;
 import settings, formatter, ast, parse.parser, parse.tokenizer, validate.remarks,
     interpret.evaluator;
@@ -83,6 +83,14 @@ int dbgCounter;
     writeln("DEBUG ", ++dbgCounter);
 }
 
+
+pure nothrow immutable(T)[] getReversed (T) (T[] arr)
+{
+    auto res = new Unqual!(T)[arr.length];
+    foreach (ix, item; arr)
+        res[arr.length - ix - 1] = item;
+    return assumeUnique (res);
+}
 
 B sureCast (B, A) (A obj) { return cast(B)cast(void*)obj; }
 

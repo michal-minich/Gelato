@@ -233,6 +233,8 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
 
     Exp visit (ValueStruct s) { return s; }
 
+    Exp visit (ValueArray arr) { return arr; }
+
     Exp visit (StmLabel) { return null; }
 
     Exp visit (TypeType) { return null; }
@@ -252,6 +254,8 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
     Exp visit (TypeChar) { return null; }
 
     Exp visit (TypeStruct) { return null; }
+
+    Exp visit (TypeArray) { return null; }
 
     // BUG: todo should return value of most recent expression (or not be evaluated - removed in preparer)
     Exp visit (WhiteSpace ws) { return null; }

@@ -79,6 +79,7 @@ final class Program
         if (starts.length > 1)
             context.remark(textRemark("more starts functions"));
 
+        /*
         debug context.println("EVALUATE");
         auto ev = new Evaluator(context);
         auto res = ev.eval(starts[0]);
@@ -86,6 +87,8 @@ final class Program
         debug if (res) context.println("RESULT: " ~ res.str(fv));
 
         return res;
+        */
+        return null;
     }
 
 
@@ -181,15 +184,16 @@ final class Program
 
         if (context.hasBlocker)
             return astFile;
-        
-        /*
+
         debug context.println("TYPE INFER");
         auto inf = new TypeInferer(context);
-        inf.visit(m);
+        inf.visit(astFile);
+
+        debug fv.useInferredTypes = true;
+        debug context.println(astFile.str(fv));
 
         if (context.hasBlocker)
-            return m;
-        */
+            return astFile;
 
         return astFile;
     }

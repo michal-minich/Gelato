@@ -44,7 +44,9 @@ import common, ast;
         if (!e.parent)
             return e.exps.map!(d => d.str(this))().join(newLine);
 
+        ++level;
         auto exps = e.exps.map!(d => d.str(this))().join(newLine ~ tab);
+        --level;
 
         if (printOriginalParse && !e.parent)
             return exps;
@@ -74,6 +76,15 @@ import common, ast;
 
     dstring visit (ExpFnApply e)
     {
+        if (e.applicable.tokens.length == 1)
+        {
+            if (e.applicable.tokens[0].type == TokenType.braceStart)
+                return formatBraceOpApply(e.applicable.tokens[0].text, e.args);
+
+            else if (e.applicable.tokens[0].type == TokenType.op)
+                return dtext(e.args[0].str(this), " ", e.applicable.tokens[0].text, " ", e.args[1].str(this));
+        }
+
         if (printOriginalParse && !e.parent)
             return e.applicable.str(this);
 
@@ -110,6 +121,9 @@ import common, ast;
     {
         return dtext("'", e.value.to!dstring().toVisibleCharsChar(), "'");
     }
+
+
+    dstring visit (ValueArray arr) { return formatBraceOpApply("[", arr.items); }
 
 
     dstring visit (ExpIf e)
@@ -173,6 +187,8 @@ import common, ast;
 
     const dstring visit (TypeStruct) { return "struct { TODO }"; }
 
+    dstring visit (TypeArray arr) { return "Array(" ~ (arr.elementType ? arr.elementType.str(this) : "?") ~ ")"; }
+
     const dstring visit (ValueBuiltinFn) { assert (false, "built in fn has no textual representation"); }
 
     dstring visit (TypeOr or)
@@ -188,6 +204,24 @@ import common, ast;
 
 
     const dstring visit (WhiteSpace ws) { return ws.tokensText; }
+
+
+    private dstring formatBraceOpApply (dstring braceStart, Exp[] items)
+    {
+        return dtext(braceStart, items.map!(i => i.str(this))().join(", "), braceStart.map!reverseBrace().array().getReversed());
+    }
+}
+
+
+@safe pure nothrow dchar reverseBrace (dchar brace)
+{
+    switch (brace)
+    {
+        case '[': return ']';
+        case '{': return '}';
+        case '(': return ')';
+        default: assert(false);         
+    }
 }
 
 

@@ -70,6 +70,7 @@ interface IAstVisitor (R)
     R visit (ValueFn);
     R visit (ValueBuiltinFn);
     R visit (ValueUnknown);
+    R visit (ValueArray);
 
     R visit (ExpIdent);
     R visit (ExpFnApply);
@@ -92,6 +93,7 @@ interface IAstVisitor (R)
     R visit (TypeText);
     R visit (TypeChar);
     R visit (TypeStruct);
+    R visit (TypeArray);
 
     R visit (WhiteSpace);
 }
@@ -207,6 +209,18 @@ final class ValueStruct : ValueScope
     mixin visitImpl;
     ValueFn constructor;
     nothrow this (ValueScope parent) { super(parent); }
+}
+
+
+final class ValueArray : Exp
+{
+    mixin visitImpl;
+    Exp[] items;
+    nothrow this (ValueScope parent, Exp[] items)
+    {
+        super(parent);
+        this.items = items;
+    }
 }
 
 
@@ -427,6 +441,15 @@ final class TypeChar: Exp
 }
 
 
+final class TypeArray: Exp
+{
+    mixin visitImpl;
+    Exp elementType;
+    nothrow this (ValueScope parent, Exp elementType) { super(parent); this.elementType = elementType; }
+}
+
+
+// =================================================== White
 class WhiteSpace: Exp
 {
     mixin visitImpl;

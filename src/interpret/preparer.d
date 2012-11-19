@@ -142,11 +142,20 @@ import common, ast, validate.remarks, interpret.builtins, interpret.declrfinder;
 
     void visit (Closure) { assert (false, "Closure prepare"); }
 
+
     void visit (ExpDot dot)
     { 
         dot.record.prepare(this);
         dot.member.prepare(this);
     }
+
+
+    void visit (ValueArray arr)
+    {
+        foreach (i; arr.items)
+            i.prepare(this);
+    }
+
 
     void visit (StmReturn r) { r.exp.prepare(this);}
 
@@ -181,6 +190,8 @@ import common, ast, validate.remarks, interpret.builtins, interpret.declrfinder;
     void visit (TypeChar) { }
 
     void visit (TypeStruct) { }
+
+    void visit (TypeArray) { }
 
     void visit (WhiteSpace ws) { }
 }

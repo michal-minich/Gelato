@@ -61,6 +61,8 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (ValueStruct e) { return "ValueStruct"; }
 
+    const dstring visit (ValueArray e) { return "ValueArray"; }
+
     const dstring visit (ValueFn e) { return "ValueFn"; }
 
     const dstring visit (ExpFnApply e) { return "ExpFnApply"; }
@@ -100,6 +102,8 @@ final class TestInterpreterContext : IInterpreterContext
     const dstring visit (ValueBuiltinFn) { return "ValueBuiltinFn"; }
 
     const dstring visit (TypeOr tor) { return "TypeOr"; }
+
+    const dstring visit (TypeArray tor) { return "TypeArray"; }
 
     const dstring visit (TypeFn tfn) { return "TypeFn"; }
 
@@ -147,6 +151,8 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (ValueChar e) { return e.tokensText ~ "|"; }
 
+    const dstring visit (ValueArray e) { return e.tokensText ~ "|"; }
+
     const dstring visit (ExpIf e) { return e.tokensText ~ "|"; }
 
     const dstring visit (StmGoto e) { return e.tokensText ~ "|"; }
@@ -172,6 +178,8 @@ final class TestInterpreterContext : IInterpreterContext
     const dstring visit (ValueBuiltinFn bfn) { return bfn.tokensText ~ "|"; }
 
     const dstring visit (TypeOr tor) { return tor.tokensText ~ "|"; }
+
+    const dstring visit (TypeArray arr) { return arr.tokensText ~ "|"; }
 
     const dstring visit (TypeFn tfn) { return tfn.tokensText ~ "|"; }
 

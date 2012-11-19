@@ -179,7 +179,6 @@ final class DeclrFinder : IAstVisitor!(void)
 
     void visit (StmReturn r) { r.exp.findDeclr(this); }
 
-
     void visit (Closure) { }
 
     void visit (StmLabel) { }
@@ -191,6 +190,7 @@ final class DeclrFinder : IAstVisitor!(void)
     void visit (ValueNum) { }
     void visit (ValueText) { }
     void visit (ValueChar) { }
+    void visit (ValueArray) { }
 
     void visit (TypeType) { }
     void visit (TypeAny) { }
@@ -201,6 +201,7 @@ final class DeclrFinder : IAstVisitor!(void)
     void visit (TypeText) { }
     void visit (TypeChar) { }
     void visit (TypeStruct) { }
+    void visit (TypeArray) { }
 
     void visit (WhiteSpace) { }
 }

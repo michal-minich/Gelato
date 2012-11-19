@@ -5,7 +5,7 @@ import std.algorithm, std.array;
 import common, ast, parse.parser, validate.remarks;
 
 
-Exp mergeTypes (Exp[] types...)
+@trusted Exp mergeTypes (Exp[] types...)
 {
     Exp[] possible;
     foreach (t; types)
@@ -72,6 +72,12 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
+    Exp visit (ValueArray arr)
+    {
+        assert (false, "value array infer");
+    }
+
+
     Exp visit (ValueBuiltinFn bfn)
     {
         bfn.infType = bfn.signature;
@@ -105,13 +111,18 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (ExpFnApply fna)
     {
-        foreach (e; fna.args)
-            e.infer(this);
+        Exp[] ts;
+        foreach (a; fna.args)
+            ts ~= a.infer(this);
 
         auto applicableType = fna.applicable.infer(this);
         auto fn = cast(TypeFn)applicableType;
 
         fna.infType = fn ? fn.retType : applicableType /* struct */;
+
+        auto arrType = cast(TypeArray)fna.infType;
+        if (arrType)
+            arrType.elementType = mergeTypes(ts);
 
         return fna.infType;
     }
@@ -212,6 +223,8 @@ final class TypeInferer : IAstVisitor!(Exp)
     Exp visit (TypeChar tch) { return new TypeType(null, tch); }
 
     Exp visit (TypeStruct s) { return new TypeType(null, s); }
+
+    Exp visit (TypeArray arr) { return new TypeType(null, arr); }
 
     Exp visit (WhiteSpace ws) { return null; }
 }
