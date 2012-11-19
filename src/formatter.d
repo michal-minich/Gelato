@@ -51,10 +51,25 @@ import common, ast;
         if (printOriginalParse && !e.parent)
             return exps;
 
-        ++level;
-        immutable txt = dtext("struct", newLine, tab1, "{", newLine, tab, exps, newLine, tab1, "}");
-        --level;
-        return txt;
+        if (e.exps.length == 0)
+        {
+            immutable txt = dtext("struct { }");
+            return txt;
+        }
+       /* else if (e.exps.length == 1)
+        {
+            ++level;
+            immutable txt = dtext("struct { ", exps, " }");
+            --level;
+            return txt;
+        }*/
+        else
+        {
+            ++level;
+            immutable txt = dtext("struct", newLine, tab1, "{", newLine, tab, exps, newLine, tab1, "}");
+            --level;
+            return txt;
+        }
     }
 
 
