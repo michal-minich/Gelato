@@ -564,7 +564,7 @@ final class Parser
             assert (false, "unclosed empty text");
         }
 
-        while (current.type != TokenType.textEnd)
+        while (current.type != TokenType.textStart)
         {
             if (finished)
             {

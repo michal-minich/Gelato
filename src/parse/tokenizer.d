@@ -1,20 +1,15 @@
 module parse.tokenizer;
 
-import std.array, std.algorithm, std.conv;
-import common, ast;
+import ast;
 
 
 @safe nothrow:
-
-
-enum ParseContext { any, text, character, comment }
 
 
 immutable struct TokenResult
 {
     TokenType type;
     size_t length;
-    ParseContext contextAfter;
     bool isError;
 }
 
@@ -22,19 +17,15 @@ immutable struct TokenResult
 private enum TokenResult empty = TokenResult();
 
 
-private pure TokenResult ok (immutable TokenType tokenType, 
-                             immutable size_t length, 
-                             immutable ParseContext contextAfter = ParseContext.any)
+private pure TokenResult ok (immutable TokenType tokenType, immutable size_t length)
 {
-    return TokenResult(tokenType, length, contextAfter);
+    return TokenResult(tokenType, length);
 }
 
 
-private pure TokenResult error (immutable TokenType tokenType, 
-                                immutable size_t length, 
-                                immutable ParseContext contextAfter = ParseContext.any)
+private pure TokenResult error (immutable TokenType tokenType, immutable size_t length)
 {
-    return TokenResult(tokenType, length, contextAfter, true);
+    return TokenResult(tokenType, length, true);
 }
 
 
@@ -43,11 +34,8 @@ final class Tokenizer
     nothrow:
 
     private dstring src;
-    private ParseContext context;
-
-    Token front;
-    bool empty;
-    uint index;
+    private Token front;
+    private uint index;
 
 
     this (const dstring src)
@@ -57,15 +45,24 @@ final class Tokenizer
     }
 
 
-    void popFront ()
+    Token[] tokenize()
     {
-        if (!src.length)
+        Token[] res;
+        for (;;)
         {
-            empty = true;
-            return;
+            res ~= front;
+            if (!src.length)
+                break;
+            popFront ();
         }
 
-        auto tr = parseNext();
+        return res;
+    }
+
+
+    private void popFront ()
+    {
+        immutable tr = parseNext();
 
         front = Token(
             index++,
@@ -78,27 +75,23 @@ final class Tokenizer
             tr.isError);
 
         src = src[tr.length .. $];
-        context = tr.contextAfter;
     }
 
 
-    private TokenResult parseNext ()
+    pure private TokenResult parseNext ()
     {
         auto errorLength = 0;
-        enum parsers = [
-            ParseContext.any : [&parseCommentEnd, &parseCommentLine, &parseCommentStart, &parseWhite,
-                                &parseNewLine, &parseBraceStart, &parseBraceEnd, &parseIdent, &parseNum,
-                                &parseTextStart, &parseCharStart, &parseOp],
-            ParseContext.text : [&parseTextEnd, &parseText, &parseTextEscape, &parseTextNewLine],
-            ParseContext.character : [&parseChar, &parseCharEscape, &parseCharEnd, &parseCharNewLine],
-            ParseContext.comment : [&parseCommentEnd, &parseComment, &parseCommentNewLine],
-        ];
+        enum parsers = [&parseWhite, &parseIdent, &parseNum, &parseNewLine,
+                        &parseBraceStart, &parseBraceEnd,
+                        &parseCommentLine, &parseCommentStart, &parseCommentEnd,
+                        &parseTextStart, &parseCharStart, &parseTextEscape, 
+                        &parseOp];
         auto src2 = src;
         tryAgain:
-        foreach (p; parsers[context])
+        foreach (p; parsers)
         {
             assert (src.length);
-            auto tr = p(src2);
+            immutable tr = p(src2);
             if (tr.length)
                 return errorLength == 0 ? tr : error(TokenType.unknown, errorLength);
         }
@@ -117,110 +110,35 @@ final class Tokenizer
 pure:
 
 
-TokenResult parseCharStart (const dstring src)
-{
-    return ok(TokenType.textStart, src[0] == '\'', ParseContext.character);
-}
+TokenResult parseCharStart (const dstring src) { return ok(TokenType.textStart, src[0] == '\''); }
 
-
-TokenResult parseCharEnd (const dstring src)
-{
-    return ok(TokenType.textEnd, src[0] == '\'', ParseContext.any);
-}
-
-
-TokenResult parseChar (const dstring src)
-{
-    auto l = src.lengthUntilIncluding!(ch => ch =='\\' || ch == '\'');
-    if (!l)
-    {
-        l = src.lengthUntilIncluding!isNewLine;
-        return error(TokenType.text, l ? l - 1 : src.length, ParseContext.any);
-    }
-    return ok(TokenType.text, l - 1, ParseContext.character);
-}
-
-
-TokenResult parseCharNewLine (const dstring src)
-{
-    return ok(TokenType.newLine, src.lengthWhile!isNewLine, ParseContext.character);
-}
-
-
-TokenResult parseCharEscape (const dstring src)
-{
-    return parseTextEscapeImpl (src, ParseContext.character);
-}
-
-
-TokenResult parseTextStart (const dstring src)
-{
-    return ok(TokenType.textStart, src[0] == '"', ParseContext.text);
-}
-
-
-TokenResult parseTextEnd (const dstring src)
-{
-    return ok(TokenType.textEnd, src[0] == '"', ParseContext.any);
-}
-
-
-TokenResult parseText (const dstring src)
-{
-    auto l = src.lengthUntilIncluding!(ch => ch == '\\' || ch == '"' || ch.isNewLine);
-    if (!l)
-        return error(TokenType.text, src.length, ParseContext.any);
-    else if (src[l - 1] == '"')
-        return ok(TokenType.text, l - 1, ParseContext.text);
-    else if (src[l - 1] == '\\')
-        return src[l + 1 .. $ - l + 2].lengthUntilIncluding!(ch => ch == '"')
-            ? ok(TokenType.text, l - 1, ParseContext.text)
-            : error(TokenType.text, l - 1, ParseContext.any);
-    else
-        return src.lengthUntilIncluding!(ch => ch == '"')
-            ? ok(TokenType.text, l - 1, ParseContext.text)
-            : error(TokenType.text, l - 1, ParseContext.any);
-}
-
-
-TokenResult parseTextNewLine (const dstring src)
-{
-    return ok(TokenType.newLine, src.lengthWhile!isNewLine, ParseContext.text);
-}
+TokenResult parseTextStart (const dstring src) { return ok(TokenType.textStart, src[0] == '"'); }
 
 
 TokenResult parseTextEscape (const dstring src)
 {
-    return parseTextEscapeImpl(src, ParseContext.text);
-}
-
-
-TokenResult parseTextEscapeImpl (const dstring src, ParseContext pc)
-{
-    if (src[0] == '\\')
-    {
-        if (src.length < 2)
-            return error(TokenType.textEscape, 1, pc);
-
-        immutable ch = src[1];
-        if (ch == 'n' || ch == 'r' || ch == 't' || ch == '"' || ch == '\'' || ch == '\\')
-            return ok(TokenType.textEscape, 2, pc);
-        return error(TokenType.textEscape, 2, pc);
-    }
-    return empty;
+    return src.length >= 2 && src[0] == '\\' && src[1].isSmallLetter
+        ? ok(TokenType.textEscape, 2)
+        : empty;
 }
 
 
 TokenResult parseOp (const dstring src)
 {
-    switch (src[0])
-    {
-        case '.': return ok(TokenType.dot, 1);
-        case '=': return ok(TokenType.assign, 1);
-        case ',': return ok(TokenType.coma, 1);
-        case ':': return ok(TokenType.asType, 1);
-        default:  return ok(TokenType.op, src.lengthWhile!isOp);
-    }
+    immutable l = src.lengthWhile!isOp;
+
+    if (l == 1)
+        switch (src[0])
+        {
+            case '.': return ok(TokenType.dot, 1);
+            case '=': return ok(TokenType.assign, 1);
+            case ',': return ok(TokenType.coma, 1);
+            case ':': return ok(TokenType.asType, 1);
+            case '#': return ok(TokenType.unknown, 1);
+            default: return ok(TokenType.op, l);
+        }
+
+    return src[0] == ',' ? ok(TokenType.coma, 1) : ok(TokenType.op, l);
 }
 
 
@@ -228,9 +146,8 @@ TokenResult parseNum (const dstring src)
 {
     if (src[0] == '#')
     {
-        auto tr = parseIdentOrNum!(isHexNum, ch => ch.isHexNum || ch == '_')(
-            src[1 .. $], TokenType.num);
-        return TokenResult(tr.type, tr.length + 1);
+        immutable tr = parseIdentOrNum!(isHexNum, ch => ch.isHexNum || ch == '_')(src[1 .. $], TokenType.num);
+        return tr.length ? TokenResult(tr.type, tr.length + 1) : empty;
     }
 
     return parseIdentOrNum!(isNum, ch => ch.isNum || ch == '_')(src, TokenType.num);
@@ -288,81 +205,36 @@ TokenResult parseIdentOrNum (alias start, alias rest) (const dstring src, TokenT
 }
 
 
-TokenResult parseBraceStart (const dstring src)
-{
-    return ok(TokenType.braceStart, src[0].isBraceStart);
-}
+TokenResult parseBraceStart (const dstring src) { return ok(TokenType.braceStart, src[0].isBraceStart); }
 
+TokenResult parseBraceEnd (const dstring src) { return ok(TokenType.braceEnd, src[0].isBraceEnd); }
 
-TokenResult parseBraceEnd (const dstring src)
-{
-    return ok(TokenType.braceEnd, src[0].isBraceEnd);
-}
+TokenResult parseNewLine (const dstring src) { return ok(TokenType.newLine, src.lengthWhile!isNewLine); }
+
+TokenResult parseWhite (const dstring src) { return ok(TokenType.white, src.lengthWhile!isWhite); }
 
 
 TokenResult parseCommentLine (const dstring src)
 {
-    if (!(src.length >= 2 && src[0] == '-' && src[1] == '-'))
-        return empty;
-    immutable l = src.lengthUntilIncluding!isNewLine;
-    return ok(TokenType.commentLine, l ? l - 1 : src.length);
+    return src.matchesTwo ('-', '-') ? ok(TokenType.commentLine, 2) : empty;
 }
 
 
 TokenResult parseCommentStart (const dstring src)
 {
-    if (src.length >= 2 && src[0] == '/' && src[1]== '-')
-        return ok(TokenType.commentMultiStart, 2, ParseContext.comment);
-    return empty;
-}
-
-
-TokenResult parseComment (const dstring src)
-{
-    size_t l;
-    while (true)
-    {
-        if (!src.myCanFind("-/"))
-        {
-            auto lineLength = src.lengthWhile!(ch => !ch.isNewLine);
-            return error(TokenType.commentMulti, lineLength, ParseContext.any);
-        }
-
-        if (l == src.length || isNewLine(src[l]) || (src[l] == '-' && l + 1 < src.length && src[l + 1] == '/'))
-        {
-            if (l == 0)
-                return empty;
-            else
-                return ok(TokenType.commentMulti, l, ParseContext.comment);
-        }
-        ++l;
-    }
+    return src.matchesTwo ('/', '-') ? ok(TokenType.commentMultiStart, 2) : empty;
 }
 
 
 TokenResult parseCommentEnd (const dstring src)
 {
-    if (src.length >= 2 && src[0] == '-' && src[1]== '/')
-        return ok(TokenType.commentMultiEnd, 2, ParseContext.any);
-    return empty;
+    return src.matchesTwo ('-', '/') ? ok(TokenType.commentMultiEnd, 2) : empty;
 }
 
 
-TokenResult parseCommentNewLine (const dstring src)
+bool matchesTwo (const dstring src, dchar ch1, dchar ch2)
 {
-    return ok(TokenType.newLine, src.lengthWhile!isNewLine, ParseContext.comment);
-}
-
-
-TokenResult parseNewLine (const dstring src)
-{
-    return ok(TokenType.newLine, src.lengthWhile!isNewLine);
-}
-
-
-TokenResult parseWhite (const dstring src)
-{
-    return ok(TokenType.white, src.lengthWhile!isWhite);
+    return src.length >= 2 && src[0] == ch1 && src[1] == ch2;
 }
 
 
@@ -382,26 +254,15 @@ size_t lengthWhile (alias isMatch) (immutable dstring src)
 }
 
 
-size_t lengthUntilIncluding (alias isMatch) (immutable dstring src)
-{
-    size_t i = 0;
-    while (i < src.length)
-    {
-        if (isMatch(src[i]))
-            return i + 1;
-        i++;
-    }
-    return 0;
-}
-
-
 bool isUnderscore (dchar ch) { return ch == '_'; }
 
 bool isWhite (dchar ch) { return ch == ' ' || ch == '\t'; }
 
 bool isNewLine (dchar ch) { return ch == '\r' || ch == '\n'; }
 
-bool isIdent (dchar ch) { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z'); }
+bool isSmallLetter (dchar ch) { return ch >= 'a' && ch <= 'z'; }
+
+bool isIdent (dchar ch) { return ch.isSmallLetter || (ch >= 'A' && ch <= 'Z'); }
 
 bool isBraceStart (dchar ch) { return ch == '(' || ch == '{' || ch == '['; }
 
@@ -415,6 +276,6 @@ bool isOp (dchar ch)
 {
     return ch == '!' ||  ch == '\\' ||  ch == '^' ||  ch == '`' ||  ch == '|' ||  ch == '~'
         || (ch >= '#' && ch <= '\'')
-        || (ch >= '*' && ch <= '-') ||  ch == '/'
+        || (ch >= '*' && ch <= '/')
         || (ch >= ':' && ch <= '@');
 }

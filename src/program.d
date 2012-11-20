@@ -133,7 +133,7 @@ final class Program
     {  
         debug context.println(": " ~ fileName);
         debug context.println("TOKENIZE");
-        auto toks =  (new Tokenizer(fileData)).array();
+        auto toks =  (new Tokenizer(fileData)).tokenize();
 
         debug foreach (t; toks) context.println(t.toDebugString());
 /+
