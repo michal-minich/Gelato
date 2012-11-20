@@ -11,19 +11,23 @@ op dot priority
 goto from and inside if/then/else
 
 TOKENIZER -----------------------------
-  cancel unclosed text after escape on first line
-  cancel unclosed comment on first line
-  decimal numbers
-  hex decimals
+  move textm char and multi-comment to parser
+  hex decimals #1.a (not #1.#a)
+  hex/dec decimals with exponents
   text hex escapes
   text unicode escapes
-  nested comment
-  documentation comments
 
 PARSER -----------------------------
+  decimal numbers
+  fix char parsing the same way as text
+  text escape on unclosed brace ->"\n<- does not reports as error
+  where to report error on unclosed text/char/multi-comment
+  cancel unclosed text after escape on first line
+  nested comment
   custom brace op apply
   cleanup and reliability fixes
   generate remarks
+  documentation comments
 
 VALIDATOR -----------------------------
   syntax
@@ -78,9 +82,19 @@ CMD / INTERACTIVE -----------------------------
   project file
   interactive - first version
 
+function:
+  pure    = mempure + dont do io / call external functions
+  mempure = determp + dont modify any vairable outside funciton
+  determ  = return value depends only on parameters
+  contant = return value is constant
 
-pure    = determ + dont modify anyting outside funciton
-determ  = return value depends only on parameters
+fn paremeter:
+  (un)used    = is used in funciton
+  functional  = is used to compute result
+
+expression:
+  constant = literal
+  dead
 
 
 

@@ -619,14 +619,14 @@ final class Parser
         nextNonWhiteTok();
         ExpAssign d;
 
-        if (e && current.text == ":")
+        if (e && current.type == TokenType.asType)
         {
             d = new ExpAssign(parent, e, null);
             e.parent = parent;
             nextTok();
             d.type = parse(parent);
         }
-        if (e && current.text == "=")
+        if (e && current.type == TokenType.assign)
         {
             if (!d)
                 d = new ExpAssign(parent, e, null);

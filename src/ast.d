@@ -1,6 +1,6 @@
 module ast;
 
-import std.conv;
+import std.conv, std.format, std.array;
 import common;
 import formatter, validate.validation, validate.inferer, interpret.preparer, interpret.evaluator, interpret.declrfinder;
 
@@ -25,9 +25,10 @@ struct Token
 
     @trusted const dstring toDebugString ()
     {
-        return dtext(index, "\t", type, "\t\t", start.line, ":", start.column, "-", endColumn,
-               "(", text.length, ")", pos, "\t", isError ? "Error" : "",
-               "\t\"", text.toVisibleCharsText(), "\"");
+        auto writer = appender!dstring(); 
+        formattedWrite(writer, "%2s %-17s%2s:%s-%s(%s)%s  ", 
+                       index, type, start.line, start.column, endColumn, text.length, pos);
+        return writer.data ~ (isError ? "error"d : "     ") ~ "\t\"" ~ text.toVisibleCharsText() ~ "\"";
     }
 }
 
@@ -45,7 +46,7 @@ enum TokenType
     white, newLine,
     num,
     ident,
-    op, dot, 
+    op, dot, assign, asType,
     coma,
     braceStart, braceEnd,
     textStart, text, textEscape, textEnd,

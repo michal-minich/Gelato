@@ -92,6 +92,24 @@ pure nothrow immutable(T)[] getReversed (T) (T[] arr)
     return assumeUnique (res);
 }
 
+
+@safe pure nothrow bool myCanFind (dstring haystack, dstring needle)
+{
+    if (haystack.length < needle.length)
+        return false;
+
+    int i = 0;
+    immutable max = haystack.length - needle.length;
+    while (i <= max)
+    {
+        if (haystack[i .. i + needle.length] == needle)
+            return true;
+        ++i;
+    }
+    return false;
+}
+
+
 B sureCast (B, A) (A obj) { return cast(B)cast(void*)obj; }
 
 
@@ -155,7 +173,6 @@ void cmdError (string[] text ...)
 @trusted dstring toVisibleCharsText (const dstring str)
 {
     return str
-        .replace("\\", "\\\\")
         .replace("\n", "\\n")
         .replace("\r", "\\r")
         .replace("\t", "\\t");

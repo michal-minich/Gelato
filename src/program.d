@@ -71,7 +71,7 @@ final class Program
         if (!files.length)
         {
             parseAndValidateDataAll(context);
-            findDeclarationsAll(context);
+            //findDeclarationsAll(context);
         }
 
         if (!prog.exps.length)
@@ -135,8 +135,8 @@ final class Program
         debug context.println("TOKENIZE");
         auto toks =  (new Tokenizer(fileData)).array();
 
-        // debug foreach (t; toks) context.println(t.toDebugString());
-
+        debug foreach (t; toks) context.println(t.toDebugString());
+/+
         debug context.println("PARSE");
         auto par = new Parser(context, toks);
         auto astFile = par.parseAll();
@@ -171,7 +171,8 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
-        return astFile;
+        return astFile;+/
+        return null;
     }
 
 

@@ -1,13 +1,1 @@
-start = fn ()	
-{
-	a = 1
-	f = if a + 0 then fn () { } else fn () { "" } end
-	Sif = if 1 then struct { } else struct { x = 1 } end
-	S = struct { x = 1, y = "" }
-	sif = Sif()
-	s = S()
-	xx = s.x
-	yy = s.y
-	s.x = 1
-	s.y = 2
-}
+1.2
