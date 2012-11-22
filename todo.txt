@@ -17,16 +17,14 @@ TOKENIZER -----------------------------
   text unicode escapes
 
 PARSER -----------------------------
-  decimal numbers
-  fix char parsing the same way as text
-  text escape on unclosed brace ->"\n<- does not reports as error
-  where to report error on unclosed text/char/multi-comment
-  cancel unclosed text after escape on first line
-  nested comment
-  custom brace op apply
+  cancel unclosed text on first line
+  when code text ends with single quote, is it char/text/error ?
   cleanup and reliability fixes
   generate remarks
+  decimal numbers
   documentation comments
+  nested comment
+  custom brace op apply
 
 VALIDATOR -----------------------------
   syntax

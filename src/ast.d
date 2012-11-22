@@ -49,7 +49,7 @@ enum TokenType
     op, dot, assign, asType,
     coma,
     braceStart, braceEnd,
-    textStart, textEscape,
+    quote, textEscape,
     commentLine, commentMultiStart, commentMultiEnd,
     keyIf, keyThen, keyElse, keyEnd,
     keyFn, keyReturn,

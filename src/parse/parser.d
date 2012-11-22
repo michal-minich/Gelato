@@ -127,8 +127,8 @@ final class Parser
         switch (current.type)
         {
             case TokenType.num: exp = parseNum(parent); break;
-            case TokenType.ident: exp = parseIdentOrDeclr(parent); break;
-            case TokenType.textStart: exp = parseText(parent); break;
+            case TokenType.ident: exp = parseIdentOrAssign(parent); break;
+            case TokenType.quote: exp = parseText(parent); break;
 
             case TokenType.braceEnd: assert(false, "redundant brace end");
 
@@ -204,7 +204,7 @@ final class Parser
 
     Exp parseVar (ValueScope parent)
     {
-        nextTok(); 
+        nextTok();
         auto e = parse (parent);
         auto a = cast(ExpAssign)e;
         if (a)
@@ -551,36 +551,42 @@ final class Parser
     {
         Token[] ts;
         dstring txt;
+        dchar startQoute = current.text[0];
 
-        ts ~= current;
-
-        nextTok();
-
-        if (!toks.length)
+        while (true)
         {
-            assert (false, "unclosed empty text");
-        }
+            ts ~= current;
+            nextTok();
 
-        while (current.type != TokenType.textStart)
-        {
             if (!toks.length)
+                break;
+
+            if (current.type == TokenType.quote && current.text[0] == startQoute)
             {
-                assert (false, "unclosed text");
-                //return new ValueText(ts, txt);
+                ts ~= current;
+                nextNonWhiteTok();
+                break;
             }
 
-            alias current t;
-            ts ~= current;
-            txt ~= t.type == TokenType.textEscape ? t.text.toInvisibleCharsText() : t.text;
-
-            nextTok();
+            txt ~= current.type == TokenType.textEscape 
+                ? current.text.toInvisibleCharsText() 
+                : current.text;
         }
 
-        nextTok();
+        if (ts.length == 1)
+            vctx.remark (textRemark("unclosed empty text"));
+        else if (ts.length == 2)
+            vctx.remark (textRemark("unclosed text"));
 
-        auto t = txt.length == 1 && ts[0].text == "'"
-            ? new ValueChar(parent, txt[0]) : new ValueText(parent, txt);
+        Exp t;
+
+        if (ts[0].text == "'" && (ts.length == 1 || ((ts.length == 2 || (ts.length == 3 && ts[2].text == "'")) && txt.length == 1)))
+            t = new ValueChar(parent, txt.length ? txt[0] : 255 /* TODO - should be invalid utf32 char*/);
+        else
+            t = new ValueText(parent, txt);
+
         t.tokens = ts;
+
         return t;
     }
 
@@ -595,43 +601,33 @@ final class Parser
 
     ValueNum parseNum (ValueScope parent)
     {
-        long num;
         immutable s = current.text.replace("_", "");
-        if (s.length == 0)
-            num = 0;
-        else if (s[0] == '#')
-            num = s.length == 1 ? 0 : s[1 .. $].to!long(16);
-        else
-            num = s.to!long();
-
-        auto n = new ValueNum(parent, num);
-        nextTok();
+        auto n = new ValueNum(parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
+        nextNonWhiteTok();
         return n;
     }
 
 
-    Exp parseIdentOrDeclr (ValueScope parent)
+    Exp parseIdentOrAssign (ValueScope parent)
     {
         auto e = new ExpIdent(parent, current.text);
         nextNonWhiteTok();
         ExpAssign d;
 
-        if (e && current.type == TokenType.asType)
+        if (current.type == TokenType.asType)
         {
             d = new ExpAssign(parent, e, null);
-            e.parent = parent;
-            nextTok();
+            nextNonWhiteTok();
             d.type = parse(parent);
         }
-        if (e && current.type == TokenType.assign)
+
+        if (current.type == TokenType.assign)
         {
             if (!d)
                 d = new ExpAssign(parent, e, null);
-            //e.parent = d;
             nextTok();
             d.expValue = parse(parent);
             d.value = d.expValue;
-            return d;
         }
 
         return d ? d : e;

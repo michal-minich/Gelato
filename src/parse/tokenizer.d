@@ -23,9 +23,9 @@ private pure TokenResult ok (immutable TokenType tokenType, immutable size_t len
 }
 
 
-private pure TokenResult error (immutable TokenType tokenType, immutable size_t length)
+private pure TokenResult error (immutable size_t length)
 {
-    return TokenResult(tokenType, length, true);
+    return TokenResult(TokenType.unknown, length, true);
 }
 
 
@@ -92,14 +92,14 @@ final class Tokenizer
         {
             immutable tr = p(src2);
             if (tr.length)
-                return errorLength == 0 ? tr : error(TokenType.unknown, errorLength);
+                return errorLength == 0 ? tr : error(errorLength);
         }
 
         src2 = src2[1 .. $];
         ++errorLength;
 
         if (!src2.length)
-            return error(TokenType.unknown, errorLength);
+            return error(errorLength);
 
         goto tryAgain;
     }
@@ -109,16 +109,18 @@ final class Tokenizer
 pure:
 
 
-TokenResult parseCharStart (const dstring src) { return ok(TokenType.textStart, src[0] == '\''); }
+TokenResult parseCharStart (const dstring src) { return ok(TokenType.quote, src[0] == '\''); }
 
-TokenResult parseTextStart (const dstring src) { return ok(TokenType.textStart, src[0] == '"'); }
+TokenResult parseTextStart (const dstring src) { return ok(TokenType.quote, src[0] == '"'); }
 
 
 TokenResult parseTextEscape (const dstring src)
 {
-    return src.length >= 2 && src[0] == '\\' && src[1].isSmallLetter
-        ? ok(TokenType.textEscape, 2)
-        : empty;
+    if (src[0] == '\\')
+        return src.length >= 2
+            ? src[1].isEcapeChar ? ok(TokenType.textEscape, 2) : error(2)
+            : error(1);
+    return empty;
 }
 
 
@@ -254,9 +256,9 @@ bool isWhite (dchar ch) { return ch == ' ' || ch == '\t'; }
 
 bool isNewLine (dchar ch) { return ch == '\r' || ch == '\n'; }
 
-bool isSmallLetter (dchar ch) { return ch >= 'a' && ch <= 'z'; }
+bool isEcapeChar (dchar ch) { return ch == 'r' || ch == 'n' || ch == '\'' || ch == '"' || ch == '\\' || ch == '#'; }
 
-bool isIdent (dchar ch) { return ch.isSmallLetter || (ch >= 'A' && ch <= 'Z'); }
+bool isIdent (dchar ch) { return ch >= 'a' && ch <= 'z' || (ch >= 'A' && ch <= 'Z'); }
 
 bool isBraceStart (dchar ch) { return ch == '(' || ch == '{' || ch == '['; }
 

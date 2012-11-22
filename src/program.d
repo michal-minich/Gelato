@@ -144,7 +144,10 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
-        debug context.println(astFile.str(fv));
+        foreach (e; astFile.exps)
+            context.println(e.str(fv) ~ "\t" ~ typeid(e).name.to!dstring());
+
+        //debug context.println(astFile.str(fv));
 /+
         debug context.println("VALIDATE");
         auto val = new Validator(context);
