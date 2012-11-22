@@ -90,7 +90,6 @@ final class Tokenizer
         tryAgain:
         foreach (p; parsers)
         {
-            assert (src.length);
             immutable tr = p(src2);
             if (tr.length)
                 return errorLength == 0 ? tr : error(TokenType.unknown, errorLength);
@@ -146,11 +145,11 @@ TokenResult parseNum (const dstring src)
 {
     if (src[0] == '#')
     {
-        immutable tr = parseIdentOrNum!(isHexNum, ch => ch.isHexNum || ch == '_')(src[1 .. $], TokenType.num);
+        immutable tr = src[1 .. $].parseIdentOrNum!(isHexNum, ch => ch.isHexNum || ch == '_')(TokenType.num);
         return tr.length ? TokenResult(tr.type, tr.length + 1) : empty;
     }
 
-    return parseIdentOrNum!(isNum, ch => ch.isNum || ch == '_')(src, TokenType.num);
+    return src.parseIdentOrNum!(isNum, ch => ch.isNum || ch == '_')(TokenType.num);
 }
 
 
@@ -216,25 +215,25 @@ TokenResult parseWhite (const dstring src) { return ok(TokenType.white, src.leng
 
 TokenResult parseCommentLine (const dstring src)
 {
-    return src.matchesTwo ('-', '-') ? ok(TokenType.commentLine, 2) : empty;
+    return ok(TokenType.commentLine, src.matchTwo ('-', '-'));
 }
 
 
 TokenResult parseCommentStart (const dstring src)
 {
-    return src.matchesTwo ('/', '-') ? ok(TokenType.commentMultiStart, 2) : empty;
+    return ok(TokenType.commentMultiStart, src.matchTwo ('/', '-'));
 }
 
 
 TokenResult parseCommentEnd (const dstring src)
 {
-    return src.matchesTwo ('-', '/') ? ok(TokenType.commentMultiEnd, 2) : empty;
+    return ok(TokenType.commentMultiEnd, src.matchTwo ('-', '/'));
 }
 
 
-bool matchesTwo (const dstring src, dchar ch1, dchar ch2)
+size_t matchTwo (const dstring src, dchar ch1, dchar ch2)
 {
-    return src.length >= 2 && src[0] == ch1 && src[1] == ch2;
+    return src.length >= 2 && src[0] == ch1 && src[1] == ch2 ? 2 : 0;
 }
 
 
@@ -244,13 +243,8 @@ bool matchesTwo (const dstring src, dchar ch1, dchar ch2)
 size_t lengthWhile (alias isMatch) (immutable dstring src)
 {
     size_t i = 0;
-    while (i < src.length)
-    {
-        if (!isMatch(src[i]))
-            return i;
-        i++;
-    }
-    return src.length;
+    while (i < src.length && isMatch(src[i])) { i++; }
+    return i;
 }
 
 

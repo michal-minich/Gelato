@@ -11,7 +11,6 @@ op dot priority
 goto from and inside if/then/else
 
 TOKENIZER -----------------------------
-  move textm char and multi-comment to parser
   hex decimals #1.a (not #1.#a)
   hex/dec decimals with exponents
   text hex escapes

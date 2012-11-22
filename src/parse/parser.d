@@ -1,7 +1,7 @@
 module parse.parser;
 
 
-import std.algorithm, std.array, std.conv;
+import std.array, std.conv;
 import common, validate.remarks, ast;
 
 
@@ -26,7 +26,7 @@ final class Parser
         vctx = valContext;
         toks = tokens;
         toks2 = tokens;
-        if (!finished)
+        if (toks.length)
             current = toks.front;
     }
 
@@ -46,23 +46,20 @@ final class Parser
     private:
 
 
-    void nextTok ()
-    {
-        if (!finished)
-        {
-            toks.popFront();
-            if (!finished)
-                current = toks.front;
-        }
-    }
-
-
-    @property const bool finished () { return !toks.length; }
-
-
     @property const bool isWhite ()
     {
         return current.type == TokenType.newLine || current.type == TokenType.white;
+    }
+
+
+    void nextTok ()
+    {
+        if (toks.length)
+        {
+            toks.popFront();
+            if (toks.length)
+                current = toks.front;
+        }
     }
 
 
@@ -76,7 +73,7 @@ final class Parser
     void skipWhite ()
     {
         sepPassed = false;
-        while(!finished)
+        while(toks.length)
         {
             switch (current.type)
             {
@@ -92,14 +89,14 @@ final class Parser
     void nextNonWhiteTokOnSameLine ()
     {
         nextTok();
-        while (!finished && current.type == TokenType.white)
+        while (toks.length && current.type == TokenType.white)
             nextTok();
     }
 
 
     bool skipSep ()
     {
-        while(!finished)
+        while(toks.length)
         {
             switch (current.type)
             {
@@ -121,7 +118,7 @@ final class Parser
         skipComment:
 
         auto startIndex = current.index;
-        if (finished)
+        if (!toks.length)
             return null;
 
         skipSep();
@@ -447,7 +444,7 @@ final class Parser
                 }
             }
 
-            if (finished || current.type != TokenType.keyEnd)
+            if (!toks.length || current.type != TokenType.keyEnd)
                 assert (false, "if without end");
 
             const last = i.otherwise is null ? i.then : i.otherwise;
@@ -559,14 +556,14 @@ final class Parser
 
         nextTok();
 
-        if (finished)
+        if (!toks.length)
         {
             assert (false, "unclosed empty text");
         }
 
         while (current.type != TokenType.textStart)
         {
-            if (finished)
+            if (!toks.length)
             {
                 assert (false, "unclosed text");
                 //return new ValueText(ts, txt);

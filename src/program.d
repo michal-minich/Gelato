@@ -136,7 +136,7 @@ final class Program
         auto toks =  (new Tokenizer(fileData)).tokenize();
 
         debug foreach (t; toks) context.println(t.toDebugString());
-/+
+
         debug context.println("PARSE");
         auto par = new Parser(context, toks);
         auto astFile = par.parseAll();
@@ -144,8 +144,8 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
-        // debug context.println(astFile.str(fv));
-
+        debug context.println(astFile.str(fv));
+/+
         debug context.println("VALIDATE");
         auto val = new Validator(context);
         val.visit(astFile);
