@@ -346,7 +346,7 @@ final class ConsoleInterpreterContext : IInterpreterContext
     @property Exp[] exceptions () { return exs; }
 
 
-    void remark (Remark remark)
+    @trusted void remark (Remark remark)
     {
         auto svr = remark.severity;
 

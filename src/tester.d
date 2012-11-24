@@ -33,7 +33,7 @@ final class TestInterpreterContext : IInterpreterContext
     @property Exp[] exceptions () { return exs; }
 
 
-    void remark (Remark remark)
+    @trusted void remark (Remark remark)
     {
         if (remark.text == "Missing start function")
             return;

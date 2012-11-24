@@ -503,47 +503,31 @@ final class Parser
     StmReturn parserReturn (ValueScope parent)
     {
         nextNonWhiteTokOnSameLine();
-        auto r = new StmReturn(parent);
-        r.exp = parse(parent);
-        if (!r.exp)
-            vctx.remark(textRemark("return without expression"));
-        return r;
+        return new StmReturn(parent, (toks.length && current.type != TokenType.newLine) ? parse(parent) : null);
     }
 
 
     StmGoto parserGoto (ValueScope parent)
     {
         nextNonWhiteTokOnSameLine();
-        if (current.type == TokenType.ident)
-        {
-            auto g = new StmGoto(parent, current.text);
-            nextTok();
-            return g;
-        }
-        else
-        {
-            auto gt = new StmGoto(parent, null);
-            vctx.remark(GotoWithoutIdentifier(gt));
-            return gt;
-        }
+        if (current.type != TokenType.ident)
+            return new StmGoto(parent, null);
+        
+        auto g = new StmGoto(parent, current.text);
+        nextTok();
+        return g;
     }
 
 
     StmLabel parserLabel (ValueScope parent)
     {
         nextNonWhiteTokOnSameLine();
-        if (current.type == TokenType.ident)
-        {
-            auto l = new StmLabel (parent, current.text);
-            nextTok();
-            return l;
-        }
-        else
-        {
-            auto l = new StmLabel (parent, null);
-            vctx.remark(LabelWithoutIdentifier(l));
-            return l;
-        }
+        if (current.type != TokenType.ident)
+            return new StmLabel (parent, null);
+
+        auto l = new StmLabel (parent, current.text);
+        nextTok();
+        return l;
     }
 
 
@@ -572,11 +556,6 @@ final class Parser
                 ? current.text.toInvisibleCharsText() 
                 : current.text;
         }
-
-        if (ts.length == 1)
-            vctx.remark (textRemark("unclosed empty text"));
-        else if (ts.length == 2)
-            vctx.remark (textRemark("unclosed text"));
 
         Exp t;
 

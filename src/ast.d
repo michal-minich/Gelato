@@ -354,7 +354,7 @@ final class StmReturn : Exp
 {
     mixin visitImpl;
     Exp exp;
-    nothrow this (ValueScope parent) { super(parent); }
+    nothrow this (ValueScope parent, Exp exp) { super(parent); this.exp = exp; }
 }
 
 

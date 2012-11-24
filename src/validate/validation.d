@@ -46,11 +46,22 @@ final class Validator : IAstVisitor!(void)
 
     void visit (ValueText t)
     {
+        validateTextChar (t.tokens);
     }
 
 
     void visit (ValueChar ch)
     {
+        validateTextChar (ch.tokens);
+    }
+
+
+    void validateTextChar(Token[] ts)
+    {
+        if (ts.length == 1)
+            vctx.remark (textRemark("unclosed empty text"));
+        else if (ts.length == 2)
+            vctx.remark (textRemark("unclosed text"));
     }
 
 
@@ -115,16 +126,23 @@ final class Validator : IAstVisitor!(void)
 
     void visit (StmLabel l)
     {
+        if (!l.label)
+            vctx.remark(LabelWithoutIdentifier(l));
     }
 
 
     void visit (StmGoto gt)
     {
+        if (!gt.label)
+            vctx.remark(GotoWithoutIdentifier(gt));
     }
 
 
     void visit (StmReturn r)
-    {
+    {  
+        if (!r.exp)
+            vctx.remark(textRemark("return without expression"));
+
         r.exp.validate(this);
     }
 

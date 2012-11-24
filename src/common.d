@@ -131,7 +131,7 @@ ValueStruct parseFile (IValidationContext vctx, string filePath)
 }
 
 
-interface IValidationContext
+@safe interface IValidationContext
 {
     void remark (Remark);
 }
