@@ -5,7 +5,7 @@ import std.array, std.conv;
 import common, validate.remarks, ast;
 
 
-nothrow:
+@safe nothrow:
 
 
 final class Parser
@@ -18,6 +18,7 @@ final class Parser
         Token current;
         bool sepPassed;
         Comment comment;
+        Stack!dchar braceStack;
     }
 
 
@@ -26,6 +27,7 @@ final class Parser
         vctx = valContext;
         toks = tokens;
         toks2 = tokens;
+        braceStack = new Stack!dchar;
         if (toks.length)
             current = toks.front;
     }
@@ -115,6 +117,7 @@ final class Parser
 
     @trusted Exp parse (ValueScope parent)
     {
+        next:
         skipComment:
 
         auto startIndex = current.index;
@@ -123,6 +126,7 @@ final class Parser
 
         skipSep();
 
+
         Exp exp;
         switch (current.type)
         {
@@ -130,7 +134,7 @@ final class Parser
             case TokenType.ident: exp = parseIdentOrAssign(parent); break;
             case TokenType.quote: exp = parseText(parent); break;
 
-            case TokenType.braceEnd: assert(false, "redundant brace end");
+            case TokenType.braceEnd: handleBraceEnd(); goto next;
 
             case TokenType.keyIf: exp = parseIf(parent); break;
             case TokenType.keyThen: assert(false, "then without if");
@@ -199,6 +203,13 @@ final class Parser
             exp.tokens = toks2[startIndex .. current.index + 1];
 
         return exp;
+    }
+
+
+    void handleBraceEnd ()
+    {
+        nextTok();
+        vctx.remark(textRemark("redundant close brace"));
     }
 
 
@@ -276,7 +287,7 @@ final class Parser
         if (!operand2)
         {
             vctx.remark(textRemark("second operand is missing"));
-            operand2 = ValueUnknown.single;
+            operand2 = new ValueUnknown(parent);
         }
 
         auto fna = new ExpFnApply(parent, op, [operand1, operand2]);
@@ -286,14 +297,16 @@ final class Parser
 
     Exp parseBracedExp (ValueScope parent)
     {
-        if (current.text == "(")
+        braceStack.push(current.text[0]);
+
+        if (current.text[0] == '(')
         {
             auto exps = parseBracedExpList (parent);
             if (exps.length > 1)
                 vctx.remark(textRemark("only one exp can be braced ()"));
             return exps[0];
         }
-        else if (current.text == "[")
+        else if (current.text[0] == '[')
         {
             auto op = new ExpIdent(parent, current.text);
             op.tokens = [current];
@@ -304,33 +317,33 @@ final class Parser
         else
         {
             vctx.remark(textRemark("unsupported brace op apply"));
-            return ValueUnknown.single;
+            return new ValueUnknown(parent);
         }
     }
 
 
     Exp[] parseBracedExpList (ValueScope parent)
     {
+        braceStack.push(current.text[0]);
+
         Exp[] list;
         immutable opposite = oppositeBrace(current.text);
         nextNonWhiteTok();
         while (current.text != opposite)
-        {
-            auto e = parse(parent);
-            if (!e)
+        {   
+            if (!toks.length)
             {
                 vctx.remark(textRemark("reached end of file and close brace not found"));
                 return list;
             }
 
+            auto e = parse(parent);
             list ~= e;
 
             if (current.type == TokenType.braceEnd)
             {
                 if (current.text != opposite)
                     vctx.remark(textRemark("end brace does not match start brace"));
-
-                break;
             }
             else if (!sepPassed)
             {
@@ -350,69 +363,8 @@ final class Parser
             case "(": return ")";
             case "[": return "]";
             case "{": return "}";
-            default: assert (false, "bad brace '" ~ brace.to!string() ~ "'");
+            default: assert (false, "bad brace '" ~ brace.toString() ~ "'");
         }
-    }
-
-
-    TypeAny parseTypeAny (ValueScope parent)
-    {
-        nextTok();
-        return TypeAny.single;
-    }
-
-
-    TypeVoid parseTypeVoid (ValueScope parent)
-    {
-        nextTok();
-        return TypeVoid.single;
-    }
-
-
-    TypeNum parseTypeNum (ValueScope parent)
-    {
-        nextTok();
-        return TypeNum.single;
-    }
-
-
-    TypeChar parseTypeChar (ValueScope parent)
-    {
-        nextTok();
-        return TypeChar.single;
-    }
-
-
-    TypeText parseTypeText (ValueScope parent)
-    {
-        nextTok();
-        return TypeText.single;
-    }
-
-
-    TypeType parseTypeType (ValueScope parent)
-    {
-        nextNonWhiteTok();
-        auto types = parseBracedExpList(parent);
-        if (types.length != 1)
-            vctx.remark(textRemark("Type takes one argument"));
-        return new TypeType(parent, types[0]);
-    }
-
-
-    TypeOr parseTypeOr (ValueScope parent)
-    {
-        nextNonWhiteTok();
-        auto types = parseBracedExpList(parent);
-        return new TypeOr(parent, types);
-    }
-
-
-    TypeFn parseTypeFn (ValueScope parent)
-    {
-        nextNonWhiteTok();
-        auto types = parseBracedExpList(parent);
-        return new TypeFn(parent, types[0.. $ - 1], types[0]);
     }
 
 
@@ -450,7 +402,6 @@ final class Parser
             const last = i.otherwise is null ? i.then : i.otherwise;
             nextTok();
             return i;
-
         }
         else
         {
@@ -572,13 +523,12 @@ final class Parser
 
     ValueUnknown parseUnknown (ValueScope parent)
     {
-        auto u = ValueUnknown.single;
         nextTok();
-        return u;
+        return new ValueUnknown(parent);
     }
 
 
-    ValueNum parseNum (ValueScope parent)
+    @trusted ValueNum parseNum (ValueScope parent)
     {
         immutable s = current.text.replace("_", "");
         auto n = new ValueNum(parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
@@ -610,5 +560,66 @@ final class Parser
         }
 
         return d ? d : e;
+    }
+
+
+    TypeAny parseTypeAny (ValueScope parent)
+    {
+        nextTok();
+        return new TypeAny(parent);
+    }
+
+
+    TypeVoid parseTypeVoid (ValueScope parent)
+    {
+        nextTok();
+        return new TypeVoid(parent);
+    }
+
+
+    TypeNum parseTypeNum (ValueScope parent)
+    {
+        nextTok();
+        return new TypeNum(parent);
+    }
+
+
+    TypeChar parseTypeChar (ValueScope parent)
+    {
+        nextTok();
+        return new TypeChar(parent);
+    }
+
+
+    TypeText parseTypeText (ValueScope parent)
+    {
+        nextTok();
+        return new TypeText(parent);
+    }
+
+
+    TypeType parseTypeType (ValueScope parent)
+    {
+        nextNonWhiteTok();
+        auto types = parseBracedExpList(parent);
+        if (types.length != 1)
+            vctx.remark(textRemark("Type takes one argument"));
+        return new TypeType(parent, types[0]);
+    }
+
+
+    TypeOr parseTypeOr (ValueScope parent)
+    {
+        nextNonWhiteTok();
+        auto types = parseBracedExpList(parent);
+        return new TypeOr(parent, types);
+    }
+
+
+    TypeFn parseTypeFn (ValueScope parent)
+    {
+        nextNonWhiteTok();
+        auto types = parseBracedExpList(parent);
+        return new TypeFn(parent, types[0.. $ - 1], types[0]);
     }
 }

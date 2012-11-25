@@ -163,7 +163,8 @@ final class ValueUnknown : Exp
 {
     mixin visitImpl;
     ExpIdent ident;
-    nothrow this (ExpIdent ident) { this.ident = ident; }
+    nothrow this (ValueScope parent) { super(parent); }
+    nothrow this (ValueScope parent, ExpIdent ident) { super(parent); this.ident = ident; }
     private this () { }
     static typeof(this) single;
     static this () { single = new typeof(this); }
@@ -370,18 +371,18 @@ final class TypeType : Exp
 final class TypeAny : Exp
 {
     mixin visitImpl;
-    private this () {}
+    this (ValueScope parent) { super(parent); }
     static typeof(this) single;
-    static this () { single = new typeof(this); }
+    static this () { single = new typeof(this)(null); }
 }
 
 
 final class TypeVoid : Exp
 {
     mixin visitImpl;
-    private this () {}
+    this (ValueScope parent) { super(parent); }
     static typeof(this) single;
-    static this () { single = new typeof(this); }
+    static this () { single = new typeof(this)(null); }
 }
 
 
@@ -418,27 +419,27 @@ final class TypeStruct: Exp
 final class TypeNum : Exp
 {
     mixin visitImpl;
-    private this () {}
+    this (ValueScope parent) { super(parent); }
     static typeof(this) single;
-    static this () { single = new typeof(this); }
+    static this () { single = new typeof(this)(null); }
 }
 
 
 final class TypeText : Exp
 {
     mixin visitImpl;
-    private this () {}
+    this (ValueScope parent) { super(parent); }
     static typeof(this) single;
-    static this () { single = new typeof(this); }
+    static this () { single = new typeof(this)(null); }
 }
 
 
 final class TypeChar: Exp
 {
     mixin visitImpl;
-    private this () {}
+    this (ValueScope parent) { super(parent); }
     static typeof(this) single;
-    static this () { single = new typeof(this); }
+    static this () { single = new typeof(this)(null); }
 }
 
 

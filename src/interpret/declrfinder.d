@@ -74,7 +74,7 @@ final class DeclrFinder : IAstVisitor!(void)
             else
             {
                 //context.remark(textRemark("identifier " ~ m.text ~ " is not defined"));
-                m.declaredBy = new ExpAssign(null, m, new ValueUnknown(m));
+                m.declaredBy = new ExpAssign(null, m, new ValueUnknown(m.parent, m));
             }
         }
 

@@ -15,6 +15,6 @@ Global
 		{E47B7886-40B1-4097-9D9A-83047BDE5823}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
+		HideSolutionNode = TRUE
 	EndGlobalSection
 EndGlobal
