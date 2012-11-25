@@ -151,11 +151,31 @@ final class Validator : IAstVisitor!(void)
     {
         i.when.validate(this);
 
+        if (isThenElseMissing(i.then))
+            vctx.remark(textRemark("missing expression after then"));
+
+        if (isThenElseMissing(i.otherwise))
+            vctx.remark(textRemark("missing expression after else"));
+
         foreach (t; i.then)
             t.validate(this);
 
         foreach (o; i.otherwise)
             o.validate(this);
+    }
+
+
+    @trusted bool isThenElseMissing (Exp[] exps)
+    {
+        if (exps.length != 1)
+            return false;
+        auto ut = cast(ValueUnknown)exps[0];
+        if (ut)
+        {
+            immutable tt = ut.tokensText;
+            return tt.count('_') == tt.length;
+        }
+        return false;
     }
 
 

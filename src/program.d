@@ -148,14 +148,14 @@ final class Program
             context.println(e.str(fv) ~ "\t" ~ typeid(e).name.to!dstring());
 
         //debug context.println(astFile.str(fv));
-/+
+
         debug context.println("VALIDATE");
         auto val = new Validator(context);
         val.visit(astFile);
 
         if (context.hasBlocker)
             return astFile;
-
+/+
         debug context.println("PREPARE");
         ExpAssign start;
         auto m = prepareFile(context, astFile, fileName, isStartFile, /*out*/ start, prog);

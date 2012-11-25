@@ -126,7 +126,6 @@ final class Parser
 
         skipSep();
 
-
         Exp exp;
         switch (current.type)
         {
@@ -370,43 +369,37 @@ final class Parser
 
     ExpIf parseIf (ValueScope parent)
     {
-        uint startIndex = current.index;
-        nextTok();
-
         auto i = new ExpIf(parent);
+        nextNonWhiteTok();
         i.when = parse(parent);
 
-        if (current.type == TokenType.keyThen)
+        if (current.type != TokenType.keyThen)
+             vctx.remark(textRemark("missing 'then' after if"));
+        
+        nextNonWhiteTok();
+
+        while (toks.length && current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
+            i.then ~= parse(parent);
+
+        if (!i.then.length)
+            i.then ~= new ValueUnknown(parent);
+
+        if (current.type == TokenType.keyElse)
         {
             nextNonWhiteTok();
 
+            while (toks.length && current.type != TokenType.keyEnd)
+                i.otherwise ~= parse(parent);
 
-            while (current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
-            {
-                i.then ~= parse(parent);
-            }
-
-            if (current.type == TokenType.keyElse)
-            {
-                nextNonWhiteTok();
-
-                while (current.type != TokenType.keyEnd)
-                {
-                    i.otherwise ~= parse(parent);
-                }
-            }
-
-            if (!toks.length || current.type != TokenType.keyEnd)
-                assert (false, "if without end");
-
-            const last = i.otherwise is null ? i.then : i.otherwise;
-            nextTok();
-            return i;
+            if (!i.otherwise.length)
+                i.otherwise ~= new ValueUnknown(parent);
         }
-        else
-        {
-            assert (false, "no then");
-        }
+
+        if (!toks.length)
+            vctx.remark(textRemark("if without 'end'"));
+
+        nextNonWhiteTok();
+        return i;
     }
 
 

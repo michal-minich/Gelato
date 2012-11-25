@@ -23,7 +23,7 @@ import common, ast;
 
     dstring visit (ValueUnknown e)
     {
-        return e.tokens ? e.tokens.map!(t => t.text)().join() : "<unknown(" ~ (e.ident ? e.ident.text : "") ~ ")>";
+        return e.tokens ? e.tokens.map!(t => t.text)().join() : "<unknown" ~ (e.ident ? ": " ~ e.ident.text : "") ~ ">";
     }
 
 
@@ -144,13 +144,14 @@ import common, ast;
     dstring visit (ExpIf e)
     {
         ++level;
-        immutable expandBoth = e.then.length > 1 || e.otherwise.length > 1;
-        immutable txt = e.otherwise.length == 1 && cast(ValueUnknown)e.otherwise[0]
-            ? dtext("if ", e.when.str(this), " then", dtextExps(e.then, expandBoth), "end")
-            : dtext("if ", e.when.str(this), " then", dtextExps(e.then, expandBoth), "else",
-                dtextExps(e.otherwise, expandBoth), "end");
+        immutable forceExpand = e.then.length > 1 || e.otherwise.length > 1;
+        auto txt = dtext("if ", e.when.str(this), " then", dtextExps(e.then, forceExpand));
+
+        if (e.otherwise.length)
+            txt ~= dtext("else", dtextExps(e.otherwise, forceExpand));
+
         --level;
-        return txt;
+        return txt ~ "end";
     }
 
 
