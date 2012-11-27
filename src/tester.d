@@ -55,7 +55,9 @@ final class TestInterpreterContext : IInterpreterContext
 
 @trusted pure final class TestFormatVisitor : IFormatVisitor
 {
-    const dstring visit (ValueNum e) { return e.value.to!dstring(); }
+    const dstring visit (ValueInt i) { return i.value.to!dstring(); }
+
+    const dstring visit (ValueFloat f) { return f.value.to!dstring(); }
 
     const dstring visit (ValueUnknown e) { return "ValueUnknown"; }
 
@@ -93,7 +95,9 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (TypeVoid) { return "TypeVoid"; }
 
-    const dstring visit (TypeNum) { return "TypeNum"; }
+    const dstring visit (TypeInt) { return "TypeInt"; }
+
+    const dstring visit (TypeFloat) { return "TypeFloat"; }
 
     const dstring visit (TypeText) { return "TypeText"; }
 
@@ -115,7 +119,9 @@ final class TestInterpreterContext : IInterpreterContext
 
 @trusted pure final class TokenTestFormatVisitor : IFormatVisitor
 {
-    const dstring visit (ValueNum e) { return e.tokensText ~ "|"; }
+    const dstring visit (ValueInt i) { return i.tokensText ~ "|"; }
+
+    const dstring visit (ValueFloat f) { return f.tokensText ~ "|"; }
 
     const dstring visit (ValueUnknown e) { return e.tokensText ~ "|"; }
 
@@ -126,7 +132,9 @@ final class TestInterpreterContext : IInterpreterContext
             ~ (d.value ? d.value.str(this) : "");
     }
 
+
     dstring visit (ValueStruct e) { return e.tokensText ~ "|" ~ e.exps.map!(e2 => e2.str(this))().join(); }
+
 
     dstring visit (ValueFn fn)
     { 
@@ -147,7 +155,7 @@ final class TestInterpreterContext : IInterpreterContext
 
     dstring visit (StmLabel e) { return e.tokensText ~ "|"; }
 
-    dstring visit (StmReturn e) { return e.tokensText ~ "|" ~ e.exp.str(this); }
+    dstring visit (StmReturn e) { return e.tokensText ~ "|" ~ (e.exp ? e.exp.str(this) : ""); }
 
     const dstring visit (ValueText e){ return e.tokensText ~ "|"; }
 
@@ -169,7 +177,9 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (TypeVoid tv) { return tv.tokensText ~ "|"; }
 
-    const dstring visit (TypeNum tn) { return tn.tokensText ~ "|"; }
+    const dstring visit (TypeInt i) { return i.tokensText ~ "|"; }
+
+    const dstring visit (TypeFloat f) { return f.tokensText ~ "|"; }
 
     const dstring visit (TypeText tt) { return tt.tokensText ~ "|"; }
 

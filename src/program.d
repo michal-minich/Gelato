@@ -56,7 +56,7 @@ final class Program
 
         if (res)
         {
-            auto n = cast(ValueNum)res;
+            auto n = cast(ValueInt)res;
             return n ? n.value.to!int() : 0;
         }
         else
@@ -144,8 +144,9 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
+        auto ttfv = new tester.TokenTestFormatVisitor;
         foreach (e; astFile.exps)
-            context.println(e.str(fv) ~ "\t" ~ typeid(e).name.to!dstring());
+            context.println(e.str(fv) ~ "\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
 
         //debug context.println(astFile.str(fv));
 

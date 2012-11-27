@@ -19,28 +19,33 @@ final class Validator : IAstVisitor!(void)
     }
 
 
-    @trusted  void visit (ValueNum n)
+    @trusted  void visit (ValueInt i)
     {
         // TODO "00" - should report as "can be written as "0""
         Remark[] rs;
-        auto txt = n.tokens[0].text[0] == '#' ? n.tokensText[1 .. $] : n.tokensText;
+        auto txt = i.tokens[0].text[0] == '#' ? i.tokensText[1 .. $] : i.tokensText;
 
         if (txt.startsWith("_"))
-            rs ~= NumberStartsWithUnderscore(n);
+            rs ~= NumberStartsWithUnderscore(i);
 
         else if (txt.endsWith("_"))
-            rs ~= NumberEndsWithUnderscore(n);
+            rs ~= NumberEndsWithUnderscore(i);
 
         else if (txt.canFind("__"))
-            rs ~= NumberContainsRepeatedUnderscore(n);
+            rs ~= NumberContainsRepeatedUnderscore(i);
 
         if (txt.length > 1 && txt.startsWith("0"))
-            rs ~= NumberStartsWithZero(n);
+            rs ~= NumberStartsWithZero(i);
 
         if (rs.length == 1)
             vctx.remark(rs[0]);
         else if (rs.length > 1)
-            vctx.remark(NumberNotProperlyFormatted(n, assumeUnique(rs)));
+            vctx.remark(NumberNotProperlyFormatted(i, assumeUnique(rs)));
+    }
+
+    
+    void visit (ValueFloat f)
+    {
     }
 
 
@@ -151,31 +156,11 @@ final class Validator : IAstVisitor!(void)
     {
         i.when.validate(this);
 
-        if (isThenElseMissing(i.then))
-            vctx.remark(textRemark("missing expression after then"));
-
-        if (isThenElseMissing(i.otherwise))
-            vctx.remark(textRemark("missing expression after else"));
-
         foreach (t; i.then)
             t.validate(this);
 
         foreach (o; i.otherwise)
             o.validate(this);
-    }
-
-
-    @trusted bool isThenElseMissing (Exp[] exps)
-    {
-        if (exps.length != 1)
-            return false;
-        auto ut = cast(ValueUnknown)exps[0];
-        if (ut)
-        {
-            immutable tt = ut.tokensText;
-            return tt.count('_') == tt.length;
-        }
-        return false;
     }
 
 
@@ -191,7 +176,9 @@ final class Validator : IAstVisitor!(void)
 
     void visit (TypeFn) { }
 
-    void visit (TypeNum) { }
+    void visit (TypeInt) { }
+
+    void visit (TypeFloat) { }
 
     void visit (TypeText) { }
 

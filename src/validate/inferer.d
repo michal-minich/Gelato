@@ -50,10 +50,17 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (ValueNum n)
+    Exp visit (ValueInt i)
     {
-        n.infType = TypeNum.single;
-        return n.infType;
+        i.infType = TypeInt.single;
+        return i.infType;
+    }
+
+
+    Exp visit (ValueFloat f)
+    {
+        f.infType = TypeFloat.single;
+        return f.infType;
     }
 
 
@@ -251,7 +258,9 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     Exp visit (TypeFn tfn) { return new TypeType(null, tfn); }
 
-    Exp visit (TypeNum tn) { return new TypeType(null, tn); }
+    Exp visit (TypeInt ti) { return new TypeType(null, ti); }
+
+    Exp visit (TypeFloat tf) { return new TypeType(null, tf); }
 
     Exp visit (TypeText tt) { return new TypeType(null, tt); }
 

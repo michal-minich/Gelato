@@ -1,36 +1,31 @@
-struct assignment (identifier even) is var implicitly ?
-check  chained assignments - are they var ?
-disallow chained assignments ?
-mutable variables - allow only var as mutable
-remark multiply defined 
-import names form scope to scope (also selective) - import std (id, second), module2
-import all modules by default
-public attribute
-
-op dot priority
-goto from and inside if/then/else
 
 TOKENIZER -----------------------------
-  hex decimals #1.a (not #1.#a)
-  hex/dec decimals with exponents
+  decimal exponent (hex and dec)
   text hex escapes
   text unicode escapes
 
 PARSER -----------------------------
+  tokens text
+  hex decimal numbers
+  parse #a.f as hex decimal, (#a).f as member access
+  fix parse op crash "+ a"
+  wrong braces ( a, ] b, [ c )  - also mind coma
   cancel unclosed text on first line
   when code text ends with single quote, is it char/text/error ?
-  cleanup and reliability fixes
-  generate remarks
-  decimal numbers
   documentation comments
   nested comment
   custom brace op apply
+  variables in text "abc $variable 123"
 
-VALIDATOR -----------------------------
-  syntax
+SYNTAX VALIDATOR -----------------------------
+  syntax (todo - specify what exactly)
+  hex decimals are #1.a (warn when #1.#a)
   indentation level
 
 PREPARER -----------------------------
+! remark multiply defined variables
+! mutable variables - allow only var as mutable
+! op dot priority
 ! call functions as members of first parameter
   operators priority
   prepare functions on firs call
@@ -49,6 +44,13 @@ TYPE INFERENCE / CHECK -----------------------------
   infer on fn pure, deterministic throws, modify global, ..
 
 INTERPRETER -----------------------------
+! struct assignment (identifier even) is var implicitly ?
+! check  chained assignments - are they var ?
+! disallow chained assignments ?
+! import names form scope to scope (also selective) - import std (id, second), module2
+! import all modules by default
+! public attribute
+! goto from and inside if/then/else
 ! built-ins with qualified name (also overridable)
 ! variable length fn params
 ! array operations (empty, first, rest)
@@ -93,7 +95,6 @@ expression:
   constant = literal
   dead
 
-( a, ] b, [ c )
 
 
 

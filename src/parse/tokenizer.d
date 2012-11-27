@@ -126,12 +126,17 @@ TokenResult parseTextEscape (const dstring src)
 
 TokenResult parseOp (const dstring src)
 {
+    immutable lDot = src.lengthWhile!(ch => ch == '.');
+    if (lDot == 1)
+        return ok(TokenType.dot, lDot);
+    else if (lDot > 1)
+        return ok(TokenType.op, lDot);
+
     immutable l = src.lengthWhile!isOp;
 
     if (l == 1)
         switch (src[0])
         {
-            case '.': return ok(TokenType.dot, 1);
             case '=': return ok(TokenType.assign, 1);
             case ',': return ok(TokenType.coma, 1);
             case ':': return ok(TokenType.asType, 1);
@@ -183,7 +188,8 @@ TokenResult parseIdent (const dstring src)
         case "Any":    return ok(TokenType.typeAny,   tr.length);
         case "AnyOf":  return ok(TokenType.typeOr,    tr.length);
         case "Fn":     return ok(TokenType.typeFn,    tr.length);
-        case "Num":    return ok(TokenType.typeNum,   tr.length);
+        case "Int":    return ok(TokenType.typeInt,   tr.length);
+        case "Float":  return ok(TokenType.typeFloat, tr.length);
         case "Text":   return ok(TokenType.typeText,  tr.length);
         case "Char":   return ok(TokenType.typeChar,  tr.length);
 

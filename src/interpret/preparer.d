@@ -169,7 +169,9 @@ import common, ast, validate.remarks, interpret.builtins, interpret.declrfinder;
 
     void visit (ValueChar) { }
 
-    void visit (ValueNum) { }
+    void visit (ValueInt) { }
+
+    void visit (ValueFloat) { }
 
     void visit (ValueBuiltinFn) { }
 
@@ -183,7 +185,9 @@ import common, ast, validate.remarks, interpret.builtins, interpret.declrfinder;
 
     void visit (TypeFn) { }
 
-    void visit (TypeNum) { }
+    void visit (TypeInt) { }
+
+    void visit (TypeFloat) { }
 
     void visit (TypeText) { }
 

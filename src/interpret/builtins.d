@@ -17,12 +17,12 @@ ValueBuiltinFn[dstring] builtinFns;
         builtinFns = [
         "print"   : new ValueBuiltinFn(&customPrint, new TypeFn(null, [TypeAny.single], TypeVoid.single))
        ,"readln"  : new ValueBuiltinFn(&customReadln, new TypeFn(null, [], TypeText.single))
-       ,"toNum"   : new ValueBuiltinFn(&toNum, new TypeFn(null, [TypeText.single], TypeNum.single))
-       ,"inc"     : new ValueBuiltinFn(&incNum, new TypeFn(null, [TypeNum.single], TypeNum.single))
-       ,"dec"     : new ValueBuiltinFn(&decNum, new TypeFn(null, [TypeNum.single], TypeNum.single))
-       ,"=="      : new ValueBuiltinFn(&eq, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeNum.single))
-       ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeNum.single))
-       ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn(null, [TypeNum.single, TypeNum.single], TypeNum.single))
+       ,"toNum"   : new ValueBuiltinFn(&toNum, new TypeFn(null, [TypeText.single], TypeInt.single))
+       ,"inc"     : new ValueBuiltinFn(&incNum, new TypeFn(null, [TypeInt.single], TypeInt.single))
+       ,"dec"     : new ValueBuiltinFn(&decNum, new TypeFn(null, [TypeInt.single], TypeInt.single))
+       ,"=="      : new ValueBuiltinFn(&eq, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeInt.single))
+       ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeInt.single))
+       ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn(null, [TypeInt.single, TypeInt.single], TypeInt.single))
        ,"["       : new ValueBuiltinFn(&array, new TypeFn(null, [TypeAny.single], new TypeArray(null, null)))
        ,"!"       : new ValueBuiltinFn(&arrayIndex, new TypeFn(null, [TypeAny.single],TypeAny.single))
        ,"++"      : new ValueBuiltinFn(&arrayConcat, new TypeFn(null, [TypeAny.single],TypeAny.single))
@@ -61,22 +61,22 @@ Exp customReadln (IInterpreterContext context, Exp[] exps)
 Exp toNum (IInterpreterContext context, Exp[] exps)
 {
     auto n = sureCast!ValueText(exps[0]);
-    return new ValueNum(null, n.value.to!long());
+    return new ValueInt(null, n.value.to!long());
 }
 
 
 
 Exp incNum (IInterpreterContext context, Exp[] exps)
 {
-    auto n = exps[0].sureCast!ValueNum();
-    return new ValueNum(null, n.value + 1);
+    auto n = exps[0].sureCast!ValueInt();
+    return new ValueInt(null, n.value + 1);
 }
 
 
 Exp decNum (IInterpreterContext context, Exp[] exps)
 {
-    auto n = exps[0].sureCast!ValueNum();
-    return new ValueNum(null, n.value - 1);
+    auto n = exps[0].sureCast!ValueInt();
+    return new ValueInt(null, n.value - 1);
 }
 
 
@@ -85,7 +85,7 @@ Exp eq (IInterpreterContext context, Exp[] exps)
     auto tfv = new TestFormatVisitor;
     auto a = exps[0].str(tfv);
     auto b = exps[1].str(tfv);
-    return new ValueNum(null, a == b);
+    return new ValueInt(null, a == b);
 }
 
 
@@ -93,15 +93,15 @@ Exp eqTyped (IInterpreterContext context, Exp[] exps)
 {
     return typeid(exps[0]) == typeid(exps[1])
         ? eq(context, exps)
-        : new ValueNum(null, 0);
+        : new ValueInt(null, 0);
 }
 
 
 Exp plusNum (IInterpreterContext context, Exp[] exps)
 {
-    auto a = exps[0].sureCast!ValueNum();
-    auto b = exps[1].sureCast!ValueNum();
-    return new ValueNum(null, a.value + b.value);
+    auto a = exps[0].sureCast!ValueInt();
+    auto b = exps[1].sureCast!ValueInt();
+    return new ValueInt(null, a.value + b.value);
 }
 
 
@@ -114,7 +114,7 @@ Exp array (IInterpreterContext context, Exp[] exps)
 Exp arrayIndex (IInterpreterContext context, Exp[] exps)
 {
     auto arr = cast(ValueArray)exps[0];
-    auto ix = cast(ValueNum)exps[1];
+    auto ix = cast(ValueInt)exps[1];
     return arr.items[cast(uint)ix.value];
 }
 

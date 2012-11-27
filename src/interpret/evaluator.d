@@ -141,7 +141,7 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
         if (!e)
         throw new Exception ("if test expression must not evaluate to null.");
 
-        auto when = cast(ValueNum)e;
+        auto when = cast(ValueInt)e;
         if (!when)
             throw new Exception ("if test expression must evaluate to number.");
 
@@ -233,7 +233,9 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
 
     Exp visit (ValueChar ch) { return ch; }
 
-    Exp visit (ValueNum num) { return num; }
+    Exp visit (ValueInt i) { return i; }
+
+    Exp visit (ValueFloat f) { return f; }
 
     Exp visit (ValueBuiltinFn bfn) { return bfn; }
 
@@ -255,7 +257,9 @@ import common, ast, validate.remarks, interpret.preparer, interpret.builtins,
 
     Exp visit (TypeFn) { return null; }
 
-    Exp visit (TypeNum) { return null; }
+    Exp visit (TypeInt) { return null; }
+
+    Exp visit (TypeFloat) { return null; }
 
     Exp visit (TypeText) { return null; }
 

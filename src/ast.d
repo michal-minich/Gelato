@@ -58,13 +58,14 @@ enum TokenType
     keyThrow,
     keyVar,
     keyImport,
-    typeType, typeAny, typeVoid, typeOr, typeFn, typeNum, typeText, typeChar,
+    typeType, typeAny, typeVoid, typeOr, typeFn, typeInt, typeFloat, typeText, typeChar,
 }
 
 
 interface IAstVisitor (R)
 {
-    R visit (ValueNum);
+    R visit (ValueInt);
+    R visit (ValueFloat);
     R visit (ValueText);
     R visit (ValueChar);
     R visit (ValueStruct);
@@ -90,7 +91,8 @@ interface IAstVisitor (R)
     R visit (TypeVoid);
     R visit (TypeOr);
     R visit (TypeFn);
-    R visit (TypeNum);
+    R visit (TypeInt);
+    R visit (TypeFloat);
     R visit (TypeText);
     R visit (TypeChar);
     R visit (TypeStruct);
@@ -171,7 +173,15 @@ final class ValueUnknown : Exp
 }
 
 
-final class ValueNum : Exp
+final class ValueFloat : Exp
+{
+    mixin visitImpl;
+    real value;
+    nothrow this (ValueScope parent, real value) { super(parent); this.value = value; }
+}
+
+
+final class ValueInt : Exp
 {
     mixin visitImpl;
     long value;
@@ -338,7 +348,7 @@ final class StmLabel : Exp
 {
     mixin visitImpl;
     dstring label;
-    this (ValueScope parent, dstring label) { super(parent); this.label = label; }
+    nothrow this (ValueScope parent, dstring label) { super(parent); this.label = label; }
 }
 
 
@@ -371,7 +381,7 @@ final class TypeType : Exp
 final class TypeAny : Exp
 {
     mixin visitImpl;
-    this (ValueScope parent) { super(parent); }
+    nothrow this (ValueScope parent) { super(parent); }
     static typeof(this) single;
     static this () { single = new typeof(this)(null); }
 }
@@ -380,7 +390,7 @@ final class TypeAny : Exp
 final class TypeVoid : Exp
 {
     mixin visitImpl;
-    this (ValueScope parent) { super(parent); }
+    nothrow this (ValueScope parent) { super(parent); }
     static typeof(this) single;
     static this () { single = new typeof(this)(null); }
 }
@@ -416,10 +426,19 @@ final class TypeStruct: Exp
 }
 
 
-final class TypeNum : Exp
+final class TypeInt : Exp
 {
     mixin visitImpl;
-    this (ValueScope parent) { super(parent); }
+    nothrow this (ValueScope parent) { super(parent); }
+    static typeof(this) single;
+    static this () { single = new typeof(this)(null); }
+}
+
+
+final class TypeFloat : Exp
+{
+    mixin visitImpl;
+    nothrow this (ValueScope parent) { super(parent); }
     static typeof(this) single;
     static this () { single = new typeof(this)(null); }
 }
@@ -428,7 +447,7 @@ final class TypeNum : Exp
 final class TypeText : Exp
 {
     mixin visitImpl;
-    this (ValueScope parent) { super(parent); }
+    nothrow this (ValueScope parent) { super(parent); }
     static typeof(this) single;
     static this () { single = new typeof(this)(null); }
 }
@@ -437,7 +456,7 @@ final class TypeText : Exp
 final class TypeChar: Exp
 {
     mixin visitImpl;
-    this (ValueScope parent) { super(parent); }
+    nothrow this (ValueScope parent) { super(parent); }
     static typeof(this) single;
     static this () { single = new typeof(this)(null); }
 }
@@ -455,12 +474,12 @@ final class TypeArray: Exp
 class WhiteSpace: Exp
 {
     mixin visitImpl;
-    this () { }
+    nothrow this () { }
 }
 
 
 final class Comment: WhiteSpace
 {
     mixin visitImpl;
-    this () { }
+    nothrow this () { }
 }

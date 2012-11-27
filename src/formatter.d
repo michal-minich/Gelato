@@ -18,7 +18,9 @@ import common, ast;
     const private @property tab1() { return tabs[0 .. 4 * (level - 1)]; }
 
 
-    const dstring visit (ValueNum e) { return e.value.to!dstring(); }
+    const dstring visit (ValueInt i) { return i.value.to!dstring(); }
+
+    const dstring visit (ValueFloat f) { return f.value.to!dstring(); }
 
 
     dstring visit (ValueUnknown e)
@@ -195,7 +197,9 @@ import common, ast;
 
     const dstring visit (TypeVoid) { return "Void"; }
 
-    const dstring visit (TypeNum) { return "Num"; }
+    const dstring visit (TypeInt) { return "Int"; }
+
+    const dstring visit (TypeFloat) { return "Float"; }
 
     const dstring visit (TypeText) { return "Text"; }
 

@@ -187,7 +187,8 @@ final class DeclrFinder : IAstVisitor!(void)
     void visit (ValueBuiltinFn) { }
     void visit (ValueUnknown) { }
 
-    void visit (ValueNum) { }
+    void visit (ValueInt) { }
+    void visit (ValueFloat) { }
     void visit (ValueText) { }
     void visit (ValueChar) { }
     void visit (ValueArray) { }
@@ -197,7 +198,8 @@ final class DeclrFinder : IAstVisitor!(void)
     void visit (TypeVoid) { }
     void visit (TypeOr) { }
     void visit (TypeFn) { }
-    void visit (TypeNum) { }
+    void visit (TypeInt) { }
+    void visit (TypeFloat) { }
     void visit (TypeText) { }
     void visit (TypeChar) { }
     void visit (TypeStruct) { }
