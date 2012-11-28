@@ -185,8 +185,8 @@ final class Parser
             case TokenType.keyFn: exp = parserFn(tokenStartIndex, parent); break;
             case TokenType.keyReturn: exp = parserReturn(tokenStartIndex, parent); break;
 
-            case TokenType.keyGoto: exp = parserGoto(tokenStartIndex, parent); break;
-            case TokenType.keyLabel: exp = parserLabel(tokenStartIndex, parent); break;
+            case TokenType.keyGoto: exp = parserGoto(parent); break;
+            case TokenType.keyLabel: exp = parserLabel(parent); break;
 
             case TokenType.keyStruct: exp = parseStruct(tokenStartIndex, parent); break;
             //case TokenType.keyThrow: exp = parserThrow(tokenStartIndex, parent); break;
@@ -532,25 +532,26 @@ final class Parser
     }
 
 
-    StmGoto parserGoto (size_t tokenStartIndex, ValueScope parent)
+    StmGoto parserGoto (ValueScope parent)
     {
-        nextNonWhiteTokOnSameLine();
-        if (current.type != TokenType.ident)
-            return newExp!StmGoto(tokenStartIndex, parent, null);
-        
-        auto g = newExp!StmGoto(tokenStartIndex, parent, current.text);
-        nextTok();
-        return g;
+        return parserLabelGoto!StmGoto(parent);
     }
 
 
-    StmLabel parserLabel (size_t tokenStartIndex, ValueScope parent)
+    StmLabel parserLabel (ValueScope parent)
     {
+        return parserLabelGoto!StmLabel(parent);
+    }
+
+
+    LabelGoto parserLabelGoto (alias LabelGoto) (ValueScope parent)
+    {
+        auto start = current.index;
         nextNonWhiteTokOnSameLine();
         if (current.type != TokenType.ident)
-            return newExp!StmLabel (tokenStartIndex, parent, null);
+            return newExp2!LabelGoto (start, start, parent, ""d);
 
-        auto l = newExp!StmLabel (tokenStartIndex, parent, current.text);
+        auto l = newExp2!LabelGoto (start, current.index, parent, current.text);
         nextTok();
         return l;
     }

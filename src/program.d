@@ -139,9 +139,9 @@ final class Program
 
         auto ttfv = new test.TokenTestFormatVisitor.TokenTestFormatVisitor;
         foreach (e; astFile.exps)
-            context.println(e.str(fv) ~ "\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
+            context.println(e.str(fv) ~ "\t\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
 
-        debug context.println(astFile.str(fv));
+        //debug context.println(astFile.str(fv));
 
         debug context.println("VALIDATE");
         auto val = new SyntaxValidator(context);

@@ -41,7 +41,7 @@ import syntax.ast;
 
     const dstring visit (ExpIdent i) { return i.tokensText ~ "|"; }
 
-    dstring visit (StmLabel e) { return e.tokensText ~ "|"; }
+    dstring visit (StmLabel e) { return e.tokensText ~ (e.label ? e.label : "") ~ "|"; }
 
     dstring visit (StmReturn e) { return e.tokensText ~ "|" ~ (e.exp ? e.exp.str(this) : ""); }
 
@@ -53,7 +53,7 @@ import syntax.ast;
 
     const dstring visit (ExpIf e) { return e.tokensText ~ "|"; }
 
-    const dstring visit (StmGoto e) { return e.tokensText ~ "|"; }
+    const dstring visit (StmGoto e) { return e.tokensText ~ (e.label ? e.label : "") ~ "|"; }
 
     const dstring visit (Closure sc) { return sc.tokensText ~ "|"; }
 
