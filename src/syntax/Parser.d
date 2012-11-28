@@ -1,8 +1,8 @@
-module parse.parser;
+module syntax.Parser;
 
 
 import std.array, std.conv, std.format;
-import common, validate.remarks, ast;
+import common, validate.remarks, syntax.ast;
 
 
 @safe:

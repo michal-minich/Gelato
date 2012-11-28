@@ -1,8 +1,7 @@
 module settings;
 
 import std.conv;
-import common, localization, ast, validate.remarks,
-    validate.validation, parse.parser;
+import common, syntax.ast, validate.remarks, syntax.SyntaxValidator, syntax.Parser;
 
 
 

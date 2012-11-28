@@ -1,13 +1,13 @@
-module validate.validation;
+module syntax.SyntaxValidator;
 
 import std.algorithm, std.exception;
-import common, ast, parse.parser, validate.remarks;
+import common, syntax.ast, syntax.Parser, validate.remarks;
 
 
 @safe nothrow:
 
 
-final class Validator : IAstVisitor!(void)
+final class SyntaxValidator : IAstVisitor!(void)
 {
     private IValidationContext vctx;
 
@@ -144,10 +144,7 @@ final class Validator : IAstVisitor!(void)
 
 
     void visit (StmReturn r)
-    {  
-        if (!r.exp)
-            vctx.remark(textRemark("return without expression"));
-
+    {
         r.exp.validate(this);
     }
 

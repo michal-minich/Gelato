@@ -1,10 +1,10 @@
-module formatter;
+module syntax.Formatter;
 
 import std.algorithm, std.array, std.conv;
-import common, ast;
+import common, syntax.ast;
 
 
-@trusted pure final class FormatVisitor : IFormatVisitor
+@trusted pure final class Formatter : IFormatVisitor
 {
     bool useInferredTypes;
     bool printOriginalParse;
@@ -230,6 +230,24 @@ import common, ast;
     {
         return dtext(braceStart, items.map!(i => i.str(this))().join(", "), braceStart.map!reverseBrace().array().getReversed());
     }
+
+
+    static Formatter load (IValidationContext vctx, const string rootPath, const string name)
+    {
+        auto exps = parseFile(vctx, rootPath ~ "/format/" ~ name ~ ".gel");
+        auto f = new Formatter;
+
+        /*foreach (e; exps)
+        {
+        auto decldstring = cast(ExpAssign)e;
+        if (declr.ident.text == "name")
+        rl.name = declr.value.str(this);
+        else
+        rl.values[declr.ident.text] = declr.value.str(this).to!RemarkSeverity();
+        }*/
+
+        return f;
+    }
 }
 
 
@@ -241,28 +259,5 @@ import common, ast;
         case '{': return '}';
         case '(': return ')';
         default: assert(false);         
-    }
-}
-
-
-
-final class Formatter
-{
-    static Formatter load (
-        IValidationContext vctx, const string rootPath, const string name)
-    {
-        auto exps = parseFile(vctx, rootPath ~ "/format/" ~ name ~ ".gel");
-        auto f = new Formatter;
-
-        /*foreach (e; exps)
-        {
-            auto decldstring = cast(ExpAssign)e;
-            if (declr.ident.text == "name")
-                rl.name = declr.value.str(this);
-            else
-                rl.values[declr.ident.text] = declr.value.str(this).to!RemarkSeverity();
-        }*/
-
-        return f;
     }
 }

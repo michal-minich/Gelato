@@ -1,8 +1,8 @@
-module ast;
+module syntax.ast;
 
 import std.conv, std.format, std.array;
 import common;
-import formatter, validate.validation, validate.inferer, interpret.preparer, interpret.evaluator, interpret.declrfinder;
+import syntax.Formatter, syntax.SyntaxValidator, validate.TypeInferer, interpret.preparer, interpret.Interpreter, interpret.declrfinder;
 
 
 @safe:
@@ -111,9 +111,9 @@ alias IAstVisitor!(dstring) IFormatVisitor;
 mixin template visitImpl ()
 {
     override dstring str       (IFormatVisitor v)       { return v.visit(this); }
-    override Exp     eval      (Evaluator v)            { return v.visit(this); }
+    override Exp     eval      (Interpreter v)            { return v.visit(this); }
     override void    prepare   (PreparerForEvaluator v) {        v.visit(this); }
-    override void    validate  (Validator v)            {        v.visit(this); }
+    override void    validate  (SyntaxValidator v)      {        v.visit(this); }
     override Exp     infer     (TypeInferer v)          { return v.visit(this); }
     override void    findDeclr (DeclrFinder v)          { return v.visit(this); }
 }
@@ -152,9 +152,9 @@ abstract class Exp
 
 
     abstract dstring str (IFormatVisitor);
-    abstract Exp eval (Evaluator);
+    abstract Exp eval (Interpreter);
     abstract void prepare (PreparerForEvaluator);
-    abstract void validate (Validator);
+    abstract void validate (SyntaxValidator);
     abstract Exp infer (TypeInferer);
     abstract void findDeclr (DeclrFinder v);
 }

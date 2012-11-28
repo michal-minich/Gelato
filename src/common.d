@@ -2,14 +2,15 @@ module common;
 
 
 import std.stdio, std.range, std.array, std.range, std.algorithm, std.conv,
-    std.string, std.utf, std.path, std.traits, std.exception;
+       std.string, std.utf, std.path, std.traits, std.exception;
 import std.file : readText, exists, isFile;
-import settings, formatter, ast, parse.parser, parse.tokenizer, validate.remarks,
-    interpret.evaluator;
+
+import settings, syntax.Formatter, syntax.ast, syntax.Parser, syntax.Tokenizer, validate.remarks,
+       interpret.Interpreter;
 
 
 Settings sett;
-FormatVisitor fv;
+Formatter fv;
 
 
 enum newLine = "\r\n";

@@ -1,7 +1,7 @@
 module interpret.declrfinder;
 
 import std.algorithm;
-import common, ast, validate.remarks, interpret.builtins;
+import common, syntax.ast, validate.remarks, interpret.builtins;
 
 
 @safe:

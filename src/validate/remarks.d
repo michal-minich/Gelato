@@ -1,7 +1,7 @@
 module validate.remarks;
 
 import std.conv;
-import common, ast, validate.validation;
+import common, syntax.ast;
 
 
 class Remark

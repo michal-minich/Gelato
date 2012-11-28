@@ -1,6 +1,6 @@
-module parse.tokenizer;
+module syntax.Tokenizer;
 
-import ast;
+import syntax.ast;
 
 
 @safe nothrow:

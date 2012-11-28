@@ -3,9 +3,9 @@ module program;
 
 import std.stdio, std.algorithm, std.string, std.array, std.conv, std.file, std.path, std.utf, std.path;
 import std.file : readText, exists, isFile;
-import common, settings, formatter, validate.remarks, validate.validation,
-    parse.tokenizer, parse.parser, ast, interpret.evaluator, interpret.preparer,
-    validate.inferer, interpret.declrfinder, interpret.builtins;
+import common, settings, syntax.Formatter, validate.remarks, syntax.SyntaxValidator,
+    syntax.Tokenizer, syntax.Parser, syntax.ast, interpret.Interpreter, interpret.preparer,
+    validate.TypeInferer, interpret.declrfinder, interpret.builtins;
 
 
 final class Program
@@ -40,18 +40,18 @@ final class Program
     {
         if (runTests)
         {
-            import tester;
+            import test.tester;
             bool success = true;
 
             foreach (f; filePaths)
                 if (f.endsWith(".txt"))
-                    success = success & test(f);
+                    success = success & doTest(f);
 
             return 0;
         }
 
         auto context = new ConsoleInterpreterContext;
-        context.evaluator = new Evaluator(context);
+        context.evaluator = new Interpreter(context);
         auto res = run (context);
 
         if (res)
@@ -144,14 +144,14 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
-        auto ttfv = new tester.TokenTestFormatVisitor;
+        auto ttfv = new test.TokenTestFormatVisitor.TokenTestFormatVisitor;
         foreach (e; astFile.exps)
             context.println(e.str(fv) ~ "\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
 
         //debug context.println(astFile.str(fv));
 
         debug context.println("VALIDATE");
-        auto val = new Validator(context);
+        auto val = new SyntaxValidator(context);
         val.visit(astFile);
 
         if (context.hasBlocker)
@@ -328,7 +328,7 @@ final class ConsoleInterpreterContext : IInterpreterContext
         uint remarkCounter;
         bool hasBlockerField;
         Exp[] exs;
-        Evaluator evaluator;
+        Interpreter evaluator;
     }
 
 

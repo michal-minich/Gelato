@@ -1,8 +1,8 @@
-module validate.inferer;
+module validate.TypeInferer;
 
 
 import std.algorithm, std.array;
-import common, ast, parse.parser, validate.remarks, interpret.evaluator;
+import common, syntax.ast, syntax.Parser, validate.remarks, interpret.Interpreter;
 
 
 @trusted Exp mergeTypes (Exp[] types...)
@@ -205,7 +205,7 @@ final class TypeInferer : IAstVisitor!(Exp)
             auto tor = cast(TypeOr)t;
             if (tor)
             {
-                i.infType = Evaluator.isTrueForIf(context.eval(i.when))
+                i.infType = Interpreter.isTrueForIf(context.eval(i.when))
                    ? i.then[0].infType
                    : i.otherwise[0].infType;
             }

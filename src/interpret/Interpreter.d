@@ -1,12 +1,12 @@
-module interpret.evaluator;
+module interpret.Interpreter;
 
 import std.algorithm, std.array, std.conv;
-import common, ast, validate.remarks, interpret.preparer, interpret.builtins, 
+import common, syntax.ast, validate.remarks, interpret.preparer, interpret.builtins, 
     interpret.declrfinder;
 
 
 
-@safe final class Evaluator : IAstVisitor!(Exp)
+@safe final class Interpreter : IAstVisitor!(Exp)
 {
     private
     {

@@ -2,12 +2,12 @@
 
 
 import std.stdio, std.algorithm, std.conv, std.path;
-import common, settings, formatter, program;
+import common, settings, syntax.Formatter, program;
 
 
 int main (string[] args)
 {
-    fv = new FormatVisitor;
+    fv = new Formatter;
 
     sett = Settings.beforeLoad;
     sett = Settings.load (new ConsoleInterpreterContext, args[0].buildNormalizedPath().dirName());
