@@ -62,7 +62,7 @@ final class Parser
             toks.popFront();
             if (toks.length)
                 current = toks.front;
-            else
+            else if (current.type != TokenType.empty)
                 current = Token(current.index + 1, TokenType.empty);
         }
     }
@@ -595,28 +595,32 @@ final class Parser
 
     Exp parseIdentOrAssign (ValueScope parent)
     {
-        auto e = newExp1!ExpIdent(parent, current.text);
-        ExpAssign d;
+        auto i = newExp1!ExpIdent(parent, current.text);
 
+        Exp type;
         nextNonWhiteTok();
         if (current.type == TokenType.asType)
         {
-            d = newExp1!ExpAssign(parent, e, null);
-            nextNonWhiteTok();
-            d.type = parse(parent);
+            nextTok();
+            type = parse(parent);
         }
 
+        Exp value;
         if (current.type == TokenType.assign)
         {
-            if (!d)
-                d = newExp1!ExpAssign(parent, e, null);
             nextTok();
             auto v = parse(parent);
-            d.expValue =  v ? v : new ValueUnknown(parent);
-            d.value = d.expValue;
+            value = v ? v : new ValueUnknown(parent);
         }
 
-        return d ? d : e;
+        if (type || value)
+        {
+            auto d = newExp2!ExpAssign(i.tokens[0].index, current.index, parent, i, value);
+            d.type = type;
+            return d;
+        }
+            
+        return i;
     }
 
 

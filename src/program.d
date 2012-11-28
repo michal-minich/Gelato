@@ -23,7 +23,7 @@ final class Program
     {
         prog = new ValueStruct (null);
         this.filePaths ~= filePaths;
-        this.filePaths ~= "std.gel";
+        //this.filePaths ~= "std.gel";
         this.runTests = runTests;
     }
 
@@ -71,7 +71,7 @@ final class Program
         if (!files.length)
         {
             parseAndValidateDataAll(context);
-            findDeclarations(context, prog);
+            //findDeclarations(context, prog);
         }
 
         if (!prog.exps.length)
@@ -128,7 +128,7 @@ final class Program
         debug context.println("TOKENIZE");
         auto toks =  (new Tokenizer(fileData)).tokenize();
 
-        //debug foreach (t; toks) context.println(t.toDebugString());
+        debug foreach (t; toks) context.println(t.toDebugString());
 
         debug context.println("PARSE");
         auto par = new Parser(context, toks);
@@ -137,11 +137,11 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
-        //auto ttfv = new test.TokenTestFormatVisitor.TokenTestFormatVisitor;
-        //foreach (e; astFile.exps)
-        //    context.println(e.str(fv) ~ "\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
+        auto ttfv = new test.TokenTestFormatVisitor.TokenTestFormatVisitor;
+        foreach (e; astFile.exps)
+            context.println(e.str(fv) ~ "\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
 
-        //debug context.println(astFile.str(fv));
+        debug context.println(astFile.str(fv));
 
         debug context.println("VALIDATE");
         auto val = new SyntaxValidator(context);

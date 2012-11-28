@@ -1,5 +1,1 @@
-start = fn ()
-{
-	a  = 1
-	std.id(2)
-}
+a = 1
