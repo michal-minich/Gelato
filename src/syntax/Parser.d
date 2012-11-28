@@ -234,7 +234,7 @@ final class Parser
                 exp = newExp!ExpFnApply(tokenStartIndex, parent, exp, parseBracedExpList(tokenStartIndex, parent));
 
             if (current.type == TokenType.op)
-                exp = parseOp(current.index, parent, exp);
+                exp = parseOp(parent, exp);
 
             if (current.type == TokenType.dot)
             {
@@ -381,19 +381,19 @@ final class Parser
     }
 
 
-    ExpFnApply parseOp (size_t tokenStartIndex, ValueScope parent, Exp operand1)
+    ExpFnApply parseOp (ValueScope parent, Exp operand1)
     {
-        auto op = newExp!ExpIdent(tokenStartIndex, parent, current.text);
+        auto op = newExp1!ExpIdent(parent, current.text);
         nextNonWhiteTok();
         auto operand2 = parse(parent);
 
         if (!operand2)
         {
             vctx.remark(textRemark("second operand is missing"));
-            operand2 = newExp!ValueUnknown(tokenStartIndex, parent);
+            operand2 = new ValueUnknown(parent);
         }
 
-        auto fna = newExp!ExpFnApply(tokenStartIndex, parent, op, [operand1, operand2]);
+        auto fna = newExp2!ExpFnApply(operand1.tokens[0].index, current.index, parent, op, [operand1, operand2]);
         return fna;
     }
 
