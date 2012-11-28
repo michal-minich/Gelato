@@ -611,7 +611,8 @@ final class Parser
             if (!d)
                 d = newExp1!ExpAssign(parent, e, null);
             nextTok();
-            d.expValue = parse(parent);
+            auto v = parse(parent);
+            d.expValue =  v ? v : new ValueUnknown(parent);
             d.value = d.expValue;
         }
 

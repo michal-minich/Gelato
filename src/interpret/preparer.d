@@ -109,8 +109,6 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.declr
         if (i.otherwise)
             foreach (o; i.otherwise)
                 o.prepare(this);
-        else
-            i.otherwise = [ValueUnknown.single];
     }
 
 
@@ -135,8 +133,6 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.declr
 
         if (d.value)
             d.value.prepare(this);
-        else
-            d.expValue = ValueUnknown.single;
     }
 
 

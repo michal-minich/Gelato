@@ -38,6 +38,7 @@ final class TypeInferer : IAstVisitor!(Exp)
 {
     private IInterpreterContext context;
     private ValueFn currentFn;
+    private ValueStruct[] usedStructs;
 
 
     this (IInterpreterContext context) { this.context = context; }
@@ -165,6 +166,17 @@ final class TypeInferer : IAstVisitor!(Exp)
             e.infer(this);
 
         s.infType = new TypeStruct(null, s);
+
+        if (!s.parent)
+            foreach (st; usedStructs)
+                foreach (e; st.exps)
+                {
+                    auto d = cast(ExpAssign)e;
+                    auto i = cast(ExpIdent)d.slot;
+                    if (i && !d.usedBy)
+                        context.remark(textRemark("member " ~ d.slot.str(fv) ~ " is not used"));
+                }
+
         return s.infType;
     }
 
@@ -216,6 +228,12 @@ final class TypeInferer : IAstVisitor!(Exp)
         }
         else
         {   
+            foreach (t; i.then)
+                t.infer(this);
+
+            foreach (o; i.otherwise)
+                o.infer(this);
+
             i.infType = TypeVoid.single;
         }
 
@@ -223,7 +241,7 @@ final class TypeInferer : IAstVisitor!(Exp)
     }
 
 
-    Exp visit (ExpDot dot)
+    @trusted Exp visit (ExpDot dot)
     {
         dot.record.infer(this);
 
@@ -231,17 +249,23 @@ final class TypeInferer : IAstVisitor!(Exp)
 
         assert (st, "only struct can have members");
 
+        if (!usedStructs.canFind(st.value))
+            usedStructs ~= st.value;
+
         foreach (m; st.value.exps)
         {
             auto a = cast(ExpAssign)m;
             auto i = cast(ExpIdent)a.slot;
             if (i.text == dot.member.text)
             {
+                dot.member.declaredBy = a;
+                a.usedBy ~= dot.member;
                 dot.member.infType = i.infer(this);
                 return i.infType;
             }
         }
 
+        context.remark(textRemark("member " ~ dot.member.text ~" is not defined"));
         return ValueUnknown.single;
     }
 

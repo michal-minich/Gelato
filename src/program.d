@@ -23,7 +23,7 @@ final class Program
     {
         prog = new ValueStruct (null);
         this.filePaths ~= filePaths;
-        //this.filePaths ~= "std.gel";
+        this.filePaths ~= "std.gel";
         this.runTests = runTests;
     }
 
@@ -71,7 +71,7 @@ final class Program
         if (!files.length)
         {
             parseAndValidateDataAll(context);
-            //findDeclarationsAll(context);
+            findDeclarations(context, prog);
         }
 
         if (!prog.exps.length)
@@ -87,16 +87,9 @@ final class Program
         //debug if (res) context.println("RESULT: " ~ res.str(fv));
 
         //return res;
-        
         return null;
     }
 
-
-    private void findDeclarationsAll (IInterpreterContext context)
-    {
-        foreach (ix, f; files)
-            auto m = findDeclarations(context, f);
-    }
 
     
     private void parseAndValidateDataAll (IInterpreterContext context)
@@ -135,7 +128,7 @@ final class Program
         debug context.println("TOKENIZE");
         auto toks =  (new Tokenizer(fileData)).tokenize();
 
-        debug foreach (t; toks) context.println(t.toDebugString());
+        //debug foreach (t; toks) context.println(t.toDebugString());
 
         debug context.println("PARSE");
         auto par = new Parser(context, toks);
@@ -144,9 +137,9 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
-        auto ttfv = new test.TokenTestFormatVisitor.TokenTestFormatVisitor;
-        foreach (e; astFile.exps)
-            context.println(e.str(fv) ~ "\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
+        //auto ttfv = new test.TokenTestFormatVisitor.TokenTestFormatVisitor;
+        //foreach (e; astFile.exps)
+        //    context.println(e.str(fv) ~ "\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
 
         //debug context.println(astFile.str(fv));
 
@@ -156,7 +149,7 @@ final class Program
 
         if (context.hasBlocker)
             return astFile;
-/+
+
         debug context.println("PREPARE");
         ExpAssign start;
         auto m = prepareFile(context, astFile, fileName, isStartFile, /*out*/ start, prog);
@@ -175,8 +168,7 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
-        return astFile;+/
-        return null;
+        return astFile;
     }
 
 

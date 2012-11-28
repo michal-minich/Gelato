@@ -73,17 +73,15 @@ final class DeclrFinder : IAstVisitor!(void)
             }
             else
             {
-                //context.remark(textRemark("identifier " ~ m.text ~ " is not defined"));
+                context.remark(textRemark("identifier " ~ m.text ~ " is not defined"));
                 m.declaredBy = new ExpAssign(null, m, new ValueUnknown(m.parent, m));
             }
         }
 
-        /*
         if (!env.parent)
             foreach (d; env.unused)
                 if (!d.usedBy)
                     context.remark(textRemark("declaration " ~ d.slot.str(fv) ~ " is not used"));
-        */
 
         finalize();
     }
@@ -149,7 +147,8 @@ final class DeclrFinder : IAstVisitor!(void)
     void visit (ExpDot d)
     { 
         d.record.findDeclr(this);
-        d.member.findDeclr(this);
+        
+        // d.member.declaredBy is assigned in the TypeInferer
     }
 
 

@@ -15,6 +15,7 @@ PARSER -----------------------------
 ! wrong braces ( a, ] b, [ c )  - also mind coma
 ! cancel unclosed text on first line
 ! when code text ends with single quote, is it char/text/error ?
+! remark redundant brace as in "(a)"
   documentation comments
   nested comment
   custom brace op apply
@@ -25,15 +26,20 @@ SYNTAX VALIDATOR -----------------------------
   indentation level
 
 PREPARER -----------------------------
+! op dot priority (allow for a.b.c)
 ! remark multiply defined variables
+! remark unused fn parameters
 ! mutable variables - allow only var as mutable
-! op dot priority
 ! call functions as members of first parameter
   operators priority
   prepare functions on firs call
   tail call
 
 TYPE INFERENCE / CHECK -----------------------------
+! infer named struct by name not structure
+! static if does not introduce scope, normal if yes
+! multi statement static if - eval test to know which declaration to use 
+   (only if they have conflicting declaration names, which are used after if. see previous if-scope todo)
 ! infer identifier by usage in fn (not only by def)
 ! infer identifier by usage as fn arg
   report type errors
