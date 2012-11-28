@@ -1,3 +1,27 @@
+(1).2
+3.(4)
+(5).(6)
+
+1.(m)
+(1).m
+(1).(m)
+
+(#1).2
+#3.(4)
+(#5).(6)
+
+(#1).#2
+#3.(#4)
+(#5).(#6)
+
+
+if a then b else c end
+label d
+goto e
+var f
+fn () { return 1 }
+
+
 start = fn ()
 {
 	label again

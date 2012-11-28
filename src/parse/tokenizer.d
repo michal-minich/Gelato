@@ -127,6 +127,7 @@ TokenResult parseTextEscape (const dstring src)
 TokenResult parseOp (const dstring src)
 {
     immutable lDot = src.lengthWhile!(ch => ch == '.');
+    
     if (lDot == 1)
         return ok(TokenType.dot, lDot);
     else if (lDot > 1)

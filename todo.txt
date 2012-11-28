@@ -1,17 +1,20 @@
 
 TOKENIZER -----------------------------
-  decimal exponent (hex and dec)
-  text hex escapes
-  text unicode escapes
+! text hex escapes
+! text unicode escapes
+! unicode support in text/char
+  unicode support in identifiers
+  allow unicode oprators as an option "option uniop"
 
 PARSER -----------------------------
-  tokens text
-  hex decimal numbers
-  parse #a.f as hex decimal, (#a).f as member access
-  fix parse op crash "+ a"
-  wrong braces ( a, ] b, [ c )  - also mind coma
-  cancel unclosed text on first line
-  when code text ends with single quote, is it char/text/error ?
+! tokens text
+! decimal exponent (hex and dec)
+! fix parse op crash "+ a"
+! parse op dot in form a.(+)  a.(..)
+! how to parse 3.(14)   (3).14   (3).(14)   3.(m)   (3).m   (r).(m)  ? (also for hex nums)
+! wrong braces ( a, ] b, [ c )  - also mind coma
+! cancel unclosed text on first line
+! when code text ends with single quote, is it char/text/error ?
   documentation comments
   nested comment
   custom brace op apply
@@ -19,7 +22,6 @@ PARSER -----------------------------
 
 SYNTAX VALIDATOR -----------------------------
   syntax (todo - specify what exactly)
-  hex decimals are #1.a (warn when #1.#a)
   indentation level
 
 PREPARER -----------------------------
@@ -64,6 +66,8 @@ INTERPRETER -----------------------------
 ! ref
 ! throw
 ! try catch
+  a = const 1 + 2    if const 1 + 2 then    const if 1 + 2 ... ?
+  a = var 1 + 2 ?
   built-in for stack trace
   built-in in for env
   dynamic and static typing versions

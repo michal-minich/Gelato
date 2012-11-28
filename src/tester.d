@@ -169,7 +169,7 @@ final class TestInterpreterContext : IInterpreterContext
 
     const dstring visit (Closure sc) { return sc.tokensText ~ "|"; }
 
-    const dstring visit (ExpDot dot) { return dot.tokensText ~ "|"; }
+    dstring visit (ExpDot dot) { return dot.tokensText ~ "|" ~ dot.record.str(this) ~ dot.member.str(this); }
 
     const dstring visit (TypeType tt) { return tt.tokensText ~ "|"; }
 

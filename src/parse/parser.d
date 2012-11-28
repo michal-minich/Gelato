@@ -40,7 +40,7 @@ final class Parser
         s.tokens = toks2;
         Exp e;
         skipWhite();
-        while ((e = parse(0, s)) !is null)
+        while ((e = parse(s)) !is null)
             s.exps ~= e;
         return s;
     }
@@ -62,6 +62,8 @@ final class Parser
             toks.popFront();
             if (toks.length)
                 current = toks.front;
+            else
+                current = Token(current.index + 1, TokenType.empty);
         }
     }
 
@@ -131,18 +133,38 @@ final class Parser
     T newExp (T : Exp, A...) (size_t tokenStartIndex, A args)
     {
         auto e = new T(args);
-        e.tokens = toks2[tokenStartIndex .. current.index + 1];
+        e.tokens = toks2[tokenStartIndex .. current.index];
         return e;
     }
 
 
-    Exp parse (size_t tokenStartIndex, ValueScope parent)
+    T newExp1 (T : Exp, A...) (A args)
     {
+        auto e = new T(args);
+        e.tokens = toks2[current.index .. current.index + 1];
+        return e;
+    }
+
+
+    T newExp2 (T : Exp, A...) (size_t tokenStartIndex, size_t tokenEndIndex, A args)
+    {
+        auto e = new T(args);
+        e.tokens = toks2[tokenStartIndex .. tokenEndIndex];
+        return e;
+    }
+
+
+    Exp parse (ValueScope parent)
+    {
+        auto tokenStartIndex = current.index;
+
         next:
         skipComment:
 
         if (!toks.length)
             return null;
+
+        sepPassed = false;
 
         skipSep();
 
@@ -150,7 +172,7 @@ final class Parser
         switch (current.type)
         {
             case TokenType.num: exp = parseNum(tokenStartIndex, parent); break;
-            case TokenType.ident: exp = parseIdentOrAssign(tokenStartIndex, parent); break;
+            case TokenType.ident: exp = parseIdentOrAssign(parent); break;
             case TokenType.quote: exp = parseText(tokenStartIndex, parent); break;
 
             case TokenType.braceEnd: handleBraceEnd(); goto next;
@@ -186,7 +208,7 @@ final class Parser
             case TokenType.commentLine: comment = parseCommentLine(tokenStartIndex, parent); break;
             case TokenType.commentMultiStart: comment = parseCommentMulti(tokenStartIndex, parent); break;
 
-            case TokenType.empty: assert (false);
+            case TokenType.empty: return null;
             default: assert (false);
         }
 
@@ -216,7 +238,7 @@ final class Parser
 
             if (current.type == TokenType.dot)
             {
-                exp = parseOpDot(current.index, parent, exp);
+                exp = parseOpDot(parent, exp);
                 if (cast(ValueFloat)exp)
                     break;
             }
@@ -288,7 +310,7 @@ final class Parser
             if (list.length && !sepPassed)
                 vctx.remark(textRemark("missing comma or newExp!line to separate expressions"));
 
-            auto e = parse(current.index, parent);
+            auto e = parse(parent);
             list ~= e;
         }
 
@@ -309,35 +331,45 @@ final class Parser
     }
 
 
-    @trusted Exp parseOpDot (size_t tokenStartIndex, ValueScope parent, Exp operand1)
+    @trusted Exp parseOpDot (ValueScope parent, Exp operand1)
     {
         nextNonWhiteTok();
 
         auto nInt = cast(ValueInt)operand1;
         auto isBase16 = nInt && nInt.tokens[0].text[0] == '#';
-
-        if (current.type == TokenType.ident && !isBase16)
+        
+        if (current.text == "(")
         {
-            auto dot = newExp!ExpDot(tokenStartIndex, parent, operand1, newExp!ExpIdent(tokenStartIndex, parent, current.text));
+            // TODO: parse op dot in form a.(+)   a.(..)
+        }
+
+        if ((current.type == TokenType.ident || current.type == TokenType.op) && !isBase16)
+        {
+            auto txt = current.text;
+            nextTok();
+            auto dot = newExp!ExpDot(operand1.tokens[0].index, parent, operand1, newExp!ExpIdent(current.index - 1, parent, txt));
             // parent of exp ident should be value scope of operand 1, but oprerand1 is of arbitrary expression ...
-            nextNonWhiteTok();
             return dot;
         }
 
         if (nInt && (current.type == TokenType.num || (isBase16 && (current.type == TokenType.ident || current.text == "#"))))
         {
-            auto f = newExp!ValueFloat(current.index, parent, 0);
-            immutable s = current.text.replace("_", "");
+            auto txt = current.text;
+            nextTok();
+            auto f = newExp!ValueFloat(operand1.tokens[0].index, parent, 0);
+            immutable s = txt.replace("_", "");
             auto nDecimal = (s[0] == '#' || isBase16) ? s[(s[0] == '#' ? 1 : 0) .. $].to!long(16) : s.to!long();
+            if (s[0] == '#')
+                vctx.remark(textRemark("# in decimal part is unnecessary"));
             auto nTxt = nInt.value.to!string() ~ '.' ~ nDecimal.to!string();
             real n = nTxt.to!real();
-            f.value = n;        
-            nextTok();
+            f.value = n; 
             return f;
         }
 
         vctx.remark(textRemark("second operand must be identifier"));
-        return newExp!ExpDot(tokenStartIndex, parent, operand1, newExp!ExpIdent(tokenStartIndex, parent, "<missing identifier>"d));
+        return newExp!ExpDot(operand1.tokens[0].index, parent, operand1, 
+                             newExp!ExpIdent(operand1.tokens[0].index, parent, "<missing identifier>"d));
     }
 
 
@@ -353,7 +385,7 @@ final class Parser
     {
         auto op = newExp!ExpIdent(tokenStartIndex, parent, current.text);
         nextNonWhiteTok();
-        auto operand2 = parse(current.index, parent);
+        auto operand2 = parse(parent);
 
         if (!operand2)
         {
@@ -369,7 +401,7 @@ final class Parser
     Exp parseVar (size_t tokenStartIndex, ValueScope parent)
     {
         nextTok();
-        auto e = parse (tokenStartIndex, parent);
+        auto e = parse (parent);
         auto a = cast(ExpAssign)e;
         if (a)
             return a;
@@ -383,7 +415,7 @@ final class Parser
     {
         auto i = newExp!ExpIf(tokenStartIndex, parent);
         nextNonWhiteTok();
-        i.when = parse(current.index, parent);
+        i.when = parse(parent);
 
         if (!i.when)
         {
@@ -401,7 +433,7 @@ final class Parser
             nextNonWhiteTok();
 
             while (toks.length && current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
-                i.then ~= parse(current.index, parent);
+                i.then ~= parse(parent);
 
             if (!i.then.length)
             {
@@ -415,7 +447,7 @@ final class Parser
             nextNonWhiteTok();
 
             while (toks.length && current.type != TokenType.keyEnd)
-                i.otherwise ~= parse(current.index, parent);
+                i.otherwise ~= parse(parent);
 
             if (!i.otherwise.length)
             {
@@ -496,7 +528,7 @@ final class Parser
     StmReturn parserReturn (size_t tokenStartIndex, ValueScope parent)
     {
         nextNonWhiteTokOnSameLine();
-        return newExp!StmReturn(tokenStartIndex, parent, (toks.length && current.type != TokenType.newLine) ? parse(current.index, parent) : null);
+        return newExp!StmReturn(tokenStartIndex, parent, (toks.length && current.type != TokenType.newLine) ? parse(parent) : null);
     }
 
 
@@ -561,25 +593,25 @@ final class Parser
     }
 
 
-    Exp parseIdentOrAssign (size_t tokenStartIndex, ValueScope parent)
+    Exp parseIdentOrAssign (ValueScope parent)
     {
-        auto e = newExp!ExpIdent(tokenStartIndex, parent, current.text);
-        nextNonWhiteTok();
+        auto e = newExp1!ExpIdent(parent, current.text);
         ExpAssign d;
 
+        nextNonWhiteTok();
         if (current.type == TokenType.asType)
         {
-            d = newExp!ExpAssign(current.index, parent, e, null);
+            d = newExp1!ExpAssign(parent, e, null);
             nextNonWhiteTok();
-            d.type = parse(current.index, parent);
+            d.type = parse(parent);
         }
 
         if (current.type == TokenType.assign)
         {
             if (!d)
-                d = newExp!ExpAssign(current.index, parent, e, null);
+                d = newExp1!ExpAssign(parent, e, null);
             nextTok();
-            d.expValue = parse(current.index, parent);
+            d.expValue = parse(parent);
             d.value = d.expValue;
         }
 
