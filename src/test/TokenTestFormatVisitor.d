@@ -39,6 +39,17 @@ import syntax.ast;
     }
 
 
+    dstring visit (ExpIf i)
+    {
+        auto s = i.tokensText ~ "|" ~ i.when.str(this) ~ i.then.map!(e => e.str(this))().join();
+        
+        if (i.otherwise)
+            s ~= i.otherwise.map!(e => e.str(this))().join();
+
+        return s;
+    }
+
+
     const dstring visit (ExpIdent i) { return i.tokensText ~ "|"; }
 
     dstring visit (StmLabel e) { return e.tokensText ~ (e.label ? e.label : "") ~ "|"; }
@@ -50,8 +61,6 @@ import syntax.ast;
     const dstring visit (ValueChar e) { return e.tokensText ~ "|"; }
 
     const dstring visit (ValueArray e) { return e.tokensText ~ "|"; }
-
-    const dstring visit (ExpIf e) { return e.tokensText ~ "|"; }
 
     const dstring visit (StmGoto e) { return e.tokensText ~ (e.label ? e.label : "") ~ "|"; }
 

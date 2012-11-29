@@ -1,2 +1,1 @@
-goto b
-label a
+if a b else c end

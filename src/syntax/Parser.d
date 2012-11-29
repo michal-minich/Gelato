@@ -178,18 +178,18 @@ final class Parser
             case TokenType.braceEnd: handleBraceEnd(); goto next;
 
             case TokenType.keyIf: exp = parseIf(tokenStartIndex, parent); break;
-            case TokenType.keyThen: handleThen(); return newExp!ValueUnknown(tokenStartIndex, parent);
-            case TokenType.keyElse: handleElse(); return newExp!ValueUnknown(tokenStartIndex, parent);
-            case TokenType.keyEnd: handleEnd(); return newExp!ValueUnknown(tokenStartIndex, parent);
+            case TokenType.keyThen: return parseThen(parent);
+            case TokenType.keyElse: return parseElse(parent);
+            case TokenType.keyEnd: return parseEnd(parent);
 
-            case TokenType.keyFn: exp = parserFn(tokenStartIndex, parent); break;
-            case TokenType.keyReturn: exp = parserReturn(tokenStartIndex, parent); break;
+            case TokenType.keyFn: exp = parseFn(tokenStartIndex, parent); break;
+            case TokenType.keyReturn: exp = parseReturn(tokenStartIndex, parent); break;
 
-            case TokenType.keyGoto: exp = parserGoto(parent); break;
-            case TokenType.keyLabel: exp = parserLabel(parent); break;
+            case TokenType.keyGoto: exp = parseGoto(parent); break;
+            case TokenType.keyLabel: exp = parseLabel(parent); break;
 
             case TokenType.keyStruct: exp = parseStruct(tokenStartIndex, parent); break;
-            //case TokenType.keyThrow: exp = parserThrow(tokenStartIndex, parent); break;
+            //case TokenType.keyThrow: exp = parseThrow(tokenStartIndex, parent); break;
             case TokenType.keyVar: exp = parseVar(tokenStartIndex, parent); break;
 
             case TokenType.unknown: exp = parseUnknown(parent); break;
@@ -413,19 +413,33 @@ final class Parser
 
     ExpIf parseIf (size_t tokenStartIndex, ValueScope parent)
     {
-        auto i = newExp!ExpIf(tokenStartIndex, parent);
-        nextNonWhiteTok();
-        i.when = parse(parent);
+        auto start = current.index;
 
-        if (!i.when)
+        nextNonWhiteTok();
+        Exp when;
+        while (true)
         {
-            i.when = newExp!ValueUnknown(tokenStartIndex, parent);
-            vctx.remark(textRemark("missing test expression after if"));
+            if (current.type == TokenType.keyThen || current.type == TokenType.keyElse ||
+                current.type == TokenType.keyEnd)
+            {
+                if (!when)
+                {
+                    when = new ValueUnknown(parent);
+                    vctx.remark(textRemark("missing test expression after if"));
+                }
+                break;
+            }
+
+            auto w = parse(parent);
+            if (!when)
+                when = w;
         }
 
+
+        Exp[] then;
         if (current.type != TokenType.keyThen)
         {
-            i.then ~= newExp!ValueUnknown(tokenStartIndex, parent);
+            then ~= new ValueUnknown(parent);
             vctx.remark(textRemark("missing 'then' after if"));
         }
         else
@@ -433,54 +447,66 @@ final class Parser
             nextNonWhiteTok();
 
             while (toks.length && current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
-                i.then ~= parse(parent);
+                then ~= parse(parent);
 
-            if (!i.then.length)
+            if (!then.length)
             {
-                i.then ~= newExp!ValueUnknown(tokenStartIndex, parent);
+                then ~= new ValueUnknown(parent);
                 vctx.remark(textRemark("missing expression after then"));
             }
         }
 
+        Exp[] otherwise;
         if (current.type == TokenType.keyElse)
         {
             nextNonWhiteTok();
 
             while (toks.length && current.type != TokenType.keyEnd)
-                i.otherwise ~= parse(parent);
-
-            if (!i.otherwise.length)
+                otherwise ~= parse(parent); 
+            if (!otherwise.length)
             {
-                i.otherwise ~= newExp!ValueUnknown(tokenStartIndex, parent);
+                otherwise ~= new ValueUnknown(parent);
                 vctx.remark(textRemark("missing expression after else"));
             }
         }
-        
+
         if (!toks.length)
             vctx.remark(textRemark("if without 'end'"));
+        else
+            nextTok();
 
-        nextNonWhiteTok();
+        auto i = newExp2!ExpIf(start, current.index, parent);
+        i.when = when;
+        i.then = then;
+        i.otherwise = otherwise;
         return i;
     }
 
 
-    void handleThen ()
+    ValueUnknown parseThen (ValueScope parent)
     {
+        auto t = newExp1!ValueUnknown(parent);
         nextTok();
         vctx.remark(textRemark("'then' after 'if'"));
+        return t;
     }
 
 
-    void handleElse ()
+    ValueUnknown parseElse (ValueScope parent)
     {
+        auto e = newExp1!ValueUnknown(parent);
         nextTok();
         vctx.remark(textRemark("'else' after 'if'"));
+        return e;
     }
 
 
-    void handleEnd ()
+    ValueUnknown parseEnd (ValueScope parent)
     {
+        auto e = newExp1!ValueUnknown(parent);
+        nextTok();
         vctx.remark(textRemark("'end' after 'if'"));
+        return e;
     }
 
 
@@ -493,7 +519,7 @@ final class Parser
     }
 
 
-    Exp parserFn (size_t tokenStartIndex, ValueScope parent)
+    Exp parseFn (size_t tokenStartIndex, ValueScope parent)
     {
         auto f = newExp!ValueFn(tokenStartIndex, parent);
         nextNonWhiteTok();
@@ -525,26 +551,26 @@ final class Parser
     }
 
 
-    StmReturn parserReturn (size_t tokenStartIndex, ValueScope parent)
+    StmReturn parseReturn (size_t tokenStartIndex, ValueScope parent)
     {
         nextNonWhiteTokOnSameLine();
         return newExp!StmReturn(tokenStartIndex, parent, (toks.length && current.type != TokenType.newLine) ? parse(parent) : null);
     }
 
 
-    StmGoto parserGoto (ValueScope parent)
+    StmGoto parseGoto (ValueScope parent)
     {
-        return parserLabelGoto!StmGoto(parent);
+        return parseLabelGoto!StmGoto(parent);
     }
 
 
-    StmLabel parserLabel (ValueScope parent)
+    StmLabel parseLabel (ValueScope parent)
     {
-        return parserLabelGoto!StmLabel(parent);
+        return parseLabelGoto!StmLabel(parent);
     }
 
 
-    LabelGoto parserLabelGoto (alias LabelGoto) (ValueScope parent)
+    LabelGoto parseLabelGoto (alias LabelGoto) (ValueScope parent)
     {
         auto start = current.index;
         nextNonWhiteTokOnSameLine();
