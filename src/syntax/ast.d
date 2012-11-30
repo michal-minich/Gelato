@@ -134,13 +134,18 @@ abstract class Exp
     }
 
 
-    @trusted const pure @property tokensText ()
+    @trusted const pure @property size_t tokensTextLength ()
     {
         size_t l;
         foreach (t; tokens)
             l += t.text.length;
+        return l;
+    }
 
-        auto s = new dchar[l];
+
+    @trusted const pure @property dstring tokensText ()
+    {
+        auto s = new dchar[tokensTextLength];
         size_t rl;
         foreach (t; tokens)
         {

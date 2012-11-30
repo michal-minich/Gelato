@@ -2,7 +2,7 @@
 
 
 import std.stdio, std.algorithm, std.conv, std.path;
-import common, settings, syntax.Formatter, program;
+import common, settings, syntax.Formatter, program, interpret.ConsoleInterpreterContext;
 
 
 int main (string[] args)

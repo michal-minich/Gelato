@@ -5,7 +5,7 @@ import std.stdio, std.algorithm, std.string, std.array, std.conv, std.file, std.
 import std.file : readText, exists, isFile;
 import common, settings, syntax.Formatter, validate.remarks, syntax.SyntaxValidator,
     syntax.Tokenizer, syntax.Parser, syntax.ast, interpret.Interpreter, interpret.preparer,
-    validate.TypeInferer, interpret.declrfinder, interpret.builtins;
+    validate.TypeInferer, interpret.declrfinder, interpret.builtins, interpret.ConsoleInterpreterContext;
 
 
 final class Program
@@ -324,60 +324,4 @@ static Program parseCmdArgs (string[] args)
         return null;
 
     return new Program(filePaths, runTests);
-}
-
-
-final class ConsoleInterpreterContext : IInterpreterContext
-{
-    private
-    {
-        uint remarkCounter;
-        bool hasBlockerField;
-        Exp[] exs;
-        Interpreter evaluator;
-    }
-
-
-    Exp eval (Exp e) { return e.eval(evaluator); }
-
-    void print (dstring str) { write (str); }
-
-    void println () { writeln (); }
-
-    void println (dstring str) { writeln (str); }
-
-    dstring readln () { return std.stdio.readln().idup.to!dstring(); }
-
-    @property bool hasBlocker () { return hasBlockerField; }
-
-    @property Exp[] exceptions () { return exs; }
-
-
-    @trusted void remark (Remark remark)
-    {
-        auto svr = remark.severity;
-
-        if (svr == RemarkSeverity.blocker)
-            hasBlockerField = true;
-
-        std.stdio.write (++remarkCounter, "\t", svr, "\t", remark.text);
-
-        if (remark.subject)
-            std.stdio.write ("\t", remark.subject.tokensText);
-
-        writeln();
-    }
-
-    nothrow void except (dstring ex)
-    {
-        try
-        {
-            exs ~= new ValueText(null, ex);
-            return writeln("exception\t", ex);
-        }
-        catch (Exception ex)
-        {
-            assert (false, ex.msg);
-        }
-    }
 }

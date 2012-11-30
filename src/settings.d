@@ -13,7 +13,7 @@ final class LoadSettingsValidationContext : IValidationContext
 
     void remark (Remark remark)
     {
-        if (remark.code == "MissingStartFunction")
+        if (remark.name == "MissingStartFunction")
             return;
 
         base.remark(remark);

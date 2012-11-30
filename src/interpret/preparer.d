@@ -68,9 +68,9 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.declr
             if (!gt.label || gt.label != l.label)
             {
                 if (l.label)
-                    vctx.remark(textRemark("goto will go to last label in function", l));
+                    vctx.remark(textRemark(l, "goto will go to last label in function"));
                 else
-                    vctx.remark(textRemark("goto will go to first unnamed label", l));
+                    vctx.remark(textRemark(l, "goto will go to first unnamed label"));
             }
         }
         else

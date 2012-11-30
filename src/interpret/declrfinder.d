@@ -73,7 +73,7 @@ final class DeclrFinder : IAstVisitor!(void)
             }
             else
             {
-                context.remark(textRemark("identifier " ~ m.text ~ " is not defined"));
+                context.remark(textRemark(m, "identifier " ~ m.text ~ " is not defined"));
                 m.declaredBy = new ExpAssign(null, m, new ValueUnknown(m.parent, m));
             }
         }
@@ -81,7 +81,7 @@ final class DeclrFinder : IAstVisitor!(void)
         if (!env.parent)
             foreach (d; env.unused)
                 if (!d.usedBy)
-                    context.remark(textRemark("declaration " ~ d.slot.str(fv) ~ " is not used"));
+                    context.remark(textRemark(d, "declaration " ~ d.slot.str(fv) ~ " is not used"));
 
         finalize();
     }

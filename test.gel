@@ -1,9 +1,11 @@
+q1 = 03
+cons = fn (h, t) { struct { head = h, tail = t } () }
+q2 = 4
 start = fn ()
 {
-	S = struct { B = struct { c = 2 }, b = B()}
-	s = S()
-	x = s.b.c
-	return x
+    qq = 03
+    c = cons(1, cons(2, 3))
+    c2 = c.tail
+    --x = c2.head 
+    return 1
 }
-
-

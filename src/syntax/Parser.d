@@ -96,10 +96,10 @@ final class Parser
         sepPassed = sepLine > 0 || sepComa > 0;
 
         if (sepComa > 1)
-            vctx.remark(textRemark("repeated coma"));
+            vctx.remark(textRemark(null, "repeated coma"));
 
         else if (sepComa == 1 && sepLine > 0)
-            vctx.remark(textRemark("coma is optional when new line is used"));
+            vctx.remark(textRemark(null, "coma is optional when new line is used"));
     }
 
 
@@ -248,8 +248,8 @@ final class Parser
 
     void handleBraceEnd ()
     {
+        vctx.remark(textRemark(current, "redundant close brace"));
         nextTok();
-        vctx.remark(textRemark("redundant close brace"));
     }
 
 
@@ -262,7 +262,7 @@ final class Parser
         {
             auto exps = parseBracedExpList(parent);
             if (exps.length > 1)
-                vctx.remark(textRemark("only one exp can be braced ()"));
+                vctx.remark(textRemark(exps[1], "only one exp can be braced ()"));
             return exps[0];
         }
         else if (current.text[0] == '[')
@@ -274,7 +274,7 @@ final class Parser
         }
         else
         {
-            vctx.remark(textRemark("unsupported brace op apply"));
+            vctx.remark(textRemark(current, "unsupported brace op apply"));
             return new ValueUnknown(parent);
         }
     }
@@ -282,7 +282,7 @@ final class Parser
 
     Exp[] parseBracedExpList (ValueScope parent)
     {
-        immutable start = current.index;
+        immutable start = current;
         braceStack.push(current.text[0]);
 
         Exp[] list;
@@ -295,19 +295,19 @@ final class Parser
                 if (current.text == opposite)
                     break;
 
-                vctx.remark(textRemark("closing brace has no matching beginning brace"));
+                vctx.remark(textRemark(current, "closing brace has no matching beginning brace"));
                 nextTok();
                 continue;
             }
 
             if (!toks.length)
             {
-                vctx.remark(textRemark("reached end of file and close brace not found"));
+                vctx.remark(textRemark(start, "reached end of file and close brace not found"));
                 return list;
             }
 
             if (list.length && !sepPassed)
-                vctx.remark(textRemark("missing comma or new line to separate expressions"));
+                vctx.remark(textRemark(current, "missing comma or new line to separate expressions"));
 
             auto e = parse(parent);
             list ~= e;
@@ -359,14 +359,14 @@ final class Parser
             immutable s = txt.replace("_", "");
             auto nDecimal = (s[0] == '#' || isBase16) ? s[(s[0] == '#' ? 1 : 0) .. $].to!long(16) : s.to!long();
             if (s[0] == '#')
-                vctx.remark(textRemark("# in decimal part is unnecessary"));
+                vctx.remark(textRemark(f, "# in decimal part is unnecessary"));
             auto nTxt = nInt.value.to!string() ~ '.' ~ nDecimal.to!string();
             real n = nTxt.to!real();
             f.value = n; 
             return f;
         }
 
-        vctx.remark(textRemark("second operand must be identifier"));
+        vctx.remark(textRemark(current, "second operand must be identifier"));
         return newExp!ExpDot(operand1.tokens[0].index, parent, operand1, 
                              newExp!ExpIdent(operand1.tokens[0].index, parent, "<missing identifier>"d));
     }
@@ -388,7 +388,7 @@ final class Parser
 
         if (!operand2)
         {
-            vctx.remark(textRemark("second operand is missing"));
+            vctx.remark(textRemark(null, "second operand is missing"));
             operand2 = new ValueUnknown(parent);
         }
 
@@ -405,7 +405,7 @@ final class Parser
         if (a)
             return a;
 
-        vctx.remark(textRemark("var can be only used before declaration"));
+        vctx.remark(textRemark(e, "var can be only used before declaration"));
         return e;
     }
 

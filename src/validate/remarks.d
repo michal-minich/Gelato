@@ -6,10 +6,13 @@ import common, syntax.ast;
 
 class Remark
 {
-    immutable dstring code;
+    immutable dstring name;
     Exp subject;
+    Token token;
 
-    @safe pure nothrow this (dstring c, Exp s) { code = c; subject = s; }
+    @safe pure nothrow this (dstring n, Exp s) { name = n; subject = s; }
+
+    @safe pure nothrow this (dstring n, Token t) { name = n; token = t; }
 
     @property const RemarkSeverity severity () { return sett.remarkLevel.severityOf(this); }
 
@@ -66,7 +69,7 @@ final class RemarkLevel : IRemarkLevel
 
     RemarkSeverity severityOf (const Remark remark)
     {
-        if (auto v = remark.code in values)
+        if (auto v = remark.name in values)
             return *v;
 
         else return RemarkSeverity.none;
@@ -97,7 +100,7 @@ final class NoRemarkTranslation : IRemarkTranslation
 {
     dstring textOf (const Remark remark)
     {
-        return remark.code;
+        return remark.name;
     }
 }
 
@@ -112,7 +115,7 @@ final class RemarkTranslation : IRemarkTranslation
 
     dstring textOf (const Remark remark)
     {
-        immutable key = remark.code;
+        immutable key = remark.name;
 
         if (auto v = key in values)
             return *v;
@@ -123,7 +126,7 @@ final class RemarkTranslation : IRemarkTranslation
         if (inherited)
             return inherited.textOf (remark);
 
-        return "[" ~ to!dstring(remark.code) ~ "]";
+        return "[" ~ to!dstring(remark.name) ~ "]";
     }
 
 
@@ -168,6 +171,21 @@ final class RemarkTranslation : IRemarkTranslation
 @safe nothrow:
 
 
+dstring remarkSeverityText (RemarkSeverity s)
+{
+    final switch (s)
+    {
+        case RemarkSeverity.none: return "None";
+        case RemarkSeverity.notice: return "Notice";
+        case RemarkSeverity.hint: return "Hint";
+        case RemarkSeverity.suggestion: return "Suggestion";
+        case RemarkSeverity.warning: return "Warning";
+        case RemarkSeverity.error: return "Error";
+        case RemarkSeverity.blocker: return "Blocker";
+    }
+}
+
+
 private mixin template r (string name)
 {
     mixin ("Remark " ~ name ~ " (Exp subject) { return new Remark (\""
@@ -181,9 +199,21 @@ private mixin template gr (string name)
 }
 
 
-Remark textRemark(dstring text, Exp subject = null)
+Remark textRemark(Exp subject, dstring text)
 {
     return new Remark (text, subject);
+}
+
+
+Remark textRemark(Token subject, dstring text)
+{
+    return new Remark (text, subject);
+}
+
+
+Remark textRemark(dstring text)
+{
+    return new Remark (text, null);
 }
 
 
