@@ -71,7 +71,7 @@ final class Program
         if (!files.length)
         {
             parseAndValidateDataAll(context);
-            //findDeclarations(context, prog);
+            findDeclarations(context, prog);
         }
 
         if (!prog.exps.length)
@@ -81,13 +81,27 @@ final class Program
             context.remark(textRemark("more starts functions"));
 
         
-        //debug context.println("EVALUATE");
-        //auto res = context.eval(starts[0]);
+        debug context.println("EVALUATE");
 
-        //debug if (res) context.println("RESULT: " ~ res.str(fv));
+        auto fn = cast(ValueFn)starts[0].value;
+        Exp start;
+        if (fn)
+        {
+            auto i = new ExpIdent(fn.parent, "start");
+            i.declaredBy = starts[0];
+            start = new ExpFnApply(fn.parent, i, null);
+        }
+        else
+        {
+            start = starts[0].value;
+        }
 
-        //return res;
-        return null;
+        auto res = context.eval(start);
+
+        debug if (res) context.println("RESULT: " ~ res.str(fv));
+
+        return res;
+        //return null;
     }
 
 
@@ -128,7 +142,7 @@ final class Program
         debug context.println("TOKENIZE");
         auto toks =  (new Tokenizer(fileData)).tokenize();
 
-        debug foreach (t; toks) context.println(t.toDebugString());
+        //debug foreach (t; toks) context.println(t.toDebugString());
 
         debug context.println("PARSE");
         auto par = new Parser(context, toks);
@@ -137,9 +151,9 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
-        auto ttfv = new test.TokenTestFormatVisitor.TokenTestFormatVisitor;
-        foreach (e; astFile.exps)
-            context.println(e.str(fv) ~ "\t\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
+        //auto ttfv = new test.TokenTestFormatVisitor.TokenTestFormatVisitor;
+        //foreach (e; astFile.exps)
+        //    context.println(e.str(fv) ~ "\t\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
 
         //debug context.println(astFile.str(fv));
 
@@ -324,7 +338,7 @@ final class ConsoleInterpreterContext : IInterpreterContext
     }
 
 
-    Exp eval (Exp exp) { return exp.eval(evaluator); }
+    Exp eval (Exp e) { return e.eval(evaluator); }
 
     void print (dstring str) { write (str); }
 

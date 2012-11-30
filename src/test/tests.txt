@@ -60,7 +60,7 @@
 "4"			"a = b = c = d = 4"
 "44"		"(a = (b = (c = (d = (44)))))"
 
---"1"			" start = 1 "						| start = 1 | start |1 |
+"1"			"start = 1"						|start = 1|start|1|
 "\0"		"start = fn () { }"
 "1"			"start = fn () { 1 }"
 "1"			"start = fn () { return 1 }"

@@ -61,6 +61,7 @@ bool doTest (string filePath)
         }
         auto thisFailed = false;
         auto context = new TestInterpreterContext;
+        context.evaluator = new Interpreter(context);
         auto fullCode = testPrefix ~ code;
         auto tokenFailed = false;
         dstring tokensParsed;
@@ -93,7 +94,7 @@ bool doTest (string filePath)
                 else
                 {
                     tokensExpected = '|' ~ fullCode ~ '|';
-                    tokensParsed ='|' ~ p.prog.exps[0].tokensText ~ '|';
+                    tokensParsed ='|' ~ (cast(ExpAssign)p.prog.exps[0]).value.tokensText ~ '|';
                 }
 
                 ++testsFailed;

@@ -15,11 +15,14 @@
 (#5).(#6)
 
 
-if a then b else c end
-label d
-goto e
-var f
-fn () { return 1 }
+(return (a))
+(var (a))
+(label (b)
+(goto (c))
+(fn (((a)) ( { (b) } )))
+(struct ( { (c) } ))
+(((if) (a)) ((then) (b)) ((else) (c) (end)))
+
 
 
 start = fn ()
@@ -49,11 +52,18 @@ start = fn ()
 	end
 }
 
+fac = fn (n)
+{
+	if n == 0 
+    then 1
+    else n * fac (n - 1) end
+}
+
 start = fn ()
 {
 	adder = fn (a) { fn (b) { a + b } }
-	a1 = adder (10)
-	print (a1(1))
+	ad = adder (10)
+	print (ad(1))
 }
 
 start = fn ()

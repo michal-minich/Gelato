@@ -1,1 +1,9 @@
-if a b else c end
+start = fn ()
+{
+	S = struct { B = struct { c = 2 }, b = B()}
+	s = S()
+	x = s.b.c
+	return x
+}
+
+

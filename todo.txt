@@ -7,15 +7,22 @@ TOKENIZER -----------------------------
   allow unicode oprators as an option "option uniop"
 
 PARSER -----------------------------
-! tokens text
-! decimal exponent (hex and dec)
+! parse comments
+! braces
+  ! allow braces everywhere
+  ! parse op dot in form a.(+)  a.(..)
+  ! how to parse 3.(14)   (3).14   (3).(14)   3.(m)   (3).m   (r).(m)  ? (also for hex nums)
+  ! remark redundant brace as in "(a)"
+  ! wrong braces ( a, ] b, [ c )  - also mind coma
+! test for braces
 ! fix parse op crash "+ a"
-! parse op dot in form a.(+)  a.(..)
-! how to parse 3.(14)   (3).14   (3).(14)   3.(m)   (3).m   (r).(m)  ? (also for hex nums)
-! wrong braces ( a, ] b, [ c )  - also mind coma
+! fix crash when calling parseBracedExpList when current token is not brace
+! parse : and = as sequence in parse fn after main parse
+! decimal exponent (hex and dec)
 ! cancel unclosed text on first line
 ! when code text ends with single quote, is it char/text/error ?
-! remark redundant brace as in "(a)"
+! better recovery parsing of incorrect code
+    if w t e  |  if w ignore then t e  |  if w then t ignore else e  |  if w then t e ...
   documentation comments
   nested comment
   custom brace op apply
@@ -26,7 +33,6 @@ SYNTAX VALIDATOR -----------------------------
   indentation level
 
 PREPARER -----------------------------
-! op dot priority (allow for a.b.c)
 ! remark multiply defined variables
 ! remark unused fn parameters
 ! mutable variables - allow only var as mutable
@@ -36,6 +42,7 @@ PREPARER -----------------------------
   tail call
 
 TYPE INFERENCE / CHECK -----------------------------
+! stuct instance and type have the same type
 ! infer named struct by name not structure
 ! static if does not introduce scope, normal if yes
 ! multi statement static if - eval test to know which declaration to use 
@@ -58,7 +65,6 @@ INTERPRETER -----------------------------
 ! import names form scope to scope (also selective) - import std (id, second), module2
 ! import all modules by default
 ! public attribute
-! goto from and inside if/then/else
 ! built-ins with qualified name (also overridable)
 ! variable length fn params
 ! array operations (empty, first, rest)

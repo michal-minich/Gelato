@@ -281,6 +281,12 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
   <filesToClean>*.obj;*.cmd;*.build;*.json;*.dep</filesToClean>
  </Config>
  <Folder name="Gelato">
+  <Folder name="interpert">
+   <File path="src\interpret\builtins.d" />
+   <File path="src\interpret\declrfinder.d" />
+   <File path="src\interpret\Interpreter.d" />
+   <File path="src\interpret\preparer.d" />
+  </Folder>
   <Folder name="syntax">
    <File path="src\syntax\ast.d" />
    <File path="src\syntax\Formatter.d" />
@@ -295,15 +301,9 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
    <File path="src\test\tests.txt" />
    <File path="src\test\TokenTestFormatVisitor.d" />
   </Folder>
-  <Folder name="interpert">
-   <File path="src\interpret\builtins.d" />
-   <File path="src\interpret\declrfinder.d" />
-   <File path="src\interpret\Interpreter.d" />
-   <File path="src\interpret\preparer.d" />
-  </Folder>
   <Folder name="validate">
-   <File path="src\validate\TypeInferer.d" />
    <File path="src\validate\remarks.d" />
+   <File path="src\validate\TypeInferer.d" />
   </Folder>
   <File path="src\common.d" />
   <File path="src\main.d" />

@@ -1,12 +1,13 @@
 module test.TestInterpreterContext;
 
 
-import common, validate.remarks, syntax.ast;
+import common, validate.remarks, syntax.ast, interpret.Interpreter;
 
 
 final class TestInterpreterContext : IInterpreterContext
 {
     Remark[] remarks;
+    Interpreter evaluator;
 
     private
     {
@@ -15,8 +16,7 @@ final class TestInterpreterContext : IInterpreterContext
         Exp[] exs;
     }
 
-
-    Exp eval (Exp) { assert (false, "eval from TestInterpreterContext"); }
+    Exp eval (Exp e) { return e.eval(evaluator); }
 
     void print (dstring str) { }
 
@@ -41,7 +41,8 @@ final class TestInterpreterContext : IInterpreterContext
         if (svr == RemarkSeverity.blocker)
             hasBlockerField = true;
 
-        remarks ~= remark;
+        // remarks temporarily disabled
+        //remarks ~= remark;
     }
 
     void except (dstring ex)

@@ -243,7 +243,10 @@ final class TypeInferer : IAstVisitor!(Exp)
 
     @trusted Exp visit (ExpDot dot)
     {
-        dot.record.infer(this);
+        if (dot.infType)
+            return dot.infType;
+
+        dot.record.infType = dot.record.infer(this);
 
         auto st = cast(TypeStruct)dot.record.infType;
 
@@ -261,6 +264,7 @@ final class TypeInferer : IAstVisitor!(Exp)
                 dot.member.declaredBy = a;
                 a.usedBy ~= dot.member;
                 dot.member.infType = i.infer(this);
+                dot.infType = i.infType;
                 return i.infType;
             }
         }

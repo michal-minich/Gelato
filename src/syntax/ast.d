@@ -111,7 +111,7 @@ alias IAstVisitor!(dstring) IFormatVisitor;
 mixin template visitImpl ()
 {
     override dstring str       (IFormatVisitor v)       { return v.visit(this); }
-    override Exp     eval      (Interpreter v)            { return v.visit(this); }
+    override Exp     eval      (Interpreter v)          { return v.visit(this); }
     override void    prepare   (PreparerForEvaluator v) {        v.visit(this); }
     override void    validate  (SyntaxValidator v)      {        v.visit(this); }
     override Exp     infer     (TypeInferer v)          { return v.visit(this); }

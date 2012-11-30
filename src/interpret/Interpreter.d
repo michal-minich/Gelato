@@ -13,7 +13,7 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
         IInterpreterContext context;
         PreparerForEvaluator prep;
         Closure currentClosure;
-        uint gotoIndex;
+        long gotoIndex = -1;
     }
 
 
@@ -21,16 +21,6 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
     {
         context = icontext;
         prep = new PreparerForEvaluator(icontext);
-    }
-
-
-    @trusted Exp eval (ExpAssign start)
-    {
-        auto fn = cast(ValueFn)start.value;
-        if (fn) 
-            return evalLambda(new Closure(fn, null, fn.params));
-        else
-            return start.value.eval(this);
     }
 
 
@@ -45,10 +35,18 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
             currentClosure = lambda;
             lastExp = exps[expIndex];
             e = lastExp.eval(this);
-            if (gotoIndex)
+            if (gotoIndex == typeof(gotoIndex).max)
             {
-                expIndex = gotoIndex;
-                gotoIndex = 0;
+                gotoIndex = -1;
+                return e;
+            }
+            else if (gotoIndex != -1)
+            {
+                if (exps[expIndex].parent !is lambda.parent)
+                    return null;
+
+                expIndex = cast(uint)gotoIndex;
+                gotoIndex = -1;
             }
             ++expIndex;
         }
@@ -200,7 +198,7 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
     @trusted Exp visit (StmReturn ret)
     {
         auto r = ret.exp.eval(this);
-        gotoIndex = cast(uint)currentClosure.parent.exps.length;
+        gotoIndex = typeof(gotoIndex).max;
         return r;
     }
 

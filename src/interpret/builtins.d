@@ -23,6 +23,8 @@ ValueBuiltinFn[dstring] builtinFns;
        ,"=="      : new ValueBuiltinFn(&eq, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeInt.single))
        ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeInt.single))
        ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn(null, [TypeInt.single, TypeInt.single], TypeInt.single))
+       ,"-"       : new ValueBuiltinFn(&minusNum, new TypeFn(null, [TypeInt.single, TypeInt.single], TypeInt.single))
+       ,"*"       : new ValueBuiltinFn(&multiplyNum, new TypeFn(null, [TypeInt.single, TypeInt.single], TypeInt.single))
        ,"["       : new ValueBuiltinFn(&array, new TypeFn(null, [TypeAny.single], new TypeArray(null, null)))
        ,"!"       : new ValueBuiltinFn(&arrayIndex, new TypeFn(null, [TypeAny.single],TypeAny.single))
        ,"++"      : new ValueBuiltinFn(&arrayConcat, new TypeFn(null, [TypeAny.single],TypeAny.single))
@@ -102,6 +104,22 @@ Exp plusNum (IInterpreterContext context, Exp[] exps)
     auto a = exps[0].sureCast!ValueInt();
     auto b = exps[1].sureCast!ValueInt();
     return new ValueInt(null, a.value + b.value);
+}
+
+
+Exp minusNum (IInterpreterContext context, Exp[] exps)
+{
+    auto a = exps[0].sureCast!ValueInt();
+    auto b = exps[1].sureCast!ValueInt();
+    return new ValueInt(null, a.value - b.value);
+}
+
+
+Exp multiplyNum (IInterpreterContext context, Exp[] exps)
+{
+    auto a = exps[0].sureCast!ValueInt();
+    auto b = exps[1].sureCast!ValueInt();
+    return new ValueInt(null, a.value * b.value);
 }
 
 
