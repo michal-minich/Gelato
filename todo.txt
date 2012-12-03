@@ -7,6 +7,7 @@ TOKENIZER -----------------------------
   allow unicode oprators as an option "option uniop"
 
 PARSER -----------------------------
+! remark file origin
 ! parse comments
 ! braces
   ! allow braces everywhere
@@ -33,6 +34,7 @@ SYNTAX VALIDATOR -----------------------------
   indentation level
 
 PREPARER -----------------------------
+! hierarchical modules
 ! remark multiply defined variables
 ! remark unused fn parameters
 ! mutable variables - allow only var as mutable
@@ -112,5 +114,6 @@ expression:
   dead
 
 
-
+  fix sample here, and contribue to phobos
+  http://rosettacode.org/wiki/Find_common_directory_path#D
 

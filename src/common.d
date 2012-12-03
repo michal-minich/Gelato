@@ -16,6 +16,44 @@ Formatter fv;
 enum newLine = "\r\n";
 
 
+@safe pure string commonPath (const string[] paths, 
+                              immutable char sep = pathSeparator[0])
+{
+    enforce (paths.length);
+
+    if (paths.length == 1)
+        return paths[0];
+
+    const restPaths = paths[1 .. $];
+    size_t lenghtToSep;
+
+    foreach (ix, testCh; paths[0][0 .. shortestLength(paths)])
+    {
+        foreach (p; restPaths)
+        {
+            if (testCh == sep)
+                lenghtToSep = ix + 1;
+
+            if (testCh != p[ix])
+                goto end;
+        }
+    }
+
+end:
+    return paths[0][0 .. lenghtToSep];
+}
+
+
+size_t shortestLength (T) (T[] items)
+{
+    size_t minLength = size_t.max;
+    foreach (i; items)
+        if (i.length < minLength)
+            minLength = i.length;
+    return minLength;
+}
+
+
 @trusted debug void dbg (T) (T a, bool nl = true)
 {
     static if (is(T : Exp))
