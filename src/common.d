@@ -29,22 +29,20 @@ enum newLine = "\r\n";
 
     foreach (ix, testCh; paths[0][0 .. shortestLength(paths)])
     {
-        foreach (p; restPaths)
-        {
-            if (testCh == sep)
-                lenghtToSep = ix + 1;
+        if (testCh == sep)
+            lenghtToSep = ix + 1;
 
+        foreach (p; restPaths)
             if (testCh != p[ix])
                 goto end;
-        }
     }
 
-end:
+    end:
     return paths[0][0 .. lenghtToSep];
 }
 
 
-size_t shortestLength (T) (T[] items)
+@safe pure nothrow size_t shortestLength (T) (const T[] items)
 {
     size_t minLength = size_t.max;
     foreach (i; items)
@@ -200,7 +198,7 @@ interface IInterpreterContext : IValidationContext, IPrinterContext
 }
 
 
-void cmdError (string[] text ...)
+void cmdPrint (string[] text ...)
 {
     foreach (t; text)
         write (t);

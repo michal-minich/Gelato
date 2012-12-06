@@ -10,250 +10,179 @@ import common, settings, syntax.Formatter, validate.remarks, syntax.SyntaxValida
 
 final class Program
 {
-    string[] filePaths;
-    ValueStruct[] files;
-    private dstring fileName;
-    private dstring fileData;
-    private ExpAssign[] starts;
+    TaskSpecs taskSpecs;
     ValueStruct prog;
-    bool runTests;
 
 
-    this (string[] filePaths, bool runTests)
+    this (TaskSpecs taskSpecs)
     {
-        prog = new ValueStruct (null);
-        this.filePaths ~= filePaths;
-        //this.filePaths ~= "std.gel";
-        this.runTests = runTests;
-    }
-
-
-    this (dstring fileName, dstring fileData)
-    { 
-        prog = new ValueStruct (null);
-        this.fileName = fileName;
-        this.fileData = fileData;
+        prog = new ValueStruct(null);
+        this.taskSpecs = taskSpecs;
     }
 
 
     int runInConsole ()
     {
-        if (runTests)
-        {
-            import test.tester;
-            bool success = true;
-
-            foreach (f; filePaths)
-                if (f.endsWith(".txt"))
-                    success = success & doTest(f);
-
-            return 0;
-        }
-
         auto context = new ConsoleInterpreterContext;
         context.evaluator = new Interpreter(context);
-        auto res = run (context);
+        auto res = run(context);
 
-        if (res)
-        {
-            auto n = cast(ValueInt)res;
-            return n ? n.value.to!int() : 0;
-        }
-        else
-        {
-            return context.exceptions.length != 0;
-        }
+        if (context.exceptions)
+            return 1; // TODO some magic number here
+        
+        auto n = cast(ValueInt)res;
+        return n ? n.value.to!int() : 0;
     }
 
 
     Exp run (IInterpreterContext context)
     {
-        if (!files.length)
-        {
-            parseAndValidateDataAll(context);
-            findDeclarations(context, prog);
-        }
+        auto fileData = taskSpecs.startFileData
+            ? taskSpecs.startFileData
+            : toUTF32(readText!string(taskSpecs.startFilePath));
 
-        if (!prog.exps.length)
-            return null;
+        ExpAssign[] starts;
 
-        if (starts.length > 1)
-            context.remark(textRemark("more starts functions"));
+        parseAgainWithStartFn:
 
-        
-        debug context.println("EVALUATE");
-
-        auto fn = cast(ValueFn)starts[0].value;
-        Exp start;
-        if (fn)
-        {
-            auto i = new ExpIdent(fn.parent, "start");
-            i.declaredBy = starts[0];
-            start = new ExpFnApply(fn.parent, i, null);
-        }
-        else
-        {
-            start = starts[0].value;
-        }
-
-        auto res = context.eval(start);
-
-        debug if (res) context.println("RESULT: " ~ res.str(fv));
-
-        return res;
-        //return null;
-    }
-
-
-    
-    private void parseAndValidateDataAll (IInterpreterContext context)
-    {
-        if (fileData.length)
-        {
-            files = [prepareData(context, fileData, fileName, true)];
-
-            if (context.hasBlocker)
-            {
-                context.except("context has blocker");
-                return;
-            }
-        }
-        else if (filePaths.length)
-        {
-            files.length = 0;
-            foreach (ix, f; filePaths)
-            {
-                auto fileData = toUTF32(readText!string(f));
-                files ~= prepareData(context, fileData, f.baseName().stripExtension().to!dstring(), ix == 0);
-
-                if (context.hasBlocker)
-                {
-                    context.except("context has blocker");
-                    return;
-                }
-            }
-        }
-    }
-
-
-    private ValueStruct prepareData (IInterpreterContext context, dstring fileData, dstring fileName, bool isStartFile)
-    {  
-        debug context.println(": " ~ fileName);
-        debug context.println("TOKENIZE");
-        auto toks =  (new Tokenizer(fileData)).tokenize();
-
-        //debug foreach (t; toks) context.println(t.toDebugString());
-
-        debug context.println("PARSE");
-        auto par = new Parser(context, toks);
-        auto astFile = par.parseAll();
+        auto toks = tokenize (context, fileData, taskSpecs.startFilePath);
+        auto astFile = parse (context, toks);
 
         if (context.hasBlocker)
             return astFile;
 
-        //auto ttfv = new test.TokenTestFormatVisitor.TokenTestFormatVisitor;
-        //foreach (e; astFile.exps)
-        //    context.println(e.str(fv) ~ "\t\t" ~ '"' ~ e.str(ttfv) ~ "\"\t" ~ typeid(e).name.to!dstring());
+        auto start = findDeclr(astFile.exps, "start");
 
-        //debug context.println(astFile.str(fv));
+        if (!start)
+        {
+            fileData = "start = fn () { " ~ fileData ~ " } ";
+            goto parseAgainWithStartFn;
+        }
 
-        debug context.println("VALIDATE");
-        auto val = new SyntaxValidator(context);
-        val.visit(astFile);
-
-        if (context.hasBlocker)
-            return astFile;
-
-        debug context.println("PREPARE");
-        ExpAssign start;
-        auto m = prepareFile(context, astFile, fileName, isStartFile, /*out*/ start, prog);
         if (start)
             starts ~= start;
 
-        auto prep = new PreparerForEvaluator(context);
-        if (isStartFile)
-        {
-            auto file = cast(ValueStruct)((cast(ExpAssign)m).slot).parent;
-            file.prepare(prep);
-        }
-        else
-            m.prepare(prep);
+        immutable moduleName = taskSpecs.startFilePath.baseName().stripExtension().to!dstring();
+        auto mod = makeModule(context, astFile, moduleName, prog);
+        prepare(context, mod);
 
         if (context.hasBlocker)
-            return astFile;
+            return null;
 
-        return astFile;
-    }
-
-
-    private ValueStruct findDeclarations (IInterpreterContext context, ValueStruct astFile)
-    {  
-        debug context.println("FIND DECLARATIONS");
         initBuiltinFns();
-        auto df = new DeclrFinder(context);
-        df.visit(astFile);
+
+        findDeclarations(context);
+        
+        if (context.hasBlocker)
+            return null;
+
+        typeInfer(context);
 
         if (context.hasBlocker)
             return astFile;
 
-        debug context.println("TYPE INFER");
-        auto inf = new TypeInferer(context);
-        inf.visit(astFile);
+        if (starts.length > 1)
+        {
+            context.remark(textRemark("more starts functions"));
+            return null;
+        }
 
-        debug fv.useInferredTypes = true;
-        debug context.println(astFile.str(fv));
-
-        if (context.hasBlocker)
-            return astFile;
-
-        return astFile;
+        return eval (context, starts[0]);
     }
 
 
-    static ExpAssign prepareFile (IInterpreterContext context, ValueStruct file, dstring fileName,
-                           bool isFirstFile, out ExpAssign start, ValueStruct parent)
-    {
-        start = getStartFunction (context, file, isFirstFile);
+    private:
 
-        file.parent = parent;
-        auto fna = new ExpFnApply(parent, file, null);
-        auto i = new ExpIdent(parent, fileName);
+
+    Token[] tokenize (IInterpreterContext context, dstring fileData, string fileName)
+    {
+        debug context.println("TOKENIZE " ~ fileName.to!dstring());
+        auto toks = (new Tokenizer(fileData)).tokenize();
+        //debug foreach (t; toks) context.println(t.toDebugString());
+        return toks;
+    }
+    
+
+    ValueStruct parse (IInterpreterContext context, Token[] toks)
+    {
+        debug context.println("PARSE");
+        auto par = new Parser(context, toks);
+        return par.parseAll();
+    }
+
+
+    void validateSyntax (IInterpreterContext context, ValueStruct astFile)
+    {
+        debug context.println("VALIDATE SYNTAX");
+        auto val = new SyntaxValidator(context);
+        val.visit(astFile);
+    }
+
+
+    void prepare (IInterpreterContext context, ExpAssign a)
+    {
+        debug context.println("PREPARE");
+        auto prep = new PreparerForEvaluator(context);
+        a.prepare(prep);
+    }
+
+
+    static ExpAssign makeModule (IInterpreterContext context, ValueStruct astFile, dstring moduleName, ValueStruct parent)
+    {
+        astFile.parent = parent;
+        auto fna = new ExpFnApply(parent, astFile, null);
+        auto i = new ExpIdent(parent, moduleName);
         auto a = new ExpAssign(parent, i, fna);
         parent.exps ~= a;
         return a;
     }
 
 
-
-    static private @trusted ExpAssign getStartFunction (IInterpreterContext context, ValueStruct file,
-                                                 bool makeStartIfNotExists)
+    void findDeclarations (IInterpreterContext context)
     {
-        // todo find all starts
-        auto start = findDeclr(file.exps, "start");
-
-        if (start) 
-            return start;
-
-        if (!makeStartIfNotExists)
-            return null;
-
-        context.remark(MissingStartFunction(null));
-
-        auto i = new ExpIdent(file, "start");
-        auto a = new ExpAssign(file, i, null);
-        auto fn = new ValueFn(file);
-        fn.exps = file.exps;
-        foreach (fne; fn.exps)
-            fne.parent = fn;
-        // todo set parents recursively (it is needed to set for ExpIdent, so declfinder find their delcaration  ie incNum
-        // a = 1, print (a + 10)  -- second a has parent file, but should have parent fn
-        a.value = fn;
-        file.exps = [a];
-        return a;
+        debug context.println("FIND DECLARATIONS");
+        auto df = new DeclrFinder(context);
+        df.visit(prog);
     }
 
-    // todo find all starts
-    static private @safe ExpAssign findDeclr (Exp[] exps, dstring name)
+
+    void typeInfer (IInterpreterContext context)
+    {
+        debug context.println("TYPE INFER");
+        auto inf = new TypeInferer(context);
+        inf.visit(prog);
+        debug fv.useInferredTypes = true;
+        debug context.println(prog.str(fv));
+    }
+
+
+    Exp eval (IInterpreterContext context, ExpAssign start)
+    {
+        debug context.println("EVALUATE");
+
+        auto fn = cast(ValueFn)start.value;
+        Exp start2;
+        if (fn)
+        {
+            auto i = new ExpIdent(fn.parent, "start");
+            i.declaredBy = start;
+            start2 = new ExpFnApply(fn.parent, i, null);
+        }
+        else
+        {
+            start2 = start.value;
+        }
+
+        auto res = context.eval(start2);
+
+        debug if (res) context.println("RESULT: " ~ res.str(fv));
+
+        return res;
+    }
+
+
+    // todo find all starts deeply
+    static @safe ExpAssign findDeclr (Exp[] exps, dstring name)
     {
         foreach (e; exps)
         {
@@ -270,15 +199,46 @@ final class Program
 }
 
 
-static Program parseCmdArgs (string[] args)
+private string[] getModulePaths (string[] libFolders, string relativeFilePath)
+{
+    string[] candiates;
+    foreach (lf; libFolders)
+    {
+        auto moduleFilePath = lf ~ relativeFilePath;
+        if (moduleFilePath.exists)
+            candiates ~= moduleFilePath;
+    }
+    return candiates;
+}
+
+
+struct TaskSpecs
+{
+    TaskAction action;
+    string startFilePath;
+    dstring startFileData;
+    string[] libFolders;
+}
+
+
+
+enum TaskAction { none, tokenize, parse, validateSyntax, typeInfer, run, test }
+
+
+static TaskSpecs parseCmdArgs (string[] args)
 {
     string[] filePaths;
-    bool runTests;
     bool isError;
+
+    if (args.length == 1)
+    {
+        cmdPrint ("todo display help here");
+        return TaskSpecs();
+    }
 
     foreach (a; args[1..$])
     {
-        if (a.endsWith(".gel") || a.endsWith(".txt"))
+        if (a.endsWith(".gel") || a.endsWith(".geltest"))
         {
             immutable f = a.absolutePath().buildNormalizedPath();
             if (f.exists())
@@ -290,38 +250,46 @@ static Program parseCmdArgs (string[] args)
                 else
                 {
                     isError = true;
-                    cmdError ("Path \"", a, "\" not a file. It is folder or block device.",
+                    cmdPrint ("Path \"", a, "\" not a file. It is folder or block device.",
                               " Full path is \"", f, "\".");
                 }
             }
             else
             {
                 isError = true;
-                cmdError ("File \"", a, "\" could not be found. Full path is \"", f, "\".");
+                cmdPrint ("File \"", a, "\" could not be found. Full path is \"", f, "\".");
             }
-        }
-        else if (a == "-test")
-        {
-            runTests = true;
         }
         else
         {
             if (a[0] == '-' || a[0] == '/')
             {
                 isError = true;
-                cmdError ("Unknown command line parameter \"", a, "\".");
+                cmdPrint ("Unknown command line parameter \"", a, "\".");
             }
             else
             {
                 isError = true;
-                cmdError ("Olny \"*.gel\" files are supported as input.",
+                cmdPrint ("Only \"*.gel\" files are supported as input.",
                           " Parameters can be prefixed with \"-\", \"--\" or \"/\".");
             }
         }
     }
 
-    if (isError)
-        return null;
+    if (!filePaths)
+    {
+        isError = true;
+        cmdPrint("No files specified");
+    }
+    else if (filePaths.length > 1)
+    {
+        isError = true;
+        cmdPrint("Only one file needs to be provided (the one with start function). ",
+                 "All others are taken automatically if needed.");
+    }
 
-    return new Program(filePaths, runTests);
+    if (isError)
+        return TaskSpecs();
+
+    return TaskSpecs(TaskAction.run, filePaths[0]);
 }

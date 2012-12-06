@@ -178,20 +178,28 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
     {
         auto record = dot.record.eval(this);
 
-        auto st = cast(ValueStruct)record;
-
-        assert (!st, "struct must be constructed before accessing member (" 
-                ~ dot.member.toString() ~ ")");
+       /* ??? auto st = cast(ValueStruct)record;
+        if (!st)
+        {
+            context.except("struct must be constructed before accessing member ("
+                           ~ dot.member.str(fv) ~ ")");
+            return ValueUnknown.single;
+        }*/
 
         auto sc = cast(Closure)record;
-
-        assert (sc, "only struct can have members (" ~ dot.member.toString() ~ ")");
+        if (!sc)
+        {
+            context.except("only struct can have members (" ~ dot.member.str(fv) ~ ")");
+            return ValueUnknown.single;
+        }
         
         foreach (ix, d; sc.declarations)
             if ((cast(ExpIdent)d.slot).text == dot.member.text)
                 return sc.values[ix].eval(this);
 
-        assert (false, "struct has no member " ~ dot.member.to!string());
+                context.except("struct has no member " ~ dot.member.str(fv));
+
+        return new ValueUnknown(null, dot.member);
     }
 
 

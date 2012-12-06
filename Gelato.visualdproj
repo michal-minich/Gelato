@@ -87,6 +87,7 @@
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions>-gs</additionalOptions>
   <preBuildCommand>del $(ConfigurationName)\Gelato.exe_cv
 del $(ConfigurationName)\Gelato.map
@@ -181,6 +182,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand />
   <postBuildCommand />
@@ -273,6 +275,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
   <deffile />
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
+  <useStdLibPath>1</useStdLibPath>
   <additionalOptions />
   <preBuildCommand>del $(ConfigurationName)\Gelato.exe_cv
 del $(ConfigurationName)\Gelato.map
@@ -299,7 +302,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
    <File path="src\test\tester.d" />
    <File path="src\test\TestFormatVisitor.d" />
    <File path="src\test\TestInterpreterContext.d" />
-   <File path="src\test\tests.txt" />
+   <File path="src\test\tests.geltest" />
    <File path="src\test\TokenTestFormatVisitor.d" />
   </Folder>
   <Folder name="validate">

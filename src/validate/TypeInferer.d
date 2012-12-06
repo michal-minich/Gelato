@@ -250,7 +250,11 @@ final class TypeInferer : IAstVisitor!(Exp)
 
         auto st = cast(TypeStruct)dot.record.infType;
 
-        assert (st, "only struct can have members");
+        if (!st)
+        {
+            context.remark(textRemark("only struct can have members"));
+            return TypeVoid.single;
+        }
 
         if (!usedStructs.canFind(st.value))
             usedStructs ~= st.value;
@@ -269,7 +273,7 @@ final class TypeInferer : IAstVisitor!(Exp)
             }
         }
 
-        context.remark(textRemark("member " ~ dot.member.text ~" is not defined"));
+        context.remark(textRemark("member " ~ dot.member.str(fv) ~" is not defined"));
         return ValueUnknown.single;
     }
 

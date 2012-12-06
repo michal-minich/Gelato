@@ -1,1 +1,1 @@
-Debug\Gelato.exe -test src\test\tests.txt
+Debug\Gelato.exe src\test\tests.geltest

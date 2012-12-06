@@ -68,7 +68,7 @@ bool doTest (string filePath)
 
         try
         {
-            auto p = new Program("test", fullCode);
+            auto p = new Program(TaskSpecs(TaskAction.run, null, fullCode));
             auto res = p.run(context);
 
             if (context.hasBlocker)
