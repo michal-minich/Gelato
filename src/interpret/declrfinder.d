@@ -1,7 +1,7 @@
 module interpret.declrfinder;
 
-import std.algorithm;
-import common, syntax.ast, validate.remarks, interpret.builtins;
+import std.algorithm, std.conv;
+import common, syntax.ast, validate.remarks, interpret.builtins, program;
 
 
 @safe:
@@ -34,9 +34,10 @@ final class DeclrFinder : IAstVisitor!(void)
 {
     Env env;
     IValidationContext context;
+    Program program;
 
 
-    this (IValidationContext context) { this.context = context; }
+    this (IValidationContext context, Program program) { this.context = context; this.program = program; }
 
 
     @trusted void finalize ()
@@ -57,8 +58,11 @@ final class DeclrFinder : IAstVisitor!(void)
     {
         env = new Env(env);
 
-        foreach (e; s.exps)
-            e.findDeclr(this);
+        //foreach (e; s.exps)
+        //    e.findDeclr(this);
+
+        for (auto i = 0; i < s.exps.length; i++)
+            s.exps[i].findDeclr(this);
 
         foreach (m; env.missing)
         {
@@ -92,7 +96,7 @@ final class DeclrFinder : IAstVisitor!(void)
         env = new Env(env);
 
         foreach (p; fn.params)
-            p.findDeclr(this);
+            visit(p);
 
         foreach (e; fn.exps)
             e.findDeclr(this);
@@ -105,7 +109,7 @@ final class DeclrFinder : IAstVisitor!(void)
     }
 
 
-    void visit (ExpIdent i)
+    @trusted void visit (ExpIdent i)
     {
         if (i.declaredBy)
             return;
@@ -116,9 +120,14 @@ final class DeclrFinder : IAstVisitor!(void)
         {
             auto bfn = i.text in builtinFns;
             if (bfn)
+            {
                 i.declaredBy = new ExpAssign(null, null, *bfn);
+            }
             else
+            {
+                program.tryAddModule(i.text.to!string());
                 env.missing ~= i;
+            }
         }
     }
 

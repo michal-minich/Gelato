@@ -252,19 +252,3 @@ void cmdPrint (string[] text ...)
         .replace("\r", "\\r")
         .replace("\t", "\\t");
 }
-
-
-final class Stack (T)
-{
-    @safe nothrow:
-
-    private T[] items;
-
-    @property empty () { return !items.length; }
-
-    void push (T item) { items ~= item; }
-
-    T pop () { auto i = items[$ - 1]; items.length--; return i; }
-
-    @property T peek () { return items[$ - 1]; }
-}

@@ -67,7 +67,6 @@ INTERPRETER -----------------------------
 ! check  chained assignments - are they var ?
 ! disallow chained assignments ?
 ! import names form scope to scope (also selective) - import std (id, second), module2
-! import all modules by default
 ! public attribute
 ! built-ins with qualified name (also overridable)
 ! variable length fn params

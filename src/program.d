@@ -12,19 +12,24 @@ final class Program
 {
     TaskSpecs taskSpecs;
     ValueStruct prog;
+    IInterpreterContext context;
+    string adddFilePaths;
 
 
     this (TaskSpecs taskSpecs)
     {
         prog = new ValueStruct(null);
         this.taskSpecs = taskSpecs;
+        this.taskSpecs.libFolders ~= dirName(taskSpecs.startFilePath);
+        adddFilePaths ~= taskSpecs.startFilePath;
     }
 
 
     int runInConsole ()
     {
-        auto context = new ConsoleInterpreterContext;
-        context.evaluator = new Interpreter(context);
+        auto c = new ConsoleInterpreterContext;
+        context = c;
+        c.evaluator = new Interpreter(context);
         auto res = run(context);
 
         if (context.exceptions)
@@ -45,8 +50,8 @@ final class Program
 
         parseAgainWithStartFn:
 
-        auto toks = tokenize (context, fileData, taskSpecs.startFilePath);
-        auto astFile = parse (context, toks);
+        auto toks = tokenize (fileData, taskSpecs.startFilePath);
+        auto astFile = parse (toks);
 
         if (context.hasBlocker)
             return astFile;
@@ -63,20 +68,20 @@ final class Program
             starts ~= start;
 
         immutable moduleName = taskSpecs.startFilePath.baseName().stripExtension().to!dstring();
-        auto mod = makeModule(context, astFile, moduleName, prog);
-        prepare(context, mod);
+        auto mod = makeModule(astFile, moduleName, prog);
+        prepare(mod);
 
         if (context.hasBlocker)
             return null;
 
         initBuiltinFns();
 
-        findDeclarations(context);
+        findDeclarations();
         
         if (context.hasBlocker)
             return null;
 
-        typeInfer(context);
+        typeInfer();
 
         if (context.hasBlocker)
             return astFile;
@@ -87,14 +92,49 @@ final class Program
             return null;
         }
 
-        return eval (context, starts[0]);
+        return eval (starts[0]);
+    }
+
+
+    void tryAddModule (string moduleName)
+    {
+        foreach (lf; taskSpecs.libFolders)
+        {
+            auto fp = lf ~ dirSeparator ~ moduleName ~ ".gel";
+            if (exists(fp))
+                addModule(fp, moduleName);
+        }
+    }
+
+
+    private void addModule (string filePath, string moduleName)
+    {
+        if (adddFilePaths.canFind(filePath))
+            return;
+
+        auto fileData = toUTF32(readText!string(filePath));
+
+        auto toks = tokenize (fileData, moduleName);
+        auto astFile = parse (toks);
+
+        if (context.hasBlocker)
+            return;
+
+        auto mod = makeModule(astFile, moduleName.to!dstring(), prog);
+        prepare(mod);
+
+        adddFilePaths ~= filePath;
+
+        // TODO how to handle stop on blocker in declrfinder 
+        //if (context.hasBlocker)
+        ///    return;
     }
 
 
     private:
 
 
-    Token[] tokenize (IInterpreterContext context, dstring fileData, string fileName)
+    Token[] tokenize (dstring fileData, string fileName)
     {
         debug context.println("TOKENIZE " ~ fileName.to!dstring());
         auto toks = (new Tokenizer(fileData)).tokenize();
@@ -103,7 +143,7 @@ final class Program
     }
     
 
-    ValueStruct parse (IInterpreterContext context, Token[] toks)
+    ValueStruct parse (Token[] toks)
     {
         debug context.println("PARSE");
         auto par = new Parser(context, toks);
@@ -111,7 +151,7 @@ final class Program
     }
 
 
-    void validateSyntax (IInterpreterContext context, ValueStruct astFile)
+    void validateSyntax (ValueStruct astFile)
     {
         debug context.println("VALIDATE SYNTAX");
         auto val = new SyntaxValidator(context);
@@ -119,7 +159,7 @@ final class Program
     }
 
 
-    void prepare (IInterpreterContext context, ExpAssign a)
+    void prepare (ExpAssign a)
     {
         debug context.println("PREPARE");
         auto prep = new PreparerForEvaluator(context);
@@ -127,7 +167,7 @@ final class Program
     }
 
 
-    static ExpAssign makeModule (IInterpreterContext context, ValueStruct astFile, dstring moduleName, ValueStruct parent)
+    static ExpAssign makeModule (ValueStruct astFile, dstring moduleName, ValueStruct parent)
     {
         astFile.parent = parent;
         auto fna = new ExpFnApply(parent, astFile, null);
@@ -138,15 +178,15 @@ final class Program
     }
 
 
-    void findDeclarations (IInterpreterContext context)
+    void findDeclarations ()
     {
         debug context.println("FIND DECLARATIONS");
-        auto df = new DeclrFinder(context);
+        auto df = new DeclrFinder(context, this);
         df.visit(prog);
     }
 
 
-    void typeInfer (IInterpreterContext context)
+    void typeInfer ()
     {
         debug context.println("TYPE INFER");
         auto inf = new TypeInferer(context);
@@ -156,7 +196,7 @@ final class Program
     }
 
 
-    Exp eval (IInterpreterContext context, ExpAssign start)
+    Exp eval (ExpAssign start)
     {
         debug context.println("EVALUATE");
 

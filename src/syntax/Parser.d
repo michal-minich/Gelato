@@ -18,7 +18,7 @@ final class Parser
         Token current;
         bool sepPassed;
         Comment comment;
-        Stack!dchar braceStack;
+        dchar[] braceStack;
         size_t prevStartIndex;
     }
 
@@ -28,7 +28,6 @@ final class Parser
         vctx = valContext;
         toks = tokens;
         toks2 = tokens;
-        braceStack = new Stack!dchar;
         if (toks.length)
             current = toks.front;
     }
@@ -256,7 +255,7 @@ final class Parser
     Exp parseBracedExp (ValueScope parent)
     {
         immutable start = current.index;
-        braceStack.push(current.text[0]);
+        braceStack ~= current.text[0];
 
         if (current.text[0] == '(')
         {
@@ -283,7 +282,7 @@ final class Parser
     Exp[] parseBracedExpList (ValueScope parent)
     {
         immutable start = current;
-        braceStack.push(current.text[0]);
+        braceStack ~= current.text[0];
 
         Exp[] list;
         immutable opposite = oppositeBrace(current.text);

@@ -1,10 +1,4 @@
 start = fn ()
 {
-	a = misc
-	b = extra
-	c = misc.extra
-	--print (misc)
-	--print (extra)
-	print (c)
-	print (1)
+	s = std.id(4)
 }
