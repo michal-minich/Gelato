@@ -205,7 +205,8 @@ import common, syntax.ast;
 
     const dstring visit (TypeChar) { return "Char"; }
 
-    dstring visit (TypeStruct s) { return "Struct(" ~ s.value.exps.map!(vs => vs.infType.str(this))().join(", ").array() ~ ")"; }
+    dstring visit (TypeStruct s) { return s.typeAlias.slot.str(fv); }
+       // return "Struct(" ~ s.value.exps.map!(vs => vs.infType.str(this))().join(", ").array() ~ ")"; }
 
     dstring visit (TypeArray arr) { return "Array(" ~ (arr.elementType ? arr.elementType.str(this) : "?") ~ ")"; }
 

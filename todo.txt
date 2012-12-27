@@ -3,9 +3,6 @@ NAMES
     MODULES 
         hierarchical modules
         auto find which modules to import
-	STRUCT
-        infer named struct by name not structure
-        struct instance and type have the same type
 	IMPORT
 		public attribute
 		import names form scope to scope (also selective) - import std (id, second), module2
@@ -15,8 +12,6 @@ NAMES
 		disallow chained assignments ?
 		mutable variables - allow only var as mutable
     remark multiply defined variables
-    remark unused fn parameters
-	declaredBy - implement completely
 	built-ins with qualified name (also overridable)
 
 FUNCTIONS

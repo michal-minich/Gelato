@@ -441,7 +441,13 @@ final class TypeStruct: Exp
 {
     mixin visitImpl;
     ValueStruct value;
-    nothrow this (ValueScope parent, ValueStruct value) { super(parent); this.value = value; }
+    ExpAssign typeAlias;
+    nothrow this (ValueScope parent, ExpAssign typeAlias, ValueStruct value)
+    { 
+        super(parent);
+        this.typeAlias = typeAlias;
+        this.value = value;
+    }
 }
 
 

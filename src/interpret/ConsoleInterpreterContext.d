@@ -1,7 +1,7 @@
 module interpret.ConsoleInterpreterContext;
 
 
-import std.stdio, std.conv;
+import std.stdio, std.conv, std.algorithm;
 import common, syntax.ast, interpret.Interpreter, validate.remarks;
 
 
@@ -54,8 +54,13 @@ final class ConsoleInterpreterContext : IInterpreterContext
 
         std.stdio.write ("* ", location, ", ", svr.remarkSeverityText(), ": ", remark.text);
 
+        auto txt = remark.subject.tokensText;
+        auto newLineIx = txt.countUntil('\r');
+        if (newLineIx == -1)
+            newLineIx = txt.countUntil('\n');
+
         if (remark.subject)
-            std.stdio.write ("\t", remark.subject.tokensText);
+            std.stdio.write ("\t", txt[0 .. newLineIx != -1 ? newLineIx : $], newLineIx != -1 ? " ..." : "");
 
         writeln();
     }

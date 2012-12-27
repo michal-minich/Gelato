@@ -1,7 +1,7 @@
 module interpret.TypeInferer;
 
 
-import std.algorithm, std.array;
+import std.conv, std.algorithm, std.array;
 import common, syntax.ast, syntax.Parser, validate.remarks, interpret.Interpreter, program;
 
 
@@ -40,6 +40,8 @@ final class TypeInferer : IAstVisitor!Exp
     private IInterpreterContext context;
     private ValueFn currentFn;
     Program program;
+    ExpAssign structTypeAssign;
+    uint structCounter;
 
 
     nothrow this (Program program, IInterpreterContext context) { this.program = program; this.context = context; }
@@ -82,6 +84,8 @@ final class TypeInferer : IAstVisitor!Exp
 
     Exp visit (ValueArray arr)
     {
+        structTypeAssign = null;
+
         assert (false, "value array infer");
     }
 
@@ -97,6 +101,8 @@ final class TypeInferer : IAstVisitor!Exp
     {
         if (fn.infType)
             return fn.infType;
+
+        structTypeAssign = null;
 
         Exp[] paramTypes;
         foreach (e; fn.params)
@@ -119,6 +125,8 @@ final class TypeInferer : IAstVisitor!Exp
 
     Exp visit (ExpFnApply fna)
     {
+        structTypeAssign = null;
+
         Exp[] ts;
         foreach (a; fna.args)
             ts ~= a.infer(this);
@@ -126,7 +134,7 @@ final class TypeInferer : IAstVisitor!Exp
         auto applicableType = fna.applicable.infer(this);
         auto fn = cast(TypeFn)applicableType;
 
-        fna.infType = fn ? fn.retType : applicableType /* struct */;
+        fna.infType = fn ? fn.retType : (cast(TypeType)applicableType).type;
 
         auto arrType = cast(TypeArray)fna.infType;
         if (arrType)
@@ -141,6 +149,8 @@ final class TypeInferer : IAstVisitor!Exp
         if (i.infType)
             return i.infType;
 
+        structTypeAssign = null;
+
         i.infType = i.declaredBy !is null && i.declaredBy.value !is null
             ? i.declaredBy.value.infer(this)
             : TypeAny.single;
@@ -153,20 +163,28 @@ final class TypeInferer : IAstVisitor!Exp
         if (d.infType)
             return d.infType;
 
+        structTypeAssign = d;
+
         d.infType = d.value ? d.value.infer(this) : TypeAny.single;
         return d.infType;
     }
 
 
-    Exp visit (ValueStruct s)
+    @trusted Exp visit (ValueStruct s)
     {
         if (s.infType)
             return s.infType;
 
+        if (!structTypeAssign)   
+        {
+            auto i = new ExpIdent(null, "AnynymousStruct_" ~ (++structCounter).to!dstring());
+            structTypeAssign = new ExpAssign(null, i, s);
+        }
+
+        s.infType = new TypeType(null, new TypeStruct(null, structTypeAssign, s));
+
         foreach (e; s.exps)
             e.infer(this);
-
-        s.infType = new TypeStruct(null, s);
 
         return s.infType;
     }
