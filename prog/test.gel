@@ -3,7 +3,8 @@ F = fn () { struct { y = 2 } }
 
 start = fn ()
 {
-	S = struct { x = 1 }
+	a = 1
+	S = struct { x = 1, z = 2 }
 	s = S()
 	S2 = F()
 	s2 = S2()

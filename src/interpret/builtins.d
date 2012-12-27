@@ -1,7 +1,7 @@
 module interpret.builtins;
 
 import std.algorithm, std.array, std.conv, std.string;
-import common, syntax.ast, validate.remarks, test.TestFormatVisitor, validate.TypeInferer;
+import common, syntax.ast, validate.remarks, test.TestFormatVisitor, interpret.TypeInferer;
 
 
 ExpAssign[dstring] builtinFns;

@@ -1,4 +1,4 @@
-module validate.TypeInferer;
+module interpret.TypeInferer;
 
 
 import std.algorithm, std.array;
@@ -17,6 +17,7 @@ import common, syntax.ast, syntax.Parser, validate.remarks, interpret.Interprete
 
 bool typeIdLess (T) (T a, T b) { return &a < &b; }
 
+// TODO optimize - then, the same function can be used for == and === built-in operators
 bool typeIdEq (T) (T a, T b) { return a.str(fv) == b.str(fv); }
 
 
@@ -34,11 +35,10 @@ Exp[] flatternType(Exp t)
 }
 
 
-final class TypeInferer : IAstVisitor!(Exp)
+final class TypeInferer : IAstVisitor!Exp
 {
     private IInterpreterContext context;
     private ValueFn currentFn;
-    private ValueStruct[] usedStructs;
     Program program;
 
 
@@ -168,16 +168,6 @@ final class TypeInferer : IAstVisitor!(Exp)
 
         s.infType = new TypeStruct(null, s);
 
-        if (!s.parent)
-            foreach (st; usedStructs)
-                foreach (e; st.exps)
-                {
-                    auto d = cast(ExpAssign)e;
-                    auto i = cast(ExpIdent)d.slot;
-                    if (i && !d.usedBy)
-                        context.remark(textRemark("member " ~ d.slot.str(fv) ~ " is not used"));
-                }
-
         return s.infType;
     }
 
@@ -270,9 +260,6 @@ final class TypeInferer : IAstVisitor!(Exp)
             context.remark(textRemark("only struct can have members"));
             return TypeVoid.single;
         }
-
-        if (!usedStructs.canFind(st.value))
-            usedStructs ~= st.value;
 
         foreach (m; st.value.exps)
         {

@@ -5,7 +5,7 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
 
 
 
-@safe final class PreparerForEvaluator : IAstVisitor!(void)
+@safe final class PreparerForEvaluator : IAstVisitor!void
 {
     IValidationContext vctx;
     private ValueFn currentFn;
@@ -23,7 +23,7 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
             if (a)
             {
                 ds ~= a;
-                a.prepare(this);
+                a.accept(this);
                 if (!a.value)
                     a.value = ValueUnknown.single;
             }
@@ -33,7 +33,7 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
                 if (i)
                 {
                     a = new ExpAssign(s, i, ValueUnknown.single);
-                    a.prepare(this);
+                    a.accept(this);
                     ds ~= a;
                 }
             }
@@ -51,7 +51,7 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
         {
             currentFn = fn;
             currentExpIndex = cast(uint)ix;
-            e.prepare(this);
+            e.accept(this);
         }
     }
 
@@ -64,6 +64,7 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
         if (l)
         {
             gt.labelExpIndex = expIndex;
+            l.gotoBy ~= gt;
 
             if (!gt.label || gt.label != l.label)
             {
@@ -101,23 +102,23 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
 
     void visit (ExpIf i)
     {
-        i.when.prepare(this);
+        i.when.accept(this);
 
         foreach (t; i.then)
-            t.prepare(this);
+            t.accept(this);
 
         if (i.otherwise)
             foreach (o; i.otherwise)
-                o.prepare(this);
+                o.accept(this);
     }
 
 
     void visit (ExpFnApply fna)
     {
-        fna.applicable.prepare(this);
+        fna.applicable.accept(this);
 
         foreach (a; fna.args)
-            a.prepare(this);
+            a.accept(this);
     }
 
 
@@ -129,10 +130,10 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
             i.declaredBy = d;
 
         if (d.type)
-            d.type.prepare(this);
+            d.type.accept(this);
 
         if (d.value)
-            d.value.prepare(this);
+            d.value.accept(this);
     }
 
 
@@ -141,19 +142,19 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
 
     void visit (ExpDot dot)
     { 
-        dot.record.prepare(this);
-        dot.member.prepare(this);
+        dot.record.accept(this);
+        dot.member.accept(this);
     }
 
 
     void visit (ValueArray arr)
     {
         foreach (i; arr.items)
-            i.prepare(this);
+            i.accept(this);
     }
 
 
-    void visit (StmReturn r) { r.exp.prepare(this);}
+    void visit (StmReturn r) { r.exp.accept(this);}
 
     void visit (ExpIdent) { }
 

@@ -16,7 +16,7 @@ NAMES
 		mutable variables - allow only var as mutable
     remark multiply defined variables
     remark unused fn parameters
-	declaredBy, usedBy - implement completely
+	declaredBy - implement completely
 	built-ins with qualified name (also overridable)
 
 FUNCTIONS

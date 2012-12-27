@@ -2,12 +2,11 @@ module syntax.ast;
 
 import std.conv, std.format, std.array;
 import common;
-import syntax.Formatter, syntax.SyntaxValidator, validate.TypeInferer, interpret.preparer, 
+import syntax.Formatter, syntax.SyntaxValidator, interpret.TypeInferer, interpret.preparer, 
        interpret.Interpreter, interpret.NameFinder;
 
 
 @safe:
-enum Geany { Bug }
 
 
 struct Token
@@ -103,7 +102,7 @@ interface IAstVisitor (R)
 }
 
 
-alias IAstVisitor!(dstring) IFormatVisitor;
+alias IAstVisitor!dstring IFormatVisitor;
 
 
 @system alias Exp function (IInterpreterContext, Exp[]) BuiltinFunc;
@@ -111,12 +110,11 @@ alias IAstVisitor!(dstring) IFormatVisitor;
 
 mixin template visitImpl ()
 {
-    override dstring str       (IFormatVisitor v)       { return v.visit(this); }
-    override Exp     eval      (Interpreter v)          { return v.visit(this); }
-    override void    prepare   (PreparerForEvaluator v) {        v.visit(this); }
-    override void    validate  (SyntaxValidator v)      {        v.visit(this); }
-    override Exp     infer     (TypeInferer v)          { return v.visit(this); }
-    nothrow override void    findName (NameFinder v)           { return v.visit(this); }
+    override void         accept    (IAstVisitor!void v)     {        v.visit(this); }
+    override dstring      str       (IFormatVisitor v)       { return v.visit(this); }
+    override Exp          eval      (Interpreter v)          { return v.visit(this); }
+    override Exp          infer     (TypeInferer v)          { return v.visit(this); }
+    nothrow override void findName  (NameFinder v)           { return v.visit(this); }
 }
 
 
@@ -157,12 +155,11 @@ abstract class Exp
     }
 
 
+    abstract void accept (IAstVisitor!void);
     abstract dstring str (IFormatVisitor);
     abstract Exp eval (Interpreter);
-    abstract void prepare (PreparerForEvaluator);
-    abstract void validate (SyntaxValidator);
     abstract Exp infer (TypeInferer);
-    nothrow abstract void findName (NameFinder v);
+    nothrow abstract void findName (NameFinder);
 }
 
 
@@ -369,6 +366,7 @@ final class StmLabel : Exp
 {
     mixin visitImpl;
     dstring label;
+    StmGoto[] gotoBy;
     nothrow this (ValueScope parent, dstring label) { super(parent); this.label = label; }
 }
 

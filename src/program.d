@@ -5,7 +5,8 @@ import std.stdio, std.algorithm, std.string, std.array, std.conv, std.file, std.
 import std.file : readText, exists, isFile;
 import common, settings, syntax.Formatter, validate.remarks, syntax.SyntaxValidator,
     syntax.Tokenizer, syntax.Parser, syntax.ast, interpret.Interpreter, interpret.preparer,
-    validate.TypeInferer, interpret.NameFinder, interpret.builtins, interpret.ConsoleInterpreterContext;
+    interpret.TypeInferer, validate.UnusedNamesNotifier, interpret.NameFinder, interpret.builtins, 
+    interpret.ConsoleInterpreterContext;
 
 
 final class Program
@@ -127,6 +128,8 @@ final class Program
 
         typeInfer();
 
+        notifyUnusedNames();
+
         if (context.hasBlocker)
             return astFile;
 
@@ -198,7 +201,7 @@ final class Program
     {
         debug context.println("PREPARE");
         auto prep = new PreparerForEvaluator(context);
-        e.prepare(prep);
+        e.accept(prep);
     }
 
 
@@ -237,6 +240,14 @@ final class Program
         inf.visit(prog);
         debug fv.useInferredTypes = true;
         debug context.println(prog.str(fv));
+    }
+
+
+    void notifyUnusedNames ()
+    {
+        debug context.println("UNUSED NAMES");
+        auto unn = new UnusedNamesNotifier(context);
+        unn.visit(prog);
     }
 
 

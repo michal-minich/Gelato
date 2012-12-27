@@ -315,6 +315,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
   </Folder>
   <Folder name="validate">
    <File path="src\validate\remarks.d" />
+   <File path="src\validate\UnusedNamesNotifier.d" />
   </Folder>
   <File path="src\common.d" />
   <File path="src\main.d" />

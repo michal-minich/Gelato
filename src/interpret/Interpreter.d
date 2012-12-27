@@ -6,7 +6,7 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
 
 
 
-@safe final class Interpreter : IAstVisitor!(Exp)
+@safe final class Interpreter : IAstVisitor!Exp
 {
     private
     {

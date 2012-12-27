@@ -7,7 +7,7 @@ import common, syntax.ast, syntax.Parser, validate.remarks;
 @safe nothrow:
 
 
-final class SyntaxValidator : IAstVisitor!(void)
+final class SyntaxValidator : IAstVisitor!void
 {
     private IValidationContext vctx;
 
@@ -73,27 +73,27 @@ final class SyntaxValidator : IAstVisitor!(void)
     void visit (ValueArray arr)
     {
         foreach (i; arr.items)
-            i.validate(this);
+            i.accept(this);
     }
 
 
     void visit (ValueFn fn)
     {
         foreach (p; fn.params)
-            p.validate(this);
+            p.accept(this);
 
         foreach (e; fn.exps)
-            e.validate(this);
+            e.accept(this);
     }
 
 
 
     void visit (ExpFnApply fna)
     {
-        fna.applicable.validate(this);
+        fna.applicable.accept(this);
 
         foreach (a; fna.args)
-            a.validate(this);
+            a.accept(this);
     }
 
 
@@ -106,26 +106,26 @@ final class SyntaxValidator : IAstVisitor!(void)
 
     void visit (ExpDot dot)
     {
-        dot.record.validate(this);
+        dot.record.accept(this);
     }
 
 
     void visit (ExpAssign d)
     {
-        d.slot.validate(this);
+        d.slot.accept(this);
 
         if (d.type)
-            d.type.validate(this);
+            d.type.accept(this);
 
         if (d.value)
-            d.value.validate(this);
+            d.value.accept(this);
     }
 
 
     void visit (ValueStruct s)
     {
         foreach (e; s.exps)
-            e.validate(this);
+            e.accept(this);
     }
 
 
@@ -145,19 +145,19 @@ final class SyntaxValidator : IAstVisitor!(void)
 
     void visit (StmReturn r)
     {
-        r.exp.validate(this);
+        r.exp.accept(this);
     }
 
 
     void visit (ExpIf i)
     {
-        i.when.validate(this);
+        i.when.accept(this);
 
         foreach (t; i.then)
-            t.validate(this);
+            t.accept(this);
 
         foreach (o; i.otherwise)
-            o.validate(this);
+            o.accept(this);
     }
 
 

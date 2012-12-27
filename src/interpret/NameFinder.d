@@ -7,7 +7,7 @@ import common, syntax.ast, validate.remarks, interpret.builtins;
 @safe:
 
 
-final class NameFinder : IAstVisitor!(void)
+final class NameFinder : IAstVisitor!void
 {
     nothrow:
 
