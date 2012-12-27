@@ -2,7 +2,8 @@ module syntax.ast;
 
 import std.conv, std.format, std.array;
 import common;
-import syntax.Formatter, syntax.SyntaxValidator, validate.TypeInferer, interpret.preparer, interpret.Interpreter, interpret.declrfinder;
+import syntax.Formatter, syntax.SyntaxValidator, validate.TypeInferer, interpret.preparer, 
+       interpret.Interpreter, interpret.NameFinder;
 
 
 @safe:
@@ -115,7 +116,7 @@ mixin template visitImpl ()
     override void    prepare   (PreparerForEvaluator v) {        v.visit(this); }
     override void    validate  (SyntaxValidator v)      {        v.visit(this); }
     override Exp     infer     (TypeInferer v)          { return v.visit(this); }
-    override void    findDeclr (DeclrFinder v)          { return v.visit(this); }
+    nothrow override void    findName (NameFinder v)           { return v.visit(this); }
 }
 
 
@@ -161,7 +162,7 @@ abstract class Exp
     abstract void prepare (PreparerForEvaluator);
     abstract void validate (SyntaxValidator);
     abstract Exp infer (TypeInferer);
-    abstract void findDeclr (DeclrFinder v);
+    nothrow abstract void findName (NameFinder v);
 }
 
 
@@ -217,7 +218,20 @@ final class ValueChar : Exp
 abstract class ValueScope : Exp
 {
     Exp[] exps;
+    ExpAssign[dstring] declrs;
+
     nothrow this (ValueScope parent) { super(parent); }
+
+    nothrow ExpAssign get (ExpIdent i)
+    {
+        auto d = i.text in declrs;
+        if (d)
+        {
+            d.usedBy ~= i;
+            return *d;
+        }
+        return parent ? parent.get(i) : null;
+    }
 }
 
 
@@ -257,7 +271,7 @@ final class ValueBuiltinFn : Exp
     mixin visitImpl;
     TypeFn signature;
     BuiltinFunc func;
-    this (BuiltinFunc func, TypeFn signature)
+    nothrow this (BuiltinFunc func, TypeFn signature)
     {
         super (null);
         this.func = func;

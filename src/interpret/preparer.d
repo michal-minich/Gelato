@@ -1,7 +1,7 @@
 module interpret.preparer;
 
 import std.algorithm, std.array, std.conv, std.string;
-import common, syntax.ast, validate.remarks, interpret.builtins, interpret.declrfinder;
+import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameFinder;
 
 
 

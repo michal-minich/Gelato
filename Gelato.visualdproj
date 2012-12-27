@@ -287,8 +287,8 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
   <Folder name="interpert">
    <File path="src\interpret\builtins.d" />
    <File path="src\interpret\ConsoleInterpreterContext.d" />
-   <File path="src\interpret\declrfinder.d" />
    <File path="src\interpret\Interpreter.d" />
+   <File path="src\interpret\NameFinder.d" />
    <File path="src\interpret\preparer.d" />
   </Folder>
   <Folder name="prog">

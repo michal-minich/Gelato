@@ -2,7 +2,7 @@ module interpret.Interpreter;
 
 import std.algorithm, std.array, std.conv;
 import common, syntax.ast, validate.remarks, interpret.preparer, interpret.builtins, 
-    interpret.declrfinder;
+    interpret.NameFinder;
 
 
 

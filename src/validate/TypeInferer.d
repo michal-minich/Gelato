@@ -141,7 +141,7 @@ final class TypeInferer : IAstVisitor!(Exp)
         if (i.infType)
             return i.infType;
 
-        i.infType = i.declaredBy.value
+        i.infType = i.declaredBy !is null && i.declaredBy.value !is null
             ? i.declaredBy.value.infer(this)
             : TypeAny.single;
         return i.infType;

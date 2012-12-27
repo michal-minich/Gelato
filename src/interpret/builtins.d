@@ -4,7 +4,7 @@ import std.algorithm, std.array, std.conv, std.string;
 import common, syntax.ast, validate.remarks, test.TestFormatVisitor, validate.TypeInferer;
 
 
-ValueBuiltinFn[dstring] builtinFns;
+ExpAssign[dstring] builtinFns;
 
 
 @trusted nothrow void initBuiltinFns ()
@@ -15,20 +15,20 @@ ValueBuiltinFn[dstring] builtinFns;
             return;
 
         builtinFns = [
-        "print"   : new ValueBuiltinFn(&customPrint, new TypeFn(null, [TypeAny.single], TypeVoid.single))
-       ,"readln"  : new ValueBuiltinFn(&customReadln, new TypeFn(null, [], TypeText.single))
-       ,"toNum"   : new ValueBuiltinFn(&toNum, new TypeFn(null, [TypeText.single], TypeInt.single))
-       ,"inc"     : new ValueBuiltinFn(&incNum, new TypeFn(null, [TypeInt.single], TypeInt.single))
-       ,"dec"     : new ValueBuiltinFn(&decNum, new TypeFn(null, [TypeInt.single], TypeInt.single))
-       ,"=="      : new ValueBuiltinFn(&eq, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeInt.single))
-       ,"==="     : new ValueBuiltinFn(&eqTyped, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeInt.single))
-       ,"+"       : new ValueBuiltinFn(&plusNum, new TypeFn(null, [TypeInt.single, TypeInt.single], TypeInt.single))
-       ,"-"       : new ValueBuiltinFn(&minusNum, new TypeFn(null, [TypeInt.single, TypeInt.single], TypeInt.single))
-       ,"*"       : new ValueBuiltinFn(&multiplyNum, new TypeFn(null, [TypeInt.single, TypeInt.single], TypeInt.single))
-       ,"["       : new ValueBuiltinFn(&array, new TypeFn(null, [TypeAny.single], new TypeArray(null, null)))
-       ,"!"       : new ValueBuiltinFn(&arrayIndex, new TypeFn(null, [TypeAny.single],TypeAny.single))
-       ,"++"      : new ValueBuiltinFn(&arrayConcat, new TypeFn(null, [TypeAny.single],TypeAny.single))
-       ,"TypeOf"  : new ValueBuiltinFn(&typeOf, new TypeFn(null, [TypeAny.single], new TypeType(null ,null)))
+        "print"   : bfn(&customPrint, new TypeFn(null, [TypeAny.single], TypeVoid.single))
+       ,"readln"  : bfn(&customReadln, new TypeFn(null, [], TypeText.single))
+       ,"toNum"   : bfn(&toNum, new TypeFn(null, [TypeText.single], TypeInt.single))
+       ,"inc"     : bfn(&incNum, new TypeFn(null, [TypeInt.single], TypeInt.single))
+       ,"dec"     : bfn(&decNum, new TypeFn(null, [TypeInt.single], TypeInt.single))
+       ,"=="      : bfn(&eq, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeInt.single))
+       ,"==="     : bfn(&eqTyped, new TypeFn(null, [TypeAny.single, TypeAny.single], TypeInt.single))
+       ,"+"       : bfn(&plusNum, new TypeFn(null, [TypeInt.single, TypeInt.single], TypeInt.single))
+       ,"-"       : bfn(&minusNum, new TypeFn(null, [TypeInt.single, TypeInt.single], TypeInt.single))
+       ,"*"       : bfn(&multiplyNum, new TypeFn(null, [TypeInt.single, TypeInt.single], TypeInt.single))
+       ,"["       : bfn(&array, new TypeFn(null, [TypeAny.single], new TypeArray(null, null)))
+       ,"!"       : bfn(&arrayIndex, new TypeFn(null, [TypeAny.single],TypeAny.single))
+       ,"++"      : bfn(&arrayConcat, new TypeFn(null, [TypeAny.single],TypeAny.single))
+       ,"TypeOf"  : bfn(&typeOf, new TypeFn(null, [TypeAny.single], new TypeType(null, null)))
         ];
     }
     catch
@@ -39,6 +39,9 @@ ValueBuiltinFn[dstring] builtinFns;
 
 
 private:
+
+
+nothrow ExpAssign bfn (A...) (A args) { return new ExpAssign(null, null, new ValueBuiltinFn(args)); }
 
 
 Exp customPrint (IInterpreterContext context, Exp[] exps)
@@ -65,7 +68,6 @@ Exp toNum (IInterpreterContext context, Exp[] exps)
     auto n = sureCast!ValueText(exps[0]);
     return new ValueInt(null, n.value.to!long());
 }
-
 
 
 Exp incNum (IInterpreterContext context, Exp[] exps)
@@ -137,14 +139,12 @@ Exp arrayIndex (IInterpreterContext context, Exp[] exps)
 }
 
 
-
 Exp arrayConcat (IInterpreterContext context, Exp[] exps)
 {
     auto arr1 = cast(ValueArray)exps[0];
     auto arr2 = cast(ValueArray)exps[1];
     return new ValueArray(null, arr1.items ~ arr2.items);
 }
-
 
 
 Exp typeOf (IInterpreterContext context, Exp[] exps)

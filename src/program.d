@@ -5,7 +5,7 @@ import std.stdio, std.algorithm, std.string, std.array, std.conv, std.file, std.
 import std.file : readText, exists, isFile;
 import common, settings, syntax.Formatter, validate.remarks, syntax.SyntaxValidator,
     syntax.Tokenizer, syntax.Parser, syntax.ast, interpret.Interpreter, interpret.preparer,
-    validate.TypeInferer, interpret.declrfinder, interpret.builtins, interpret.ConsoleInterpreterContext;
+    validate.TypeInferer, interpret.NameFinder, interpret.builtins, interpret.ConsoleInterpreterContext;
 
 
 final class Program
@@ -97,7 +97,7 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
-        auto start = findDeclr(astFile.exps, "start");
+        auto start = findName(astFile.exps, "start");
 
         if (!start)
         {
@@ -224,8 +224,8 @@ final class Program
 
     void findDeclarations ()
     {
-        debug context.println("FIND DECLARATIONS");
-        auto df = new DeclrFinder(context, this);
+        debug context.println("FIND NAMES");
+        auto df = new NameFinder(context);
         df.visit(prog);
     }
 
@@ -266,7 +266,7 @@ final class Program
 
 
     // todo find all starts deeply
-    static @safe ExpAssign findDeclr (Exp[] exps, dstring name)
+    static @safe ExpAssign findName (Exp[] exps, dstring name)
     {
         foreach (e; exps)
         {
