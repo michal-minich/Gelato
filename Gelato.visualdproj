@@ -35,7 +35,7 @@
   <release>0</release>
   <preservePaths>0</preservePaths>
   <warnings>1</warnings>
-  <infowarnings>0</infowarnings>
+  <infowarnings>1</infowarnings>
   <checkProperty>1</checkProperty>
   <genStackFrame>1</genStackFrame>
   <pic>0</pic>
@@ -88,7 +88,7 @@
   <resfile />
   <exefile>$(OutDir)\$(ProjectName).exe</exefile>
   <useStdLibPath>1</useStdLibPath>
-  <additionalOptions>-gs</additionalOptions>
+  <additionalOptions />
   <preBuildCommand>del $(ConfigurationName)\Gelato.exe_cv
 del $(ConfigurationName)\Gelato.map
 del $(ConfigurationName)\Gelato.obj</preBuildCommand>
@@ -291,6 +291,13 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
    <File path="src\interpret\Interpreter.d" />
    <File path="src\interpret\preparer.d" />
   </Folder>
+  <Folder name="prog">
+   <Folder name="extra">
+    <File path="prog\extra\misc.gel" />
+   </Folder>
+   <File path="prog\std.gel" />
+   <File path="prog\test.gel" />
+  </Folder>
   <Folder name="syntax">
    <File path="src\syntax\ast.d" />
    <File path="src\syntax\Formatter.d" />
@@ -313,8 +320,6 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
   <File path="src\main.d" />
   <File path="src\program.d" />
   <File path="src\settings.d" />
-  <File path="std.gel" />
-  <File path="test.gel" />
   <File path="test2.gel" />
   <File path="todo.txt" />
  </Folder>

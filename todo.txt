@@ -1,104 +1,116 @@
 
-TOKENIZER -----------------------------
-! text hex escapes
-! text unicode escapes
-! unicode support in text/char
-  unicode support in identifiers
-  allow unicode oprators as an option "option uniop"
+NAMES
+    MODULES 
+        hierarchical modules
+        auto find which modules to import
+	STRUCT
+        infer named struct by name not structure
+        struct instance and type have the same type
+	IMPORT
+		public attribute
+		import names form scope to scope (also selective) - import std (id, second), module2
+	VAR
+		struct assignment (identifier even) is var implicitly ?
+		check  chained assignments - are they var ?
+		disallow chained assignments ?
+		mutable variables - allow only var as mutable
+    remark multiply defined variables
+    remark unused fn parameters
+	declaredBy, usedBy - implement completely
+	built-ins with qualified name (also overridable)
 
-PARSER -----------------------------
+FUNCTIONS
+    infer identifier by usage in fn (not only by def)
+    infer identifier by usage as fn argument
+	variable length fn params
+
+IF
+    static if does not introduce scope, normal if yes
+    multi statement static if - eval test to know which declaration to use 
+        (only if they have conflicting declaration names, which are used after if. see previous if-scope todo) 
+
+TYPES
+	type variables
+    type parameters
+    type annotations
+	built-ins - TypeOf, Num-Text covnversions
+
+ARRAY
+	array operations (empty, first, rest)
+	text is array
+
+
+INTERPRETER
+	! on file without start, tokens position does not correspond real file (don't tokenize again)
+	! user overridable struct functions - construct, destruct, clone, ...
+	! ref
+	! throw
+	! try catch
+	  a = const 1 + 2    if const 1 + 2 then    const if 1 + 2 ... ?
+	  a = var 1 + 2 ?
+	  built-in for stack trace
+	  built-in in for env
+	  dynamic and static typing versions
+	  contracts
+	  finally / scope guars
+	  anonymous scope ?
+
+TOKENIZER
+	! text hex escapes
+	! text unicode escapes
+	! unicode support in text/char
+	  unicode support in identifiers
+	  allow unicode oprators as an option "option uniop"
+
+PARSER
 ! remark file origin
-! parse comments
-! braces
-  ! allow braces everywhere
-  ! parse op dot in form a.(+)  a.(..)
-  ! how to parse 3.(14)   (3).14   (3).(14)   3.(m)   (3).m   (r).(m)  ? (also for hex nums)
-  ! remark redundant brace as in "(a)"
-  ! wrong braces ( a, ] b, [ c )  - also mind coma
-! test for braces
-! fix parse op crash "+ a"
-! fix crash when calling parseBracedExpList when current token is not brace
-! parse : and = as sequence in parse fn after main parse
-! decimal exponent (hex and dec)
-! cancel unclosed text on first line
-! when code text ends with single quote, is it char/text/error ?
-! better recovery parsing of incorrect code
-    if w t e  |  if w ignore then t e  |  if w then t ignore else e  |  if w then t e ...
-  documentation comments
-  nested comment
-  custom brace op apply
-  variables in text "abc $variable 123"
+	! parse comments
+	! braces
+	  ! allow braces everywhere
+	  ! parse op dot in form a.(+)  a.(..)
+	  ! how to parse 3.(14)   (3).14   (3).(14)   3.(m)   (3).m   (r).(m)  ? (also for hex nums)
+	  ! remark redundant brace as in "(a)"
+	  ! wrong braces ( a, ] b, [ c )  - also mind coma
+	! test for braces
+	! fix parse op crash "+ a"
+	! fix crash when calling parseBracedExpList when current token is not brace
+	! parse : and = as sequence in parse fn after main parse
+	! decimal exponent (hex and dec)
+	! cancel unclosed text on first line
+	! when code text ends with single quote, is it char/text/error ?
+	! better recovery parsing of incorrect code
+		if w t e  |  if w ignore then t e  |  if w then t ignore else e  |  if w then t e ...
+	  documentation comments
+	  nested comment
+	  custom brace op apply
+	  variables in text "abc $variable 123"
 
-SYNTAX VALIDATOR -----------------------------
-  syntax (todo - specify what exactly)
-  indentation level
-
-PREPARER -----------------------------
-! hierarchical modules
-! auto find which modules to import
-! remark multiply defined variables
-! remark unused fn parameters
-! mutable variables - allow only var as mutable
-! call functions as members of first parameter
+PREPARER
   operators priority
   prepare functions on firs call
   tail call
-
-TYPE INFERENCE / CHECK -----------------------------
-! stuct instance and type have the same type
-! infer named struct by name not structure
-! static if does not introduce scope, normal if yes
-! multi statement static if - eval test to know which declaration to use 
-   (only if they have conflicting declaration names, which are used after if. see previous if-scope todo)
-! infer identifier by usage in fn (not only by def)
-! infer identifier by usage as fn arg
-  report type errors
-  report declared vs. inferred type discrepancies
-  infer definite assignment
-  infer value origin
-  infer value destination
-  infer possible values for variable
-  infer on fn apply / op apply: throws, ...
-  infer on fn pure, deterministic throws, modify global, ..
-
-INTERPRETER -----------------------------
-! on file without start, tokens position does not correspond real file (don't tokenize again)
-! struct assignment (identifier even) is var implicitly ?
-! check  chained assignments - are they var ?
-! disallow chained assignments ?
-! import names form scope to scope (also selective) - import std (id, second), module2
-! public attribute
-! built-ins with qualified name (also overridable)
-! variable length fn params
-! array operations (empty, first, rest)
-! text is array
-! types
-! built-ins - TypeOf
-! type parameters
-! overloaded functions
-! overloaded built-in functions
-! user overridable struct functions - construct, destruct, clone, ...
-! ref
-! throw
-! try catch
-  a = const 1 + 2    if const 1 + 2 then    const if 1 + 2 ... ?
-  a = var 1 + 2 ?
-  built-in for stack trace
-  built-in in for env
-  dynamic and static typing versions
-  contracts
-  finally / scope guars
-  anonymous scope ?
-
-FORMATTER -----------------------------
-  configuration profiles
-
-AUTOFIXER -----------------------------
-  formatting / syntax
-
-CMD / INTERACTIVE -----------------------------
-  project file
-  interactive - first version
+  
+SYNTAX VALIDATOR
+	syntax (todo - specify what exactly)
+	indentation level
+  
+TYPE INFERENCE / CHECK
+	report type errors
+	report declared vs. inferred type discrepancies
+	infer definite assignment
+	infer value origin
+	infer value destination
+	infer possible values for variable
+	infer on fn apply / op apply: throws, ...
+	infer on fn pure, deterministic throws, modify global, ..
+	
+OVERLOAD
+	overloaded functions
+	overloaded built-in functions
+formatter - configuration profiles
+autofix formatting / syntax
+cmd interactive - first version
+call functions as members  of first parameter
 
 function:
   pure    = mempure + dont do io / call external functions

@@ -2,7 +2,7 @@ module validate.TypeInferer;
 
 
 import std.algorithm, std.array;
-import common, syntax.ast, syntax.Parser, validate.remarks, interpret.Interpreter;
+import common, syntax.ast, syntax.Parser, validate.remarks, interpret.Interpreter, program;
 
 
 @trusted Exp mergeTypes (Exp[] types...)
@@ -39,9 +39,10 @@ final class TypeInferer : IAstVisitor!(Exp)
     private IInterpreterContext context;
     private ValueFn currentFn;
     private ValueStruct[] usedStructs;
+    Program program;
 
 
-    this (IInterpreterContext context) { this.context = context; }
+    nothrow this (Program program, IInterpreterContext context) { this.program = program; this.context = context; }
 
 
     Exp visit (ValueUnknown u)
@@ -245,6 +246,20 @@ final class TypeInferer : IAstVisitor!(Exp)
     {
         if (dot.infType)
             return dot.infType;
+
+        auto i2 = cast(ExpIdent)dot.record;
+        if (i2)
+        {
+            auto s2 = cast(ValueStruct)(cast(ExpFnApply)i2.declaredBy.value).applicable;
+            if (s2 && s2.filePath)
+            {
+                auto astFile = program.loadFile(s2.filePath);
+                astFile.parent = s2.parent;
+                auto fna = new ExpFnApply(s2.parent, astFile, null);
+                s2.filePath = null;
+                i2.declaredBy.value = fna;
+            }
+        }
 
         dot.record.infType = dot.record.infer(this);
 

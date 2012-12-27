@@ -1,0 +1,6 @@
+start = fn ()
+{
+	a = std
+	b = std.id
+	return 1
+}

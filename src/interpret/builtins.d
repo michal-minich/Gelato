@@ -149,6 +149,6 @@ Exp arrayConcat (IInterpreterContext context, Exp[] exps)
 
 Exp typeOf (IInterpreterContext context, Exp[] exps)
 {
-    auto i = new TypeInferer(context);
+    auto i = new TypeInferer(null, context);
     return new TypeType(null, exps[0].infer(i));
 }

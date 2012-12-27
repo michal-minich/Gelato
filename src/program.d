@@ -19,6 +19,7 @@ final class Program
     this (TaskSpecs taskSpecs)
     {
         prog = new ValueStruct(null);
+        prog.isModule = true;
         this.taskSpecs = taskSpecs;
         this.taskSpecs.libFolders ~= dirName(taskSpecs.startFilePath);
         adddFilePaths ~= taskSpecs.startFilePath;
@@ -29,6 +30,7 @@ final class Program
     {
         auto c = new ConsoleInterpreterContext;
         context = c;
+
         c.evaluator = new Interpreter(context);
         auto res = run(context);
 
@@ -37,6 +39,45 @@ final class Program
         
         auto n = cast(ValueInt)res;
         return n ? n.value.to!int() : 0;
+    }
+
+
+    bool scanModules (string folder, ValueStruct parent)
+    {
+        if (!folder.exists())
+        {
+            context.remark(textRemark("lib folder does not exits"));
+            return false;
+        }
+
+        bool res;
+
+        foreach (de; folder.dirEntries(SpanMode.shallow))
+        {
+            if (de.isFile && de.name.endsWith(".gel"))
+            {
+                auto m = new ValueStruct(parent);
+                m.filePath = de.name;
+                auto x = de.name;
+                immutable moduleName = de.name.baseName().stripExtension().to!dstring();
+                addStructAsModule(m, moduleName, parent);
+                res = true;
+            }
+            else if (de.isDir)
+            {
+                auto m = new ValueStruct(parent);
+                immutable moduleName = de.name.baseName().stripExtension().to!dstring();
+                auto a = makeModule(m, moduleName, parent);
+                auto r = scanModules (de.name, m);
+                if (r)
+                {
+                    res = true;
+                    parent.exps ~= a;
+                }
+            }
+        }
+
+        return res;
     }
 
 
@@ -68,11 +109,14 @@ final class Program
             starts ~= start;
 
         immutable moduleName = taskSpecs.startFilePath.baseName().stripExtension().to!dstring();
-        auto mod = makeModule(astFile, moduleName, prog);
+        auto mod = addStructAsModule(astFile, moduleName, prog);
         prepare(mod);
 
         if (context.hasBlocker)
             return null;
+
+        foreach (lf; taskSpecs.libFolders)
+            scanModules(lf, prog);
 
         initBuiltinFns();
 
@@ -96,35 +140,26 @@ final class Program
     }
 
 
-    void tryAddModule (string moduleName)
-    {
-        foreach (lf; taskSpecs.libFolders)
-        {
-            auto fp = lf ~ dirSeparator ~ moduleName ~ ".gel";
-            if (exists(fp))
-                addModule(fp, moduleName);
-        }
-    }
-
-
-    private void addModule (string filePath, string moduleName)
+    ValueStruct loadFile (string filePath)
     {
         if (adddFilePaths.canFind(filePath))
-            return;
+            return null;
 
         auto fileData = toUTF32(readText!string(filePath));
 
-        auto toks = tokenize (fileData, moduleName);
+        auto moduleName = filePath.baseName().stripExtension().to!dstring();
+
+        auto toks = tokenize (fileData, filePath);
         auto astFile = parse (toks);
 
         if (context.hasBlocker)
-            return;
+            return null;
 
-        auto mod = makeModule(astFile, moduleName.to!dstring(), prog);
-        prepare(mod);
+        prepare(astFile);
 
         adddFilePaths ~= filePath;
 
+        return astFile;
         // TODO how to handle stop on blocker in declrfinder 
         //if (context.hasBlocker)
         ///    return;
@@ -159,21 +194,30 @@ final class Program
     }
 
 
-    void prepare (ExpAssign a)
+    void prepare (Exp e)
     {
         debug context.println("PREPARE");
         auto prep = new PreparerForEvaluator(context);
-        a.prepare(prep);
+        e.prepare(prep);
+    }
+
+
+    static ExpAssign addStructAsModule (ValueStruct astFile, dstring moduleName, ValueStruct parent)
+    {
+        auto a = makeModule(astFile, moduleName, parent);
+        parent.exps ~= a;
+        return a;
     }
 
 
     static ExpAssign makeModule (ValueStruct astFile, dstring moduleName, ValueStruct parent)
     {
         astFile.parent = parent;
+        astFile.isModule = true;
         auto fna = new ExpFnApply(parent, astFile, null);
         auto i = new ExpIdent(parent, moduleName);
         auto a = new ExpAssign(parent, i, fna);
-        parent.exps ~= a;
+        i.declaredBy = a;
         return a;
     }
 
@@ -189,7 +233,7 @@ final class Program
     void typeInfer ()
     {
         debug context.println("TYPE INFER");
-        auto inf = new TypeInferer(context);
+        auto inf = new TypeInferer(this, context);
         inf.visit(prog);
         debug fv.useInferredTypes = true;
         debug context.println(prog.str(fv));
@@ -236,19 +280,6 @@ final class Program
         }
         return null;
     }
-}
-
-
-private string[] getModulePaths (string[] libFolders, string relativeFilePath)
-{
-    string[] candiates;
-    foreach (lf; libFolders)
-    {
-        auto moduleFilePath = lf ~ relativeFilePath;
-        if (moduleFilePath.exists)
-            candiates ~= moduleFilePath;
-    }
-    return candiates;
 }
 
 

@@ -14,10 +14,11 @@ private final class Env
     ExpIdent[] missing;
     size_t closureItemIndex;
     ExpAssign[] unused;
+    Program program;
 
-    nothrow this (Env parent) { this.parent = parent; }
+    nothrow this (Program program, Env parent) { this.program = program; this.parent = parent; }
 
-    nothrow ExpAssign get (ExpIdent i)
+    @trusted ExpAssign get (ExpIdent i)
     {
         auto d = i.text in declrs;
         if (d)
@@ -35,7 +36,6 @@ final class DeclrFinder : IAstVisitor!(void)
     Env env;
     IValidationContext context;
     Program program;
-
 
     this (IValidationContext context, Program program) { this.context = context; this.program = program; }
 
@@ -56,13 +56,10 @@ final class DeclrFinder : IAstVisitor!(void)
 
     @trusted void visit (ValueStruct s)
     {
-        env = new Env(env);
+        env = new Env(program, env);
 
-        //foreach (e; s.exps)
-        //    e.findDeclr(this);
-
-        for (auto i = 0; i < s.exps.length; i++)
-            s.exps[i].findDeclr(this);
+        foreach (e; s.exps)
+            e.findDeclr(this);
 
         foreach (m; env.missing)
         {
@@ -93,7 +90,7 @@ final class DeclrFinder : IAstVisitor!(void)
 
     void visit (ValueFn fn)
     {
-        env = new Env(env);
+        env = new Env(program, env);
 
         foreach (p; fn.params)
             visit(p);
@@ -120,14 +117,10 @@ final class DeclrFinder : IAstVisitor!(void)
         {
             auto bfn = i.text in builtinFns;
             if (bfn)
-            {
                 i.declaredBy = new ExpAssign(null, null, *bfn);
-            }
             else
-            {
-                program.tryAddModule(i.text.to!string());
                 env.missing ~= i;
-            }
+            
         }
     }
 
@@ -161,7 +154,7 @@ final class DeclrFinder : IAstVisitor!(void)
     }
 
 
-    void visit (ExpAssign a)
+    @trusted void visit (ExpAssign a)
     {
         if (a.type)
             a.type.findDeclr(this);

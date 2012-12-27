@@ -127,7 +127,7 @@ abstract class Exp
     debug string typeName;
 
 
-    this (ValueScope parent = null)
+    nothrow this (ValueScope parent = null)
     {
         debug typeName = typeid(this).name;
         this.parent = parent; 
@@ -225,6 +225,8 @@ final class ValueStruct : ValueScope
 {
     mixin visitImpl;
     ValueFn constructor;
+    bool isModule;
+    string filePath;
     nothrow this (ValueScope parent) { super(parent); }
 }
 

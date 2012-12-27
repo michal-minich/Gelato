@@ -93,12 +93,15 @@ import common, syntax.ast;
 
     dstring visit (ExpFnApply e)
     {
-        if (e.applicable.tokens[0].type == TokenType.braceStart)
-            return formatBraceOpApply(e.applicable.tokens[0].text, e.args);
+        if (e.applicable.tokens)
+        {
+            if (e.applicable.tokens[0].type == TokenType.braceStart)
+                return formatBraceOpApply(e.applicable.tokens[0].text, e.args);
 
-        else if (e.applicable.tokens[0].type == TokenType.op)
-            return dtext(e.args[0].str(this), " ", e.applicable.tokens[0].text, " ", e.args[1].str(this));
-  
+            else if (e.applicable.tokens[0].type == TokenType.op)
+                return dtext(e.args[0].str(this), " ", e.applicable.tokens[0].text, " ", e.args[1].str(this));
+        }
+
         if (printOriginalParse && !e.parent)
             return e.applicable.str(this);
 

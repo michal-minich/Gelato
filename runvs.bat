@@ -1,1 +1,1 @@
-Debug\Gelato.exe test.gel
+Debug\Gelato.exe prog\test.gel

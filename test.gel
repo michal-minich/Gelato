@@ -1,4 +1,0 @@
-start = fn ()
-{
-	s = std.id(4)
-}
