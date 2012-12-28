@@ -18,9 +18,9 @@ FUNCTIONS
 	variable length fn params
 
 IF
-    static if does not introduce scope, normal if yes
-    multi statement static if - eval test to know which declaration to use 
-        (only if they have conflicting declaration names, which are used after if. see previous if-scope todo) 
+    eval if at compile time if needed to resolve ct values (ie types).
+		note assigning in then or else branch to mutable type variable declared before if
+	definite assignment
 
 TYPES
 	type variables

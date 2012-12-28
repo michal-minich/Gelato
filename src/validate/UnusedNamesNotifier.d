@@ -52,10 +52,10 @@ final class UnusedNamesNotifier : IAstVisitor!void
     {
         i.when.accept(this);
 
-        foreach (t; i.then)
+        foreach (t; i.then.exps)
             t.accept(this);
 
-        foreach (o; i.otherwise)
+        foreach (o; i.otherwise.exps)
             o.accept(this);
     }
 

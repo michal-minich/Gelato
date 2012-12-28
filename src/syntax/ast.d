@@ -377,8 +377,8 @@ final class ExpIf : Exp
 {
     mixin visitImpl;
     Exp when;
-    Exp[] then;
-    Exp[] otherwise;
+    ValueScope then;
+    ValueScope otherwise;
     nothrow this (ValueScope parent) { super(parent); }
 }
 

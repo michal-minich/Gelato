@@ -274,15 +274,15 @@ final class TypeInferer : IAstVisitor!Exp
 
     @trusted Exp visit (ExpIf i)
     {
-        if (i.then.length == 1 && i.otherwise.length == 1)
+        if (i.then.exps.length == 1 && i.otherwise.exps.length == 1)
         {
-            auto t = mergeTypes(i.then[0].infer(this), i.otherwise[0].infer(this));
+            auto t = mergeTypes(i.then.exps[0].infer(this), i.otherwise.exps[0].infer(this));
             auto tor = cast(TypeOr)t;
             if (tor)
             {
                 i.infType = Interpreter.isTrueForIf(context.eval(i.when))
-                   ? i.then[0].infType
-                   : i.otherwise[0].infType;
+                   ? i.then.exps[0].infType
+                   : i.otherwise.exps[0].infType;
             }
             else
             {
@@ -291,10 +291,10 @@ final class TypeInferer : IAstVisitor!Exp
         }
         else
         {   
-            foreach (t; i.then)
+            foreach (t; i.then.exps)
                 t.infer(this);
 
-            foreach (o; i.otherwise)
+            foreach (o; i.otherwise.exps)
                 o.infer(this);
 
             i.infType = TypeVoid.single;

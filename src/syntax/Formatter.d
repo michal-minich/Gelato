@@ -146,11 +146,11 @@ import common, syntax.ast;
     dstring visit (ExpIf e)
     {
         ++level;
-        immutable forceExpand = e.then.length > 1 || e.otherwise.length > 1;
-        auto txt = dtext("if ", e.when.str(this), " then", dtextExps(e.then, forceExpand));
+        immutable forceExpand = e.then.exps.length > 1 || e.otherwise.exps.length > 1;
+        auto txt = dtext("if ", e.when.str(this), " then", dtextExps(e.then.exps, forceExpand));
 
-        if (e.otherwise.length)
-            txt ~= dtext("else", dtextExps(e.otherwise, forceExpand));
+        if (e.otherwise.exps.length)
+            txt ~= dtext("else", dtextExps(e.otherwise.exps, forceExpand));
 
         --level;
         return txt ~ "end";

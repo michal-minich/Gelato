@@ -104,12 +104,11 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
     {
         i.when.accept(this);
 
-        foreach (t; i.then)
+        foreach (t; i.then.exps)
             t.accept(this);
 
-        if (i.otherwise)
-            foreach (o; i.otherwise)
-                o.accept(this);
+        foreach (o; i.otherwise.exps)
+            o.accept(this);
     }
 
 

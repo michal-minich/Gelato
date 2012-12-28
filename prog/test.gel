@@ -1,16 +1,14 @@
-cons = fn (h, t) 
-{ 
-	struct 
-	{
-		head = h
-		tail = t 
-	} () 
-}
-
 start = fn ()
 {
-	c = cons(1, cons(2, 3))
-	ct = c.tail
-	ch = ct.head
-	return ch
+	a = 1
+
+	if a then
+		b = 2
+		print (a)
+	else
+		c = 3
+		print (a)
+	end
+
+	print (b)
 }

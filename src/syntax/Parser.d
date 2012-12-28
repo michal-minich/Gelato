@@ -434,10 +434,10 @@ final class Parser
         }
 
 
-        Exp[] then;
+        auto then = new ValueStruct(parent); // should be only ValueScope
         if (current.type != TokenType.keyThen)
         {
-            then ~= new ValueUnknown(parent);
+            then.exps ~= new ValueUnknown(then);
             vctx.remark(textRemark("missing 'then' after if"));
         }
         else
@@ -445,25 +445,25 @@ final class Parser
             nextNonWhiteTok();
 
             while (toks.length && current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
-                then ~= parse(parent);
+                then.exps ~= parse(then);
 
-            if (!then.length)
+            if (!then.exps.length)
             {
-                then ~= new ValueUnknown(parent);
+                then.exps ~= new ValueUnknown(then);
                 vctx.remark(textRemark("missing expression after then"));
             }
         }
 
-        Exp[] otherwise;
+        auto otherwise = new ValueStruct(parent); // should be only ValueScope
         if (current.type == TokenType.keyElse)
         {
             nextNonWhiteTok();
 
             while (toks.length && current.type != TokenType.keyEnd)
-                otherwise ~= parse(parent); 
-            if (!otherwise.length)
+                otherwise.exps ~= parse(otherwise); 
+            if (!otherwise.exps.length)
             {
-                otherwise ~= new ValueUnknown(parent);
+                otherwise.exps ~= new ValueUnknown(otherwise);
                 vctx.remark(textRemark("missing expression after else"));
             }
         }

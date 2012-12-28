@@ -61,10 +61,10 @@ nothrow:
     {        
         i.when.findName(this);
 
-        foreach (t; i.then)
+        foreach (t; i.then.exps)
             t.findName(this);
 
-        foreach (o; i.otherwise)
+        foreach (o; i.otherwise.exps)
             o.findName(this);
     }
 

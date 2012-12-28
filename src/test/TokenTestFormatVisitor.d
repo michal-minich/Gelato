@@ -41,10 +41,10 @@ import syntax.ast;
 
     dstring visit (ExpIf i)
     {
-        auto s = i.tokensText ~ "|" ~ i.when.str(this) ~ i.then.map!(e => e.str(this))().join();
+        auto s = i.tokensText ~ "|" ~ i.when.str(this) ~ i.then.exps.map!(e => e.str(this))().join();
         
-        if (i.otherwise)
-            s ~= i.otherwise.map!(e => e.str(this))().join();
+        if (i.otherwise.exps)
+            s ~= i.otherwise.exps.map!(e => e.str(this))().join();
 
         return s;
     }

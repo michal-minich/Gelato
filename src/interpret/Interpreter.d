@@ -128,7 +128,7 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
         else
         {
             auto fn = new ValueFn (currentClosure.parent);
-            fn.exps = isTrue ? i.then : i.otherwise;
+            fn.exps = isTrue ? i.then.exps : i.otherwise.exps;
             return evalLambda(new Closure(fn, currentClosure, fn.params));
         }
     }
@@ -150,6 +150,9 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
     Exp visit (ExpIdent ident)
     {
         auto d = ident.declaredBy;
+        if (!d)
+            return ValueUnknown.single;
+
         if (d.paramIndex == typeof(d.paramIndex).max)
             return d.value.eval(this);
 
