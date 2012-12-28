@@ -5,7 +5,7 @@ import std.stdio, std.algorithm, std.string, std.array, std.conv, std.file, std.
 import std.file : readText, exists, isFile;
 import common, settings, syntax.Formatter, validate.remarks, syntax.SyntaxValidator,
     syntax.Tokenizer, syntax.Parser, syntax.ast, interpret.Interpreter, interpret.preparer,
-    interpret.TypeInferer, validate.UnusedNamesNotifier, interpret.NameFinder, interpret.builtins, 
+    interpret.TypeInferer, validate.UnusedNamesNotifier, interpret.NameFinder, interpret.NameAssigner, interpret.builtins, 
     interpret.ConsoleInterpreterContext;
 
 
@@ -30,10 +30,8 @@ final class Program
     int runInConsole ()
     {
         auto c = new ConsoleInterpreterContext;
-        context = c;
-
-        c.evaluator = new Interpreter(context);
-        auto res = run(context);
+        c.evaluator = new Interpreter(c);
+        auto res = run(c);
 
         if (context.exceptions)
             return 1; // TODO some magic number here
@@ -84,9 +82,11 @@ final class Program
 
     Exp run (IInterpreterContext context)
     {
-        auto fileData = taskSpecs.startFileData
-            ? taskSpecs.startFileData
-            : toUTF32(readText!string(taskSpecs.startFilePath));
+        this.context = context;
+
+        auto fileData = taskSpecs.startFilePath
+            ? toUTF32(readText!string(taskSpecs.startFilePath))
+            : taskSpecs.startFileData;
 
         ExpAssign[] starts;
 
@@ -174,7 +174,7 @@ final class Program
 
     Token[] tokenize (dstring fileData, string fileName)
     {
-        debug context.println("TOKENIZE " ~ fileName.to!dstring());
+        debug context.println("TOKENIZE " ~  fileName.to!dstring());
         auto toks = (new Tokenizer(fileData)).tokenize();
         //debug foreach (t; toks) context.println(t.toDebugString());
         return toks;
@@ -228,8 +228,12 @@ final class Program
     void findDeclarations ()
     {
         debug context.println("FIND NAMES");
-        auto df = new NameFinder(context);
-        df.visit(prog);
+        auto nf = new NameFinder(context);
+        nf.visit(prog);
+
+        debug context.println("ASSIGN NAMES");
+        auto na = new NameAssigner(context);
+        na.visit(prog);
     }
 
 

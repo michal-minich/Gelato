@@ -15,8 +15,6 @@ NAMES
 	built-ins with qualified name (also overridable)
 
 FUNCTIONS
-    infer identifier by usage in fn (not only by def)
-    infer identifier by usage as fn argument
 	variable length fn params
 
 IF
@@ -28,12 +26,12 @@ TYPES
 	type variables
     type parameters
     type annotations
-	built-ins - TypeOf, Num-Text covnversions
+	type aliases / equality
+	built-ins - TypeOf, Num-Text conversions
 
 ARRAY
 	array operations (empty, first, rest)
 	text is array
-
 
 INTERPRETER
 	! on file without start, tokens position does not correspond real file (don't tokenize again)
@@ -55,7 +53,7 @@ TOKENIZER
 	! text unicode escapes
 	! unicode support in text/char
 	  unicode support in identifiers
-	  allow unicode oprators as an option "option uniop"
+	  allow unicode operators as an option "option uniop"
 
 PARSER
 ! remark file origin

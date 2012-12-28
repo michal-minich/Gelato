@@ -54,13 +54,15 @@ final class ConsoleInterpreterContext : IInterpreterContext
 
         std.stdio.write ("* ", location, ", ", svr.remarkSeverityText(), ": ", remark.text);
 
-        auto txt = remark.subject.tokensText;
-        auto newLineIx = txt.countUntil('\r');
-        if (newLineIx == -1)
-            newLineIx = txt.countUntil('\n');
-
         if (remark.subject)
+        {
+            auto txt = remark.subject.tokensText;
+            auto newLineIx = txt.countUntil('\r');
+            if (newLineIx == -1)
+                newLineIx = txt.countUntil('\n');
+
             std.stdio.write ("\t", txt[0 .. newLineIx != -1 ? newLineIx : $], newLineIx != -1 ? " ..." : "");
+        }
 
         writeln();
     }

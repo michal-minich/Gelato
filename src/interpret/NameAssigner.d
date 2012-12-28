@@ -1,15 +1,15 @@
-module interpret.NameFinder;
+module interpret.NameAssigner;
 
 import std.algorithm, std.conv;
-import common, syntax.ast, validate.remarks;
+import common, syntax.ast, validate.remarks, interpret.builtins;
 
 
 @safe:
 
 
-final class NameFinder : INothrowAstVisitor!void
+final class NameAssigner : INothrowAstVisitor!void
 {
-    nothrow:
+nothrow:
 
 
     IValidationContext context;
@@ -32,6 +32,19 @@ final class NameFinder : INothrowAstVisitor!void
 
         foreach (e; fn.exps)
             e.findName(this);
+    }
+
+
+    void visit (ExpIdent i)
+    {
+        i.declaredBy = i.parent.get(i);
+
+        if (!i.declaredBy)
+        {
+            auto bfn = i.text in builtinFns;
+            if (bfn)
+                i.declaredBy = *bfn;
+        }
     }
 
 
@@ -71,25 +84,8 @@ final class NameFinder : INothrowAstVisitor!void
 
         if (a.value)
             a.value.findName(this);
-
-        auto i = cast(ExpIdent)a.slot;
-        auto declr = i.text in a.parent.declrs;
-        if (declr)
-        {
-            auto declrIdent = cast(ExpIdent)declr.slot;
-          //  i.closureItemIndex =  declrIdent.closureItemIndex;
-        }
-        else
-        {
-            a.parent.declrs[i.text] = a;
-           // i.closureItemIndex =  env.closureItemIndex;
-           // ++env.closureItemIndex;
-        }
     }
 
-
-
-    void visit (ExpIdent i)  { }
 
     void visit (StmReturn r) { r.exp.findName(this); }
 

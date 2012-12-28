@@ -41,21 +41,17 @@ final class Tokenizer
     this (const dstring src)
     {
         this.src = src;
-        popFront();
     }
 
 
     Token[] tokenize()
     {
         Token[] res;
-        for (;;)
+        while (src.length)
         {
-            res ~= front;
-            if (!src.length)
-                break;
             popFront ();
+            res ~= front;
         }
-
         return res;
     }
 

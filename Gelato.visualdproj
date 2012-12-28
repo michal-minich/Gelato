@@ -288,6 +288,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
    <File path="src\interpret\builtins.d" />
    <File path="src\interpret\ConsoleInterpreterContext.d" />
    <File path="src\interpret\Interpreter.d" />
+   <File path="src\interpret\NameAssigner.d" />
    <File path="src\interpret\NameFinder.d" />
    <File path="src\interpret\preparer.d" />
    <File path="src\interpret\TypeInferer.d" />

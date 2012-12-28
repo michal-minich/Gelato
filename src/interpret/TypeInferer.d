@@ -5,6 +5,9 @@ import std.conv, std.algorithm, std.array;
 import common, syntax.ast, syntax.Parser, validate.remarks, interpret.Interpreter, program;
 
 
+@safe:
+
+
 @trusted Exp mergeTypes (Exp[] types...)
 {
     Exp[] possible;
@@ -15,10 +18,10 @@ import common, syntax.ast, syntax.Parser, validate.remarks, interpret.Interprete
 }
 
 
-bool typeIdLess (T) (T a, T b) { return &a < &b; }
+@trusted bool typeIdLess (T) (T a, T b) { return &a < &b; }
 
 // TODO optimize - then, the same function can be used for == and === built-in operators
-bool typeIdEq (T) (T a, T b) { return a.str(fv) == b.str(fv); }
+@trusted bool typeIdEq (T) (T a, T b) { return a.str(fv) == b.str(fv); }
 
 
 Exp[] flatternType(Exp t)
@@ -104,11 +107,41 @@ final class TypeInferer : IAstVisitor!Exp
 
         structTypeAssign = null;
 
-        Exp[] paramTypes;
-        foreach (e; fn.params)
-            paramTypes ~= e.infer(this);
+        inferFn(fn);
 
-         fn.infType  = new TypeFn(null, paramTypes, TypeVoid.single);
+        return fn.infType;
+    }
+
+
+    TypeFn inferFn (ValueFn fn, Exp[] args = null)
+    {
+        Exp[] paramTypes;
+
+        if (args)
+        {
+            foreach (ix, p; fn.params)
+            {
+                auto paramType = p.infer(this);
+                if (cast(TypeAny)paramType)
+                {
+                    auto argType = args[ix].infer(this);
+                    paramTypes ~= argType;
+                    (cast(ExpIdent)p.slot).argType = argType;
+                }
+                else
+                {
+                    paramTypes ~= paramType;
+                }
+            }
+        }
+        else
+        {
+            foreach (p; fn.params)
+                paramTypes ~= p.infer(this);
+        }
+
+        auto fnInfType = new TypeFn(null, paramTypes, TypeVoid.single, fn);
+        fn.infType = fnInfType;
 
         foreach (e; fn.exps)
         {
@@ -117,9 +150,9 @@ final class TypeInferer : IAstVisitor!Exp
         }
 
         if (fn.exps.length == 1 && !cast(StmReturn)fn.exps[0])
-            (cast(TypeFn)fn.infType).retType = fn.exps[0].infType;
+            fnInfType.retType = fn.exps[0].infType;
 
-        return fn.infType;
+        return fnInfType;
     }
 
 
@@ -132,9 +165,19 @@ final class TypeInferer : IAstVisitor!Exp
             ts ~= a.infer(this);
 
         auto applicableType = fna.applicable.infer(this);
-        auto fn = cast(TypeFn)applicableType;
+        auto tfn = cast(TypeFn)applicableType;
 
-        fna.infType = fn ? fn.retType : (cast(TypeType)applicableType).type;
+        if (tfn)
+        {
+            if (tfn.value)
+                fna.infType = inferFn (tfn.value, fna.args).retType;
+            else
+                fna.infType = tfn.retType;
+        }       
+        else
+        {
+            fna.infType = (cast(TypeType)applicableType).type;
+        }
 
         auto arrType = cast(TypeArray)fna.infType;
         if (arrType)
@@ -146,27 +189,38 @@ final class TypeInferer : IAstVisitor!Exp
 
     Exp visit (ExpIdent i)
     {
+        if (i.declaredBy)
+        {
+            auto s = cast(ExpIdent)i.declaredBy.slot;
+            if (s && s.argType)
+            {
+                i.infType = s.argType;
+                return i.infType;
+            }
+        }
+
         if (i.infType)
             return i.infType;
 
         structTypeAssign = null;
 
-        i.infType = i.declaredBy !is null && i.declaredBy.value !is null
+        i.infType = i.declaredBy && i.declaredBy.value
             ? i.declaredBy.value.infer(this)
             : TypeAny.single;
+
         return i.infType;
     }
 
 
-    Exp visit (ExpAssign d)
+    Exp visit (ExpAssign a)
     {
-        if (d.infType)
-            return d.infType;
+        if (a.infType)
+            return a.infType;
 
-        structTypeAssign = d;
+        structTypeAssign = a;
 
-        d.infType = d.value ? d.value.infer(this) : TypeAny.single;
-        return d.infType;
+        a.infType = a.value ? a.value.infer(this) : TypeAny.single;
+        return a.infType;
     }
 
 
@@ -258,14 +312,18 @@ final class TypeInferer : IAstVisitor!Exp
         auto i2 = cast(ExpIdent)dot.record;
         if (i2)
         {
-            auto s2 = cast(ValueStruct)(cast(ExpFnApply)i2.declaredBy.value).applicable;
-            if (s2 && s2.filePath)
+            auto dfna = cast(ExpFnApply)i2.declaredBy.value;
+            if (dfna)
             {
-                auto astFile = program.loadFile(s2.filePath);
-                astFile.parent = s2.parent;
-                auto fna = new ExpFnApply(s2.parent, astFile, null);
-                s2.filePath = null;
-                i2.declaredBy.value = fna;
+                auto s2 = cast(ValueStruct)dfna.applicable;
+                if (s2 && s2.filePath)
+                {
+                    auto astFile = program.loadFile(s2.filePath);
+                    astFile.parent = s2.parent;
+                    auto fna = new ExpFnApply(s2.parent, astFile, null);
+                    s2.filePath = null;
+                    i2.declaredBy.value = fna;
+                }
             }
         }
 

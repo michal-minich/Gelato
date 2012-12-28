@@ -102,6 +102,48 @@ interface IAstVisitor (R)
 }
 
 
+interface INothrowAstVisitor (R)
+{
+    nothrow:
+
+    R visit (ValueInt);
+    R visit (ValueFloat);
+    R visit (ValueText);
+    R visit (ValueChar);
+    R visit (ValueStruct);
+    R visit (ValueFn);
+    R visit (ValueBuiltinFn);
+    R visit (ValueUnknown);
+    R visit (ValueArray);
+
+    R visit (ExpIdent);
+    R visit (ExpFnApply);
+    R visit (ExpIf);
+    R visit (ExpDot);
+    R visit (ExpAssign);
+
+    R visit (Closure);
+
+    R visit (StmLabel);
+    R visit (StmGoto);
+    R visit (StmReturn);
+
+    R visit (TypeType);
+    R visit (TypeAny);
+    R visit (TypeVoid);
+    R visit (TypeOr);
+    R visit (TypeFn);
+    R visit (TypeInt);
+    R visit (TypeFloat);
+    R visit (TypeText);
+    R visit (TypeChar);
+    R visit (TypeStruct);
+    R visit (TypeArray);
+
+    R visit (WhiteSpace);
+}
+
+
 alias IAstVisitor!dstring IFormatVisitor;
 
 
@@ -114,7 +156,7 @@ mixin template visitImpl ()
     override dstring      str       (IFormatVisitor v)       { return v.visit(this); }
     override Exp          eval      (Interpreter v)          { return v.visit(this); }
     override Exp          infer     (TypeInferer v)          { return v.visit(this); }
-    nothrow override void findName  (NameFinder v)           { return v.visit(this); }
+    nothrow override void findName  (INothrowAstVisitor!void v)           { return v.visit(this); }
 }
 
 
@@ -124,16 +166,25 @@ abstract class Exp
     Token[] tokens;
     ValueScope parent;
     debug string typeName;
+    debug string dbgTokensText;
 
 
     nothrow this (ValueScope parent = null)
     {
         debug typeName = typeid(this).name;
-        this.parent = parent; 
+
+        this.parent = parent;
     }
 
 
-    @trusted const pure @property size_t tokensTextLength ()
+    nothrow @property void setTokens (Token[] ts)
+    {
+        tokens = ts;
+        debug dbgTokensText = tokensText.toString();
+    }
+
+
+    nothrow @trusted const pure @property size_t tokensTextLength ()
     {
         size_t l;
         foreach (t; tokens)
@@ -142,7 +193,7 @@ abstract class Exp
     }
 
 
-    @trusted const pure @property dstring tokensText ()
+    nothrow @trusted const pure @property dstring tokensText ()
     {
         auto s = new dchar[tokensTextLength];
         size_t rl;
@@ -159,7 +210,7 @@ abstract class Exp
     abstract dstring str (IFormatVisitor);
     abstract Exp eval (Interpreter);
     abstract Exp infer (TypeInferer);
-    nothrow abstract void findName (NameFinder);
+    nothrow abstract void findName (INothrowAstVisitor!void);
 }
 
 
@@ -317,6 +368,7 @@ final class ExpIdent : Exp
     dstring text;
     ExpAssign declaredBy;
     size_t closureItemIndex;
+    Exp argType;
     nothrow this (ValueScope parent, dstring identfier) { super(parent); text = identfier; }
 }
 
@@ -426,13 +478,15 @@ final class TypeOr : Exp
 final class TypeFn : Exp
 {
     mixin visitImpl;
+    ValueFn value;
     Exp[] types;
     Exp retType;
-    nothrow this (ValueScope parent, Exp[] types, Exp retType)
+    nothrow this (ValueScope parent, Exp[] types, Exp retType, ValueFn value = null)
     {
         super(parent);
         this.types = types;
         this.retType = retType;
+        this.value = value;
     }
 }
 

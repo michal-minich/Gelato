@@ -36,7 +36,7 @@ final class Parser
     ValueStruct parseAll ()
     {
         auto s = new ValueStruct(null);
-        s.tokens = toks2;
+        s.setTokens = toks2;
         Exp e;
         skipWhite();
         while ((e = parse(s)) !is null)
@@ -132,7 +132,7 @@ final class Parser
     T newExp (T : Exp, A...) (size_t start, A args)
     {
         auto e = new T(args);
-        e.tokens = toks2[start .. current.index];
+        e.setTokens = toks2[start .. current.index];
         return e;
     }
 
@@ -140,7 +140,7 @@ final class Parser
     T newExp1 (T : Exp, A...) (A args)
     {
         auto e = new T(args);
-        e.tokens = toks2[current.index .. current.index + 1];
+        e.setTokens = toks2[current.index .. current.index + 1];
         return e;
     }
 
@@ -148,7 +148,7 @@ final class Parser
     T newExp2 (T : Exp, A...) (size_t start, size_t end, A args)
     {
         auto e = new T(args);
-        e.tokens = toks2[start .. end];
+        e.setTokens = toks2[start .. end];
         return e;
     }
 
@@ -514,7 +514,7 @@ final class Parser
         auto s = new ValueStruct(parent);
         nextNonWhiteTok();
         s.exps = parseBracedExpList(s);
-        s.tokens = toks2[start .. current.index];
+        s.setTokens = toks2[start .. current.index];
         return s;
     }
 
@@ -547,7 +547,7 @@ final class Parser
         }
 
         f.exps = parseBracedExpList(f);
-        f.tokens = toks2[start .. current.index];
+        f.setTokens = toks2[start .. current.index];
         return f;
     }
 

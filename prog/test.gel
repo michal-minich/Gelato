@@ -1,17 +1,16 @@
-
-F = fn () { struct { y = 2 } }
+cons = fn (h, t) 
+{ 
+	struct 
+	{
+		head = h
+		tail = t 
+	} () 
+}
 
 start = fn ()
 {
-	a = 1
-	S = struct { x = 1, z = 2 }
-	S3 = S
-	s = S()
-	s3 = S3()
-	S2 = F()
-	s2 = S2()
-
-	b = s.x
-	c = s2.y
-	return c
+	c = cons(1, cons(2, 3))
+	ct = c.tail
+	ch = ct.head
+	return ch
 }
