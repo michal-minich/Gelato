@@ -338,6 +338,7 @@ final class ExpAssign : Exp
     Exp expValue;
     size_t paramIndex = typeof(paramIndex).max;
     ExpIdent[] usedBy;
+    bool isVar;
     nothrow this (ValueScope parent, Exp slot, Exp value)
     {
         super(parent);

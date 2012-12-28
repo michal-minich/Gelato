@@ -1,6 +1,6 @@
 start = fn ()
 {
-	a = 1
+	var a = 1
 
 	if a then
 		b = 2

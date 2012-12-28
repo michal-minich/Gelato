@@ -33,10 +33,12 @@ import common, syntax.ast;
     {
         auto t = useInferredTypes ? e.infType : e.type;
 
+        auto v = e.isVar ? "var " : "";
+
         if (!t && !e.value) return e.slot.str(this);
-        else if (!t)        return dtext (e.slot.str(this), " = ", e.value.str(this));
-        else if (!e.value)  return dtext (e.slot.str(this), " : ", t.str(this));
-        else                return dtext (e.slot.str(this), " : ", t.str(this),
+        else if (!t)        return dtext (v, e.slot.str(this), " = ", e.value.str(this));
+        else if (!e.value)  return dtext (v, e.slot.str(this), " : ", t.str(this));
+        else                return dtext (v, e.slot.str(this), " : ", t.str(this),
                                     " = ", e.value.str(this));
     }
 

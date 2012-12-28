@@ -402,7 +402,10 @@ final class Parser
         auto e = parse(parent);
         auto a = cast(ExpAssign)e;
         if (a)
+        {
+            a.isVar = true;
             return a;
+        }
 
         vctx.remark(textRemark(e, "var can be only used before declaration"));
         return e;
