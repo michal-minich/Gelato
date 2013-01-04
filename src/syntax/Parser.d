@@ -186,7 +186,7 @@ final class Parser
             case TokenType.keyLabel: exp = parseLabel(parent); break;
 
             case TokenType.keyStruct: exp = parseStruct(parent); break;
-            //case TokenType.keyThrow: exp = parseThrow(parent); break;
+            case TokenType.keyThrow: exp = parseThrow(parent); break;
             case TokenType.keyVar: exp = parseVar(parent); break;
 
             case TokenType.unknown: exp = parseUnknown(parent); break;
@@ -552,6 +552,14 @@ final class Parser
         f.exps = parseBracedExpList(f);
         f.setTokens = toks2[start .. current.index];
         return f;
+    }
+
+
+    StmThrow parseThrow (ValueScope parent)
+    {
+        immutable start = current.index;
+        nextNonWhiteTokOnSameLine();
+        return newExp!StmThrow(start, parent, (toks.length && current.type != TokenType.newLine) ? parse(parent) : null);
     }
 
 

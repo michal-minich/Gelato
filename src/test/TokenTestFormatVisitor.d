@@ -56,6 +56,8 @@ import syntax.ast;
 
     dstring visit (StmReturn e) { return e.tokensText ~ "|" ~ (e.exp ? e.exp.str(this) : ""); }
 
+    dstring visit (StmThrow th) { return th.tokensText ~ "|" ~ (th.exp ? th.exp.str(this) : ""); }
+
     const dstring visit (ValueText e){ return e.tokensText ~ "|"; }
 
     const dstring visit (ValueChar e) { return e.tokensText ~ "|"; }

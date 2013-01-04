@@ -37,7 +37,6 @@ INTERPRETER
 	! on file without start, tokens position does not correspond real file (don't tokenize again)
 	! user overridable struct functions - construct, destruct, clone, ...
 	! ref
-	! throw
 	! try catch
 	  a = const 1 + 2    if const 1 + 2 then    const if 1 + 2 ... ?
 	  a = var 1 + 2 ?

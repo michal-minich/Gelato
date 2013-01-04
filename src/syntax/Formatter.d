@@ -130,6 +130,12 @@ import common, syntax.ast;
     }
 
 
+    dstring visit (StmThrow th)
+    {
+        return "throw" ~ (th.exp ?  " " ~ th.exp.str(this) : "");
+    }
+
+
     dstring visit (ValueText e)
     {
         return dtext("\"", e.value.toVisibleCharsText(), "\"");

@@ -89,6 +89,20 @@ final class UnusedNamesNotifier : IAstVisitor!void
     }
 
 
+    void visit (StmReturn r)
+    {
+        if (r.exp)
+            r.exp.accept(this);
+    }
+    
+    
+    void visit (StmThrow th)
+    {
+        if (th.exp)
+            th.exp.accept(this);
+    }
+
+
     void visit (StmLabel l)
     {
         if (!l.gotoBy)
@@ -107,7 +121,6 @@ final class UnusedNamesNotifier : IAstVisitor!void
 
     void visit (Closure) { }
     void visit (StmGoto) { }
-    void visit (StmReturn) { }
 
     void visit (TypeType) { }
     void visit (TypeAny) { }

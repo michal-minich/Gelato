@@ -145,7 +145,15 @@ final class SyntaxValidator : IAstVisitor!void
 
     void visit (StmReturn r)
     {
-        r.exp.accept(this);
+        if (r.exp)
+            r.exp.accept(this);
+    }
+
+
+    void visit (StmThrow th)
+    {
+        if (th.exp)
+            th.exp.accept(this);
     }
 
 

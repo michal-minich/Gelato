@@ -85,6 +85,7 @@ interface IAstVisitor (R)
     R visit (StmLabel);
     R visit (StmGoto);
     R visit (StmReturn);
+    R visit (StmThrow);
 
     R visit (TypeType);
     R visit (TypeAny);
@@ -127,6 +128,7 @@ interface INothrowAstVisitor (R)
     R visit (StmLabel);
     R visit (StmGoto);
     R visit (StmReturn);
+    R visit (StmThrow);
 
     R visit (TypeType);
     R visit (TypeAny);
@@ -467,12 +469,21 @@ final class StmGoto : Exp
 {
     mixin visitImpl;
     dstring label;
-    uint labelExpIndex = uint.max;
+    ulong labelExpIndex = ulong.max;
     nothrow this (ValueScope parent, dstring label) { super(parent); this.label = label; }
 }
 
 
 final class StmReturn : Exp
+{
+    mixin visitImpl;
+    Exp exp;
+    nothrow this (ValueScope parent, Exp exp) { super(parent); this.exp = exp; }
+}
+
+
+
+final class StmThrow : Exp
 {
     mixin visitImpl;
     Exp exp;

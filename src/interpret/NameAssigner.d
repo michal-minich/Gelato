@@ -93,6 +93,7 @@ nothrow:
 
     void visit (StmLabel) { }
     void visit (StmGoto) { }
+    void visit (StmThrow) { }
 
     void visit (ValueBuiltinFn) { }
     void visit (ValueUnknown) { }

@@ -35,7 +35,11 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
             currentClosure = lambda;
             lastExp = exps[expIndex];
             e = lastExp.eval(this);
-            if (gotoIndex == typeof(gotoIndex).max)
+            if (gotoIndex == typeof(gotoIndex).max - 1)
+            {
+                return e;
+            }
+            else if (gotoIndex == typeof(gotoIndex).max)
             {
                 gotoIndex = -1;
                 return e;
@@ -223,6 +227,15 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
 
         return null;
     }
+
+
+    @trusted Exp visit (StmThrow th)
+    {
+        context.except("ex");
+        gotoIndex = typeof(gotoIndex).max - 1;
+        return null;
+    }
+
 
     Exp visit (ExpAssign a)
     { 

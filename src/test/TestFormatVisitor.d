@@ -29,6 +29,8 @@ import syntax.ast;
 
     const dstring visit (StmReturn e) { return "StmReturn"; }
 
+    const dstring visit (StmThrow) { return "StmThrow"; }
+
     const dstring visit (ValueText e){ return e.value; }
 
     const dstring visit (ValueChar e) { return e.value.to!dstring(); }

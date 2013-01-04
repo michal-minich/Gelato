@@ -97,6 +97,7 @@ final class NameFinder : INothrowAstVisitor!void
 
     void visit (StmLabel) { }
     void visit (StmGoto) { }
+    void visit (StmThrow) { }
 
     void visit (ValueBuiltinFn) { }
     void visit (ValueUnknown) { }

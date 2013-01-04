@@ -153,7 +153,19 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
     }
 
 
-    void visit (StmReturn r) { r.exp.accept(this);}
+    void visit (StmReturn r)
+    {
+        if (r.exp)
+            r.exp.accept(this);
+    }
+
+
+    void visit (StmThrow th)
+    {    
+        if (th.exp)
+            th.exp.accept(this);
+    }
+
 
     void visit (ExpIdent) { }
 
