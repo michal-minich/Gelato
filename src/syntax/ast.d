@@ -375,6 +375,7 @@ final class ExpAssign : Exp
     Exp expValue;
     size_t paramIndex = typeof(paramIndex).max;
     bool isVar;
+    bool isDeclr;
     ExpIdent[] readBy;
     ExpIdent[] writtenBy;
 

@@ -1,20 +1,19 @@
 start = fn ()
 {
-	print (1)
-	foo1()
-	print (2)
-}
+	a = 1
+	a = 2
+	print (a)
+	
+	b : Int
+	print (b)
 
-foo1 = fn ()
-{
-	print ("foo1")
-	foo2()
-	print ("foo1 x")
-}
+	c : Int
+	c = 3
 
-foo2 = fn ()
-{
-	print ("foo2")
-	throw
-	print ("foo2 x")
+	d = 4
+	print (d)
+
+	S = struct { x = 1 }
+	s = S()
+	print (s.x)
 }

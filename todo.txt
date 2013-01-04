@@ -16,6 +16,7 @@ NAMES
 
 FUNCTIONS
 	variable length fn params
+	change parsing of array from fn apply to array value
 
 IF
     eval if at compile time if needed to resolve ct values (ie types).

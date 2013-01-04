@@ -45,6 +45,9 @@ nothrow:
             if (bfn)
                 i.declaredBy = *bfn;
         }
+
+        if (i.declaredBy)
+            i.declaredBy.readBy ~= i;
     }
 
 

@@ -656,6 +656,9 @@ final class Parser
 
         if (type || value)
         {
+            if (!value)
+                value = new ValueUnknown(parent);
+
             auto d = newExp2!ExpAssign(i.tokens[0].index, current.index, parent, i, value);
             d.type = type;
             return d;

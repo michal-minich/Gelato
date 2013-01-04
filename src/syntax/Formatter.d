@@ -32,13 +32,13 @@ import common, syntax.ast;
     dstring visit (ExpAssign e)
     {
         auto t = useInferredTypes ? e.infType : e.type;
-
         auto v = e.isVar ? "var " : "";
+        auto hasValue = e.value && !cast(ValueUnknown)e.value;
 
-        if (!t && !e.value) return e.slot.str(this);
-        else if (!t)        return dtext (v, e.slot.str(this), " = ", e.value.str(this));
-        else if (!e.value)  return dtext (v, e.slot.str(this), " : ", t.str(this));
-        else                return dtext (v, e.slot.str(this), " : ", t.str(this),
+        if (!t && !hasValue) return e.slot.str(this);
+        else if (!t)         return dtext (v, e.slot.str(this), " = ", e.value.str(this));
+        else if (!hasValue)  return dtext (v, e.slot.str(this), " : ", t.str(this));
+        else                 return dtext (v, e.slot.str(this), " : ", t.str(this),
                                     " = ", e.value.str(this));
     }
 

@@ -81,6 +81,7 @@ final class NameFinder : INothrowAstVisitor!void
         }
         else
         {
+            a.isDeclr = true;
             a.parent.declrs[i.text] = a;
             i.closureItemIndex =  i.parent.closureItemsCount;
             ++i.parent.closureItemsCount;
