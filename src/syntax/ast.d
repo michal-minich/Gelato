@@ -160,11 +160,45 @@ mixin template visitImpl ()
 }
 
 
+/*
+
+    deterministic
+
+
+assign + fn
+    writesArg
+
+var
+    constant
+*/
+
+
+enum EffectValue { unknown, effector, allways, sometimes, never }
+enum EffectValueNonPropagating { unknown, allways, never }
+
+
+EffectValue escapes;
+EffectValue writtenMoreThanOnce;
+EffectValue linear;
+EffectValue usedInReturn;
+
+
 abstract class Exp
 {
     Exp infType;
     Token[] tokens;
     ValueScope parent;
+
+    EffectValueNonPropagating used; // propagates opposite direction
+
+    EffectValue throws;
+    EffectValue unsafe;
+    EffectValue allocatesOnGC;
+    EffectValue writesGlobal;
+    EffectValue readsGlobal;
+    EffectValue writesIO;
+    EffectValue readsIO;
+
     debug string typeName;
     debug string dbgTokensText;
 
@@ -267,6 +301,7 @@ abstract class ValueScope : Exp
 {
     Exp[] exps;
     ExpAssign[dstring] declrs;
+    size_t closureItemsCount;
 
     nothrow this (ValueScope parent) { super(parent); }
 
@@ -275,7 +310,7 @@ abstract class ValueScope : Exp
         auto d = i.text in declrs;
         if (d)
         {
-            d.usedBy ~= i;
+            d.writtenBy ~= i;
             return *d;
         }
         return parent ? parent.get(i) : null;
@@ -337,8 +372,10 @@ final class ExpAssign : Exp
     Exp value;
     Exp expValue;
     size_t paramIndex = typeof(paramIndex).max;
-    ExpIdent[] usedBy;
     bool isVar;
+    ExpIdent[] readBy;
+    ExpIdent[] writtenBy;
+
     nothrow this (ValueScope parent, Exp slot, Exp value)
     {
         super(parent);
@@ -347,6 +384,8 @@ final class ExpAssign : Exp
         this.value = value;
     }
 }
+
+
 
 
 final class ExpFnApply : Exp

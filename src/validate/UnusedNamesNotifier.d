@@ -68,14 +68,18 @@ final class UnusedNamesNotifier : IAstVisitor!void
 
     void visit (ExpAssign a)
     {
-        if (!a.usedBy)
+        auto i = cast(ExpIdent)a.slot;
+        if (i)
         {
-            auto i = cast(ExpIdent)a.slot;
-            if (i)
+            if (!a.writtenBy && a.readBy)
+                context.remark(textRemark(a, "Variable " ~ i.text ~ " is only written."));
+            else if (!a.readBy && a.writtenBy)
+                context.remark(textRemark(a, "Variable " ~ i.text ~ " is only read."));
+            else
                 context.remark(textRemark(a, "Variable " ~ i.text ~ " is not used."));
-            
-            a.slot.accept(this);
         }
+
+        a.slot.accept(this);
 
         if (a.type)
             a.type.accept(this);

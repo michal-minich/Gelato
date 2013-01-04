@@ -7,10 +7,10 @@ NAMES
 		public attribute
 		import names form scope to scope (also selective) - import std (id, second), module2
 	VAR
-		struct assignment (identifier even) is var implicitly ?
-		check  chained assignments - are they var ?
-		disallow chained assignments ?
-		mutable variables - allow only var as mutable
+		check  chained assignments - are they var ? - no
+		disallow chained assignments ? - clear without them, but disallowing them would be an exception (?)
+		mutable variables - make remark when mutating variable not marked as var
+			also, "x : Int" should allow later single assignment without remark (ie in if)
     remark multiply defined variables
 	built-ins with qualified name (also overridable)
 
@@ -80,7 +80,6 @@ PARSER
 
 PREPARER
   operators priority
-  prepare functions on firs call
   tail call
   
 SYNTAX VALIDATOR
@@ -104,20 +103,6 @@ formatter - configuration profiles
 autofix formatting / syntax
 cmd interactive - first version
 call functions as members  of first parameter
-
-function:
-  pure    = mempure + dont do io / call external functions
-  mempure = determp + dont modify any vairable outside funciton
-  determ  = return value depends only on parameters
-  contant = return value is constant
-
-fn paremeter:
-  (un)used    = is used in funciton
-  functional  = is used to compute result
-
-expression:
-  constant = literal
-  dead
 
 
   fix sample here, and contribue to phobos

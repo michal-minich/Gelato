@@ -77,13 +77,13 @@ final class NameFinder : INothrowAstVisitor!void
         if (declr)
         {
             auto declrIdent = cast(ExpIdent)declr.slot;
-          //  i.closureItemIndex =  declrIdent.closureItemIndex;
+            i.closureItemIndex =  declrIdent.closureItemIndex;
         }
         else
         {
             a.parent.declrs[i.text] = a;
-           // i.closureItemIndex =  env.closureItemIndex;
-           // ++env.closureItemIndex;
+            i.closureItemIndex =  i.parent.closureItemsCount;
+            ++i.parent.closureItemsCount;
         }
     }
 

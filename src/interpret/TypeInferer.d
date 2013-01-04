@@ -344,7 +344,7 @@ final class TypeInferer : IAstVisitor!Exp
             if (i.text == dot.member.text)
             {
                 dot.member.declaredBy = a;
-                a.usedBy ~= dot.member;
+                a.writtenBy ~= dot.member;
                 dot.member.infType = i.infer(this);
                 dot.infType = i.infType;
                 return i.infType;

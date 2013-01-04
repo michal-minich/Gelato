@@ -14,7 +14,7 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
         PreparerForEvaluator prep;
         Closure currentClosure;
         long gotoIndex = -1;
-    }
+    } 
 
 
     this (IInterpreterContext icontext)
@@ -226,7 +226,7 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
 
     Exp visit (ExpAssign a)
     { 
-        auto v = a.expValue.eval(this);
+        auto v = a.expValue ? a.expValue.eval(this) : null;
         auto s = a.slot;//.eval(this);
         auto i = cast(ExpIdent)s;
         if (i)
