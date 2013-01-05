@@ -1,7 +1,7 @@
 module interpret.builtins;
 
 import std.algorithm, std.array, std.conv, std.string;
-import common, syntax.ast, validate.remarks, test.TestFormatVisitor, interpret.TypeInferer;
+import common, syntax.ast, validate.remarks, test.TestFormatVisitor, interpret.TypeInferer, interpreter.DebugExpPrinter;
 
 
 ExpAssign[dstring] builtinFns;
@@ -29,6 +29,7 @@ ExpAssign[dstring] builtinFns;
        ,"!"       : bfn(&arrayIndex, new TypeFn(null, [TypeAny.single],TypeAny.single))
        ,"++"      : bfn(&arrayConcat, new TypeFn(null, [TypeAny.single],TypeAny.single))
        ,"TypeOf"  : bfn(&typeOf, new TypeFn(null, [TypeAny.single], new TypeType(null, null)))
+       ,"dbg"     : bfn(&dbgExp, new TypeFn(null, [TypeAny.single], TypeVoid.single))
         ];
     }
     catch
@@ -151,4 +152,14 @@ Exp typeOf (IInterpreterContext context, Exp[] exps)
 {
     auto i = new TypeInferer(null, context);
     return new TypeType(null, exps[0].infer(i));
+}
+
+
+public Exp dbgExp (IInterpreterContext context, Exp[] exps)
+{
+    auto d = new DebugExpPrinter(context);
+    auto e = exps[0];
+    if (e)
+        e.accept(d);
+    return null;
 }

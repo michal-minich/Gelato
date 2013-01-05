@@ -2,6 +2,7 @@ start = fn ()
 {
 	a = 1
 	a = 2
+	a = 3
 	print (a)
 	
 	b : Int
@@ -13,7 +14,9 @@ start = fn ()
 	d = 4
 	print (d)
 
-	S = struct { x = 1 }
+	S = struct { x = 11 }
 	s = S()
-	print (s.x)
+	xx = s.x
+
+	dbg (a)
 }

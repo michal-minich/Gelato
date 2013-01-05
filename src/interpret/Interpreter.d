@@ -70,8 +70,15 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
             if (bfn)
             {
                 Exp[] ea;
-                foreach (a; fna.args)
-                    ea ~= a.eval(this);
+                if (bfn.func != &dbgExp)
+                {
+                    foreach (a; fna.args)
+                        ea ~= a.eval(this);
+                }
+                else
+                {
+                    ea ~= fna.args[0];
+                }
                 
                 try
                 {
