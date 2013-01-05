@@ -121,7 +121,7 @@ final class Program
 
         initBuiltinFns();
 
-        findDeclarations();
+        findDeclarations(prog);
         
         if (context.hasBlocker)
             return null;
@@ -157,6 +157,8 @@ final class Program
 
         if (context.hasBlocker)
             return null;
+
+        findDeclarations (astFile);
 
         prepare(astFile);
 
@@ -225,15 +227,15 @@ final class Program
     }
 
 
-    void findDeclarations ()
+    void findDeclarations (ValueStruct astFile)
     {
         debug context.println("FIND NAMES");
         auto nf = new NameFinder(context);
-        nf.visit(prog);
+        nf.visit(astFile);
 
         debug context.println("ASSIGN NAMES");
         auto na = new NameAssigner(context);
-        na.visit(prog);
+        na.visit(astFile);
     }
 
 

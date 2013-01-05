@@ -2,6 +2,9 @@ start = fn ()
 {
 	import std
 
+	z = std.second('a', 'b')
+	print (z)
+
 	a = 1
 	a = 2
 	a = 3
