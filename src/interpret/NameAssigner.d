@@ -92,6 +92,8 @@ nothrow:
 
     void visit (StmReturn r) { r.exp.findName(this); }
 
+    void visit (StmImport im) { im.exp.findName(this); }
+
     void visit (Closure) { }
 
     void visit (StmLabel) { }

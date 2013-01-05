@@ -124,9 +124,15 @@ import common, syntax.ast;
     }
 
 
-    dstring visit (StmReturn e)
+    dstring visit (StmReturn r)
     {
-        return e.exp ? "return " ~ e.exp.str(this) : "return";
+        return r.exp ? "return " ~ r.exp.str(this) : "return";
+    }
+
+
+    dstring visit (StmImport im)
+    {
+        return "import" ~ (im.exp ?  " " ~ im.exp.str(this) : "");
     }
 
 

@@ -91,6 +91,8 @@ import common, syntax.ast;
 
     void visit (StmReturn e) { context.println("StmReturn"); }
 
+    void visit (StmImport im) { context.println("StmImport"); }
+
     void visit (StmThrow) { context.println("StmThrow"); }
 
     void visit (ValueText e){  context.println("ValueText"); context.println(e.value); }

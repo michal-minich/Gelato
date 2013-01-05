@@ -276,6 +276,8 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
 
     Exp visit (StmLabel) { return null; }
 
+    Exp visit (StmImport) { return null; }
+
     Exp visit (TypeType) { return null; }
 
     Exp visit (TypeAny) { return null; }

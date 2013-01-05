@@ -160,6 +160,13 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
     }
 
 
+    void visit (StmImport im)
+    {
+        if (im.exp)
+            im.exp.accept(this);
+    }
+
+
     void visit (StmThrow th)
     {    
         if (th.exp)

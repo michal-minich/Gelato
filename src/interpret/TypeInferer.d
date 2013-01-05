@@ -357,6 +357,8 @@ final class TypeInferer : IAstVisitor!Exp
 
     Exp visit (StmThrow th) { return th.exp ? th.exp.infer(this) : ValueUnknown.single; }
 
+    Exp visit (StmImport im) { return im.exp ? im.exp.infer(this) : ValueUnknown.single; }
+
     Exp visit (Closure) { return ValueUnknown.single; }
 
     Exp visit (TypeType tt) { return new TypeType(null, tt); }

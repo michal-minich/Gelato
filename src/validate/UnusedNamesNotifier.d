@@ -94,6 +94,13 @@ final class UnusedNamesNotifier : IAstVisitor!void
         if (r.exp)
             r.exp.accept(this);
     }
+
+
+    void visit (StmImport im)
+    {
+        if (im.exp)
+            im.exp.accept(this);
+    }
     
     
     void visit (StmThrow th)

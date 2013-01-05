@@ -150,6 +150,13 @@ final class SyntaxValidator : IAstVisitor!void
     }
 
 
+    void visit (StmImport im)
+    {
+        if (im.exp)
+            im.exp.accept(this);
+    }
+
+
     void visit (StmThrow th)
     {
         if (th.exp)

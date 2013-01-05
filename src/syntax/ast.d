@@ -84,8 +84,9 @@ interface IAstVisitor (R)
 
     R visit (StmLabel);
     R visit (StmGoto);
-    R visit (StmReturn);
     R visit (StmThrow);
+    R visit (StmReturn);
+    R visit (StmImport);
 
     R visit (TypeType);
     R visit (TypeAny);
@@ -127,8 +128,9 @@ interface INothrowAstVisitor (R)
 
     R visit (StmLabel);
     R visit (StmGoto);
-    R visit (StmReturn);
     R visit (StmThrow);
+    R visit (StmReturn);
+    R visit (StmImport);
 
     R visit (TypeType);
     R visit (TypeAny);
@@ -476,6 +478,14 @@ final class StmGoto : Exp
 
 
 final class StmReturn : Exp
+{
+    mixin visitImpl;
+    Exp exp;
+    nothrow this (ValueScope parent, Exp exp) { super(parent); this.exp = exp; }
+}
+
+
+final class StmImport : Exp
 {
     mixin visitImpl;
     Exp exp;

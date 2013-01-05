@@ -186,6 +186,7 @@ final class Parser
             case TokenType.keyLabel: exp = parseLabel(parent); break;
 
             case TokenType.keyStruct: exp = parseStruct(parent); break;
+            case TokenType.keyImport: exp = parseImport(parent); break;
             case TokenType.keyThrow: exp = parseThrow(parent); break;
             case TokenType.keyVar: exp = parseVar(parent); break;
 
@@ -568,6 +569,14 @@ final class Parser
         immutable start = current.index;
         nextNonWhiteTokOnSameLine();
         return newExp!StmReturn(start, parent, (toks.length && current.type != TokenType.newLine) ? parse(parent) : null);
+    }
+
+
+    StmImport parseImport (ValueScope parent)
+    {
+        immutable start = current.index;
+        nextNonWhiteTokOnSameLine();
+        return newExp!StmImport(start, parent, (toks.length && current.type != TokenType.newLine) ? parse(parent) : null);
     }
 
 
