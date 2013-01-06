@@ -185,10 +185,13 @@ final class Parser
             case TokenType.keyGoto: exp = parseGoto(parent); break;
             case TokenType.keyLabel: exp = parseLabel(parent); break;
 
+            case TokenType.keyThrow: exp = parseThrow(parent); break;
             case TokenType.keyStruct: exp = parseStruct(parent); break;
             case TokenType.keyImport: exp = parseImport(parent); break;
-            case TokenType.keyThrow: exp = parseThrow(parent); break;
             case TokenType.keyVar: exp = parseVar(parent); break;
+            case TokenType.keyPublic: exp = parseVar(parent); break;
+            case TokenType.keyPackage: exp = parseVar(parent); break;
+            case TokenType.keyModule: exp = parseVar(parent); break;
 
             case TokenType.unknown: exp = parseUnknown(parent); break;
 
@@ -399,17 +402,34 @@ final class Parser
 
     Exp parseVar (ValueScope parent)
     {
-        nextTok();
+        auto first = current;
+        nextNonWhiteTok();
+        auto second = current;
+        
+        if (isScope(second.type) || second.type == TokenType.keyVar)
+            nextTok();
+
         auto e = parse(parent);
+
         auto a = cast(ExpAssign)e;
         if (a)
         {
-            a.isVar = true;
+            a.isVar = first.type == TokenType.keyVar || second.type == TokenType.keyVar;
+            if (isScope(first.type))
+                a.accessScope = cast(AccessScope)first.type;
+            else if (isScope(second.type))
+                a.accessScope = cast(AccessScope)second.type;
             return a;
         }
 
-        vctx.remark(textRemark(e, "var can be only used before declaration"));
+        vctx.remark(textRemark(e, "'" ~ first.text ~ "' can be only used before declaration"));
         return e;
+    }
+
+
+    const bool isScope (const TokenType tt)
+    {
+        return tt == TokenType.keyPublic || tt == TokenType.keyPackage || tt == TokenType.keyModule;
     }
 
 

@@ -35,10 +35,19 @@ import common, syntax.ast;
         auto v = e.isVar ? "var " : "";
         auto hasValue = e.value && !cast(ValueUnknown)e.value;
 
+        dstring access;
+        final switch (e.accessScope)
+        {
+            case AccessScope.scopePrivate: access = ""; break;
+            case AccessScope.scopePublic: access = "public "; break;
+            case AccessScope.scopePackage: access = "package "; break;
+            case AccessScope.scopeModule: access = "module "; break;
+        }
+
         if (!t && !hasValue) return e.slot.str(this);
-        else if (!t)         return dtext (v, e.slot.str(this), " = ", e.value.str(this));
-        else if (!hasValue)  return dtext (v, e.slot.str(this), " : ", t.str(this));
-        else                 return dtext (v, e.slot.str(this), " : ", t.str(this),
+        else if (!t)         return dtext (access, v, e.slot.str(this), " = ", e.value.str(this));
+        else if (!hasValue)  return dtext (access, v, e.slot.str(this), " : ", t.str(this));
+        else                 return dtext (access, v, e.slot.str(this), " : ", t.str(this),
                                     " = ", e.value.str(this));
     }
 

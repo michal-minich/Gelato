@@ -39,7 +39,6 @@ struct Position
     uint column;
 }
 
-
 enum TokenType
 {
     empty, unknown,
@@ -57,8 +56,17 @@ enum TokenType
     keyStruct,
     keyThrow,
     keyVar,
-    keyImport,
+    keyImport, keyPublic, keyPackage, keyModule,
     typeType, typeAny, typeVoid, typeOr, typeFn, typeInt, typeFloat, typeText, typeChar,
+}
+
+
+enum AccessScope
+{
+    scopePrivate,
+    scopePublic = TokenType.keyPublic,
+    scopePackage = TokenType.keyPackage,
+    scopeModule = TokenType.keyModule
 }
 
 
@@ -378,6 +386,7 @@ final class ExpAssign : Exp
     size_t paramIndex = typeof(paramIndex).max;
     bool isVar;
     bool isDeclr;
+    AccessScope accessScope;
     ExpIdent[] readBy;
     ExpIdent[] writtenBy;
 

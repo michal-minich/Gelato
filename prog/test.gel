@@ -1,6 +1,20 @@
 start = fn ()
 {
-	import std
+	import std, extra
+
+	public q1 = 1
+	package q2 = 2
+	module q3 = 3
+
+	var q4 = 4
+
+	public var q5 = 5
+	package var q6 = 6
+	module var q7 = 7
+
+	var public q8 = 8
+	var package q9 = 9
+	var module q0 = 0
 
 	z = std.second('a', 'b')
 	print (z)

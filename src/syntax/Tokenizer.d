@@ -179,6 +179,9 @@ TokenResult parseIdent (const dstring src)
         case "throw":  return ok(TokenType.keyThrow,  tr.length);
         case "var":    return ok(TokenType.keyVar,    tr.length);
         case "import": return ok(TokenType.keyImport, tr.length);
+        case "public": return ok(TokenType.keyPublic, tr.length);
+        case "package":return ok(TokenType.keyPackage,tr.length);
+        case "module": return ok(TokenType.keyModule, tr.length);
 
         case "Type":   return ok(TokenType.typeType,  tr.length);
         case "Void":   return ok(TokenType.typeVoid,  tr.length);

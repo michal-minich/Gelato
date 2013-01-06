@@ -4,7 +4,6 @@ NAMES
         hierarchical modules
         auto find which modules to import
 	IMPORT
-		public attribute
 		import names form scope to scope (also selective) - import std (id, second), module2
 	VAR
 		check  chained assignments - are they var ? - no
@@ -56,7 +55,7 @@ TOKENIZER
 	  allow unicode operators as an option "option uniop"
 
 PARSER
-! remark file origin
+	! remark file origin
 	! parse comments
 	! braces
 	  ! allow braces everywhere
