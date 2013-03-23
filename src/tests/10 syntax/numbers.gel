@@ -1,7 +1,0 @@
-start = fn () {
-
-    println(1234)
-    println(1_234)
-    println("1_234")
-
-}
