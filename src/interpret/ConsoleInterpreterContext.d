@@ -1,7 +1,7 @@
 module interpret.ConsoleInterpreterContext;
 
 
-import std.stdio, std.conv, std.algorithm;
+import std.conv, std.algorithm;
 import common, syntax.ast, interpret.Interpreter, validate.remarks;
 
 
@@ -14,23 +14,19 @@ final class ConsoleInterpreterContext : IInterpreterContext
         uint remarkCounter;
         bool hasBlockerField;
         Exp[] exs;
+        IPrinter pPrinter;
     }
 
 
+    this (IPrinter printer) { pPrinter = printer; }
+
+    @property IPrinter printer () { return pPrinter; }
+
     Exp eval (Exp e) { return e.eval(evaluator); }
-
-    void print (dstring str) { write (str); }
-
-    void println () { writeln (); }
-
-    void println (dstring str) { writeln (str); }
-
-    dstring readln () { return std.stdio.readln().idup.to!dstring(); }
 
     @property bool hasBlocker () { return hasBlockerField; }
 
     @property Exp[] exceptions () { return exs; }
-
 
     @trusted void remark (Remark remark)
     {
@@ -52,7 +48,12 @@ final class ConsoleInterpreterContext : IInterpreterContext
             location = dtext("Line ", t.start.line + 1, " Column ", t.start.column + 1);
         }
 
-        std.stdio.write ("* ", location, ", ", svr.remarkSeverityText(), ": ", remark.text);
+        pPrinter.print("* "d);
+        pPrinter.print(location);
+        pPrinter.print(", "d);
+        pPrinter.print(svr.remarkSeverityText());
+        pPrinter.print(": "d);
+        pPrinter.print(remark.text);
 
         if (remark.subject)
         {
@@ -61,23 +62,19 @@ final class ConsoleInterpreterContext : IInterpreterContext
             if (newLineIx == -1)
                 newLineIx = txt.countUntil('\n');
 
-            std.stdio.write ("\t", txt[0 .. newLineIx != -1 ? newLineIx : $], newLineIx != -1 ? " ..." : "");
+            pPrinter.print("\t");
+            pPrinter.print(txt[0 .. newLineIx != -1 ? newLineIx : $]);
+            pPrinter.print(newLineIx != -1 ? " ..." : "");
         }
 
-        writeln();
+        pPrinter.println();
     }
 
 
-    nothrow void except (dstring ex)
+    void except (dstring ex)
     {
-        try
-        {
-            exs ~= new ValueText(null, ex);
-            return writeln("exception\t", ex);
-        }
-        catch (Exception ex)
-        {
-            assert (false, ex.msg);
-        }
+        exs ~= new ValueText(null, ex);
+        pPrinter.print("exception\t");
+        pPrinter.print(ex);
     }
 }

@@ -309,6 +309,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
    <File path="src\syntax\Tokenizer.d" />
   </Folder>
   <Folder name="test">
+   <File path="src\test\FolderTester.d" />
    <File path="src\test\tester.d" />
    <File path="src\test\TestFormatVisitor.d" />
    <File path="src\test\TestInterpreterContext.d" />

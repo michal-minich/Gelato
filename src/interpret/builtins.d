@@ -15,7 +15,8 @@ ExpAssign[dstring] builtinFns;
             return;
 
         builtinFns = [
-        "print"   : bfn(&customPrint, new TypeFn(null, [TypeAny.single], TypeVoid.single))
+        "print"   : bfn(&customPrint,   new TypeFn(null, [TypeAny.single], TypeVoid.single))
+       ,"println" : bfn(&customPrintLn, new TypeFn(null, [TypeAny.single], TypeVoid.single))
        ,"readln"  : bfn(&customReadln, new TypeFn(null, [], TypeText.single))
        ,"toNum"   : bfn(&toNum, new TypeFn(null, [TypeText.single], TypeInt.single))
        ,"inc"     : bfn(&incNum, new TypeFn(null, [TypeInt.single], TypeInt.single))
@@ -50,16 +51,27 @@ Exp customPrint (IInterpreterContext context, Exp[] exps)
     foreach (e; exps)
     {
         const txt = cast(ValueText)e;
-        context.print(txt ? txt.value : e.str(fv));
+        context.printer.print(txt ? txt.value : e.str(fv));
     }
-    context.println();
+    return null;
+}
+
+
+Exp customPrintLn (IInterpreterContext context, Exp[] exps)
+{
+    foreach (e; exps)
+    {
+        const txt = cast(ValueText)e;
+        context.printer.print(txt ? txt.value : e.str(fv));
+    }
+    context.printer.println();
     return null;
 }
 
 
 Exp customReadln (IInterpreterContext context, Exp[] exps)
 {
-    auto ln = context.readln();
+    auto ln = context.printer.readln();
     return new ValueText(null, ln[0 .. $ - 1]);
 }
 
@@ -157,7 +169,7 @@ Exp typeOf (IInterpreterContext context, Exp[] exps)
 
 public Exp dbgExp (IInterpreterContext context, Exp[] exps)
 {
-    auto d = new DebugExpPrinter(context);
+    auto d = new DebugExpPrinter(context.printer);
     auto e = exps[0];
     if (e)
         e.accept(d);

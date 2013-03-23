@@ -4,7 +4,7 @@ import std.algorithm, std.exception;
 import common, syntax.ast, syntax.Parser, validate.remarks;
 
 
-@safe nothrow:
+@safe:
 
 
 final class SyntaxValidator : IAstVisitor!void

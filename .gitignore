@@ -5,3 +5,5 @@ gelato
 gelato.exe
 gelato.d.deps
 *.suo
+*.out.txt
+*.exceptions.txt

@@ -14,17 +14,14 @@ final class TestInterpreterContext : IInterpreterContext
         uint remarkCounter;
         bool hasBlockerField;
         Exp[] exs;
+        IPrinter pPrinter;
     }
 
+    this () { pPrinter = new StringPrinter; }
+
+    @property IPrinter printer () { return pPrinter; }
+
     Exp eval (Exp e) { return e.eval(evaluator); }
-
-    void print (dstring str) { }
-
-    void println () { }
-
-    void println (dstring str) { }
-
-    dstring readln () { return "TODO?"; }
 
     @property bool hasBlocker () { return hasBlockerField; }
 

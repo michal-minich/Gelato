@@ -29,7 +29,9 @@ final class Program
 
     int runInConsole ()
     {
-        auto c = new ConsoleInterpreterContext;
+        auto cp = new ConsolePrinter;
+        debug cp.dbgEnabled = true;
+        auto c = new ConsoleInterpreterContext(cp);
         c.evaluator = new Interpreter(c);
         auto res = run(c);
 
@@ -38,45 +40,6 @@ final class Program
         
         auto n = cast(ValueInt)res;
         return n ? n.value.to!int() : 0;
-    }
-
-
-    bool scanModules (string folder, ValueStruct parent)
-    {
-        if (!folder.exists())
-        {
-            context.remark(textRemark("lib folder does not exits"));
-            return false;
-        }
-
-        bool res;
-
-        foreach (de; folder.dirEntries(SpanMode.shallow))
-        {
-            if (de.isFile && de.name.endsWith(".gel"))
-            {
-                auto m = new ValueStruct(parent);
-                m.filePath = de.name;
-                auto x = de.name;
-                immutable moduleName = de.name.baseName().stripExtension().to!dstring();
-                addStructAsModule(m, moduleName, parent);
-                res = true;
-            }
-            else if (de.isDir)
-            {
-                auto m = new ValueStruct(parent);
-                immutable moduleName = de.name.baseName().stripExtension().to!dstring();
-                auto a = makeModule(m, moduleName, parent);
-                auto r = scanModules (de.name, m);
-                if (r)
-                {
-                    res = true;
-                    parent.exps ~= a;
-                }
-            }
-        }
-
-        return res;
     }
 
 
@@ -143,6 +106,45 @@ final class Program
     }
 
 
+    bool scanModules (string folder, ValueStruct parent)
+    {
+        if (!folder.exists())
+        {
+            context.remark(textRemark("lib folder does not exits"));
+            return false;
+        }
+
+        bool res;
+
+        foreach (de; folder.dirEntries(SpanMode.shallow))
+        {
+            if (de.isFile && de.name.endsWith(".gel"))
+            {
+                auto m = new ValueStruct(parent);
+                m.filePath = de.name;
+                auto x = de.name;
+                immutable moduleName = de.name.baseName().stripExtension().to!dstring();
+                addStructAsModule(m, moduleName, parent);
+                res = true;
+            }
+            else if (de.isDir)
+            {
+                auto m = new ValueStruct(parent);
+                immutable moduleName = de.name.baseName().stripExtension().to!dstring();
+                auto a = makeModule(m, moduleName, parent);
+                auto r = scanModules (de.name, m);
+                if (r)
+                {
+                    res = true;
+                    parent.exps ~= a;
+                }
+            }
+        }
+
+        return res;
+    }
+
+
     ValueStruct loadFile (string filePath)
     {
         if (adddFilePaths.canFind(filePath))
@@ -176,16 +178,16 @@ final class Program
 
     Token[] tokenize (dstring fileData, string fileName)
     {
-        debug context.println("TOKENIZE " ~  fileName.to!dstring());
+        debug context.printer.dbg("TOKENIZE " ~  fileName.to!dstring());
         auto toks = (new Tokenizer(fileData)).tokenize();
-        //debug foreach (t; toks) context.println(t.toDebugString());
+        //debug foreach (t; toks) context.printer.println(t.toDebugString());
         return toks;
     }
     
 
     ValueStruct parse (Token[] toks)
     {
-        debug context.println("PARSE");
+        debug context.printer.dbg("PARSE");
         auto par = new Parser(context, toks);
         return par.parseAll();
     }
@@ -193,7 +195,7 @@ final class Program
 
     void validateSyntax (ValueStruct astFile)
     {
-        debug context.println("VALIDATE SYNTAX");
+        debug context.printer.dbg("VALIDATE SYNTAX");
         auto val = new SyntaxValidator(context);
         val.visit(astFile);
     }
@@ -201,7 +203,7 @@ final class Program
 
     void prepare (Exp e)
     {
-        debug context.println("PREPARE");
+        debug context.printer.dbg("PREPARE");
         auto prep = new PreparerForEvaluator(context);
         e.accept(prep);
     }
@@ -229,11 +231,11 @@ final class Program
 
     void findDeclarations (ValueStruct astFile)
     {
-        debug context.println("FIND NAMES");
+        debug context.printer.dbg("FIND NAMES");
         auto nf = new NameFinder(context);
         nf.visit(astFile);
 
-        debug context.println("ASSIGN NAMES");
+        debug context.printer.dbg("ASSIGN NAMES");
         auto na = new NameAssigner(context);
         na.visit(astFile);
     }
@@ -241,17 +243,17 @@ final class Program
 
     void typeInfer ()
     {
-        debug context.println("TYPE INFER");
+        debug context.printer.dbg("TYPE INFER");
         auto inf = new TypeInferer(this, context);
         inf.visit(prog);
         debug fv.useInferredTypes = true;
-        debug context.println(prog.str(fv));
+        debug context.printer.dbg(prog.str(fv));
     }
 
 
     void notifyUnusedNames ()
     {
-        debug context.println("UNUSED NAMES");
+        debug context.printer.dbg("UNUSED NAMES");
         auto unn = new UnusedNamesNotifier(context);
         unn.visit(prog);
     }
@@ -259,7 +261,7 @@ final class Program
 
     Exp eval (ExpAssign start)
     {
-        debug context.println("EVALUATE");
+        debug context.printer.dbg("EVALUATE");
 
         auto fn = cast(ValueFn)start.value;
         Exp start2;
@@ -276,7 +278,7 @@ final class Program
 
         auto res = context.eval(start2);
 
-        debug if (res) context.println("RESULT: " ~ res.str(fv));
+        debug if (res) context.printer.println("RESULT: " ~ res.str(fv));
 
         return res;
     }
@@ -310,7 +312,7 @@ struct TaskSpecs
 
 
 
-enum TaskAction { none, tokenize, parse, validateSyntax, typeInfer, run, test }
+enum TaskAction { none, tokenize, parse, validateSyntax, typeInfer, run, testFile, testFolder }
 
 
 static TaskSpecs parseCmdArgs (string[] args)
@@ -350,7 +352,11 @@ static TaskSpecs parseCmdArgs (string[] args)
         }
         else
         {
-            if (a[0] == '-' || a[0] == '/')
+            if (a == "-test")
+            {
+                return TaskSpecs(TaskAction.testFolder, args[2].to!string());
+            }
+            else if (a[0] == '-' || a[0] == '/')
             {
                 isError = true;
                 cmdPrint ("Unknown command line parameter \"", a, "\".");

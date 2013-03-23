@@ -174,7 +174,7 @@ ValueStruct parseFile (IValidationContext vctx, string filePath)
 }
 
 
-interface IPrinterContext
+interface IPrinter
 {
     void print (dstring);
 
@@ -182,19 +182,57 @@ interface IPrinterContext
 
     void println (dstring);
 
-    dstring readln ();
+    void dbg (dstring);
 
-    @property bool hasBlocker ();
+    dstring readln ();
 }
 
 
-interface IInterpreterContext : IValidationContext, IPrinterContext
+final class ConsolePrinter : IPrinter
 {
+    bool dbgEnabled;
+
+    void print (dstring str) { write(str); }
+
+    void println () { writeln(); }
+
+    void println (dstring str) { writeln(str); }
+
+    void dbg (dstring str) { if (dbgEnabled) println(str); }
+
+    dstring readln () { return std.stdio.readln().idup.to!dstring(); }
+}
+
+
+final class StringPrinter : IPrinter
+{
+    bool dbgEnabled;
+
+    dstring str;
+
+    void print (dstring str) { this.str ~= str; }
+
+    void println () { this.str ~= '\n'; }
+
+    void println (dstring str) { this.str ~= str ~ '\n'; }
+
+    void dbg (dstring str) { if (dbgEnabled) println(str); }
+
+    dstring readln () { assert (false); }
+}
+
+
+interface IInterpreterContext : IValidationContext
+{
+    @property IPrinter printer ();
+
     Exp eval (Exp exp);
 
     @property Exp[] exceptions ();
 
-    nothrow void except (dstring ex);
+    void except (dstring ex);
+
+    @property bool hasBlocker ();
 }
 
 
