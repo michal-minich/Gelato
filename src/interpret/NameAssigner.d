@@ -112,7 +112,7 @@ nothrow:
     void visit (TypeType) { }
     void visit (TypeAny) { }
     void visit (TypeVoid) { }
-    void visit (TypeOr) { }
+    void visit (TypeAnyOf) { }
     void visit (TypeFn) { }
     void visit (TypeInt) { }
     void visit (TypeFloat) { }

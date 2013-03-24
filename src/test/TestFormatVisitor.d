@@ -63,9 +63,9 @@ import syntax.ast;
 
     const dstring visit (ValueBuiltinFn) { return "ValueBuiltinFn"; }
 
-    const dstring visit (TypeOr tor) { return "TypeOr"; }
+    const dstring visit (TypeAnyOf tao) { return "TypeAnyOf"; }
 
-    const dstring visit (TypeArray tor) { return "TypeArray"; }
+    const dstring visit (TypeArray tao) { return "TypeArray"; }
 
     const dstring visit (TypeFn tfn) { return "TypeFn"; }
 

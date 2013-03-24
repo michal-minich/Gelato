@@ -196,7 +196,7 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
 
     void visit (TypeVoid) { }
 
-    void visit (TypeOr) { }
+    void visit (TypeAnyOf) { }
 
     void visit (TypeFn) { }
 

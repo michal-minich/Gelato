@@ -284,7 +284,7 @@ import common, syntax.ast, validate.remarks, interpret.preparer, interpret.built
 
     Exp visit (TypeVoid) { return null; }
 
-    Exp visit (TypeOr) { return null; }
+    Exp visit (TypeAnyOf) { return null; }
 
     Exp visit (TypeFn) { return null; }
 

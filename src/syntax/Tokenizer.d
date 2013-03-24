@@ -186,7 +186,7 @@ TokenResult parseIdent (const dstring src)
         case "Type":   return ok(TokenType.typeType,  tr.length);
         case "Void":   return ok(TokenType.typeVoid,  tr.length);
         case "Any":    return ok(TokenType.typeAny,   tr.length);
-        case "AnyOf":  return ok(TokenType.typeOr,    tr.length);
+        case "AnyOf":  return ok(TokenType.typeAnyOf, tr.length);
         case "Fn":     return ok(TokenType.typeFn,    tr.length);
         case "Int":    return ok(TokenType.typeInt,   tr.length);
         case "Float":  return ok(TokenType.typeFloat, tr.length);
@@ -200,8 +200,7 @@ TokenResult parseIdent (const dstring src)
 
 TokenResult parseIdentOrNum (alias start, alias rest) (const dstring src, TokenType tokType)
 {
-    //auto l = src.lengthWhile!(ch => ch == '_'); // BUG: Internal error: toir.c 178
-    auto l = src.lengthWhile!isUnderscore;
+    auto l = src.lengthWhile!(ch => ch == '_');
     immutable nl = src[l .. $].lengthWhile!start;
     if (!nl)
         return empty;
@@ -255,8 +254,6 @@ size_t lengthWhile (alias isMatch) (immutable dstring src)
     return i;
 }
 
-
-bool isUnderscore (dchar ch) { return ch == '_'; }
 
 bool isWhite (dchar ch) { return ch == ' ' || ch == '\t'; }
 

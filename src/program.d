@@ -91,6 +91,7 @@ final class Program
 
         typeInfer();
 
+        start.readBy ~= new ExpIdent(null, null);
         notifyUnusedNames();
 
         if (context.hasBlocker)

@@ -57,7 +57,7 @@ enum TokenType
     keyThrow,
     keyVar,
     keyImport, keyPublic, keyPackage, keyModule,
-    typeType, typeAny, typeVoid, typeOr, typeFn, typeInt, typeFloat, typeText, typeChar,
+    typeType, typeAny, typeVoid, typeAnyOf, typeFn, typeInt, typeFloat, typeText, typeChar,
 }
 
 
@@ -99,7 +99,7 @@ interface IAstVisitor (R)
     R visit (TypeType);
     R visit (TypeAny);
     R visit (TypeVoid);
-    R visit (TypeOr);
+    R visit (TypeAnyOf);
     R visit (TypeFn);
     R visit (TypeInt);
     R visit (TypeFloat);
@@ -143,7 +143,7 @@ interface INothrowAstVisitor (R)
     R visit (TypeType);
     R visit (TypeAny);
     R visit (TypeVoid);
-    R visit (TypeOr);
+    R visit (TypeAnyOf);
     R visit (TypeFn);
     R visit (TypeInt);
     R visit (TypeFloat);
@@ -538,7 +538,7 @@ final class TypeVoid : Exp
 }
 
 
-final class TypeOr : Exp
+final class TypeAnyOf : Exp
 {
     mixin visitImpl;
     Exp[] types;

@@ -1,2 +1,15 @@
 println(1234)
 println(1_234)
+println(3.14)
+println()
+
+println(#44)
+println(#55.66)
+println(#77.#88)
+println()
+
+println(#a)
+println(#b.c)
+println(#d.#e)
+println(#11.f)
+println(#aa.11)

@@ -235,7 +235,7 @@ import common, syntax.ast;
 
     const dstring visit (ValueBuiltinFn) { assert (false, "built in fn has no textual representation"); }
 
-    dstring visit (TypeOr or)
+    dstring visit (TypeAnyOf or)
     {
         return dtext("AnyOf(", or.types.map!(o => o.str(this))().join(", "), ")");
     }

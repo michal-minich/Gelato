@@ -90,7 +90,7 @@ import syntax.ast;
 
     const dstring visit (ValueBuiltinFn bfn) { return bfn.tokensText ~ "|"; }
 
-    const dstring visit (TypeOr tor) { return tor.tokensText ~ "|"; }
+    const dstring visit (TypeAnyOf tao) { return tao.tokensText ~ "|"; }
 
     const dstring visit (TypeArray arr) { return arr.tokensText ~ "|"; }
 

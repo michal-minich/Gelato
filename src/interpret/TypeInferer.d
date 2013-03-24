@@ -14,7 +14,7 @@ import common, syntax.ast, syntax.Parser, validate.remarks, interpret.Interprete
     foreach (t; types)
         possible ~= flatternType(t);
     auto ts = possible.sort!typeIdLess().array().uniq!typeIdEq().array();
-    return ts.length == 1 ? ts[0] : new TypeOr(null, ts);
+    return ts.length == 1 ? ts[0] : new TypeAnyOf(null, ts);
 }
 
 
@@ -27,9 +27,9 @@ import common, syntax.ast, syntax.Parser, validate.remarks, interpret.Interprete
 Exp[] flatternType(Exp t)
 {
     Exp[] res;
-    auto tOr = cast(TypeOr)t;
-    if (tOr)
-        foreach (t2; tOr.types)
+    auto tao = cast(TypeAnyOf)t;
+    if (tao)
+        foreach (t2; tao.types)
             res ~= flatternType(t2);
     else
         res ~= t;
@@ -277,8 +277,8 @@ final class TypeInferer : IAstVisitor!Exp
         if (i.then.exps.length == 1 && i.otherwise.exps.length == 1)
         {
             auto t = mergeTypes(i.then.exps[0].infer(this), i.otherwise.exps[0].infer(this));
-            auto tor = cast(TypeOr)t;
-            if (tor)
+            auto tao = cast(TypeAnyOf)t;
+            if (tao)
             {
                 i.infType = Interpreter.isTrueForIf(context.eval(i.when))
                    ? i.then.exps[0].infType
@@ -367,7 +367,7 @@ final class TypeInferer : IAstVisitor!Exp
 
     Exp visit (TypeVoid tv) { return new TypeType(null, tv); }
 
-    Exp visit (TypeOr tor) { return new TypeType(null, tor); }
+    Exp visit (TypeAnyOf tao) { return new TypeType(null, tao); }
 
     Exp visit (TypeFn tfn) { return new TypeType(null, tfn); }
 

@@ -136,9 +136,9 @@ import common, syntax.ast;
 
     void visit (ValueBuiltinFn) { printer.println("ValueBuiltinFn"); }
 
-    void visit (TypeOr tor) { printer.println("TypeOr"); }
+    void visit (TypeAnyOf tao) { printer.println("TypeAnyOf"); }
 
-    void visit (TypeArray tor) { printer.println("TypeArray"); }
+    void visit (TypeArray ta) { printer.println("TypeArray"); }
 
     void visit (TypeFn tfn) { printer.println("TypeFn"); }
 

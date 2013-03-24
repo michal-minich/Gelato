@@ -69,6 +69,7 @@ bool testFile (string filePath, int folerPathCountChars)
 
     if (expectedLines.length == actualLines.length)
     {
+        isOk = true;
         foreach (ix, el; expectedLines)
         {
             if (el != actualLines[ix])
@@ -83,7 +84,6 @@ bool testFile (string filePath, int folerPathCountChars)
     {
         if (exists(outFileName))
             remove(outFileName);
-        isOk = true;
     }
     else
     {

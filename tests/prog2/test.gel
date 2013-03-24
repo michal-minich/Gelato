@@ -1,1 +1,9 @@
-1
+a = b = x()
+t = 1
+c = if t then x() else 1 end
+
+x = fn () { struct { c = 1 } }
+
+start = fn () 
+{
+}

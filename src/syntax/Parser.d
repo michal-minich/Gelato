@@ -198,7 +198,7 @@ final class Parser
             case TokenType.typeType: exp = parseTypeType(parent); break;
             case TokenType.typeAny: exp = parseTypeAny(parent); break;
             case TokenType.typeVoid: exp = parseTypeVoid(parent); break;
-            case TokenType.typeOr: exp = parseTypeOr(parent); break;
+            case TokenType.typeAnyOf: exp = parseTypeOr(parent); break;
             case TokenType.typeFn: exp = parseTypeFn(parent); break;
             case TokenType.typeInt: exp = parseTypeInt(parent); break;
             case TokenType.typeText: exp = parseTypeText(parent); break;
@@ -780,12 +780,12 @@ final class Parser
     }
 
 
-    TypeOr parseTypeOr (ValueScope parent)
+    TypeAnyOf parseTypeOr (ValueScope parent)
     {
         immutable start = current.index;
         nextNonWhiteTok();
         auto types = parseBracedExpList(parent);
-        return newExp!TypeOr(start, parent, types);
+        return newExp!TypeAnyOf(start, parent, types);
     }
 
 
