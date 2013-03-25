@@ -52,30 +52,40 @@ enum newLine = "\r\n";
 }
 
 
-@trusted debug void dbg (T) (T a, bool nl = true)
+nothrow @trusted debug void dbg (T) (T a, bool nl = true)
 {
-    static if (is(T : Exp))
+    try
     {
-        auto e = cast(Exp)a;
-        write(e ? e.str(fv).toVisibleCharsText() : "NULL");
-
-        if (nl)
-            writeln();
-    }
-    else static if (is(T : Exp[]))
-    {
-        foreach (i, e; a)
+        static if (is(T : Exp))
         {
-            write("|", i, "|");
-            dbg(e);
+            auto e = cast(Exp)a;
+            write(e ? e.str(fv).toVisibleCharsText() : "NULL");
+
+            if (nl)
+                writeln();
+        }
+        else static if (is(T : Exp[]))
+        {
+            foreach (i, e; a)
+            {
+                write("|", i, "|");
+                dbg(e);
+            }
+        }
+        else
+        {
+            write(a.to!dstring().toVisibleCharsText());
+
+            if (nl)
+                writeln();
         }
     }
-    else
+    catch (Throwable t)
     {
-        write(a.to!dstring().toVisibleCharsText());
-
-        if (nl)
-            writeln();
+        try
+            write("dbg throws ", t.msg);
+        catch
+            assert(false, "dbg throws");
     }
 }
 

@@ -57,7 +57,7 @@ enum TokenType
     keyThrow,
     keyVar,
     keyImport, keyPublic, keyPackage, keyModule,
-    typeType, typeAny, typeVoid, typeAnyOf, typeFn, typeInt, typeFloat, typeText, typeChar,
+    typeType, typeVoid, typeAny, typeAnyOf, typeFn, typeInt, typeFloat, typeText, typeChar,
 }
 
 
@@ -97,8 +97,8 @@ interface IAstVisitor (R)
     R visit (StmImport);
 
     R visit (TypeType);
-    R visit (TypeAny);
     R visit (TypeVoid);
+    R visit (TypeAny);
     R visit (TypeAnyOf);
     R visit (TypeFn);
     R visit (TypeInt);

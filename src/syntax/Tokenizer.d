@@ -38,10 +38,7 @@ final class Tokenizer
     private uint index;
 
 
-    this (const dstring src)
-    {
-        this.src = src;
-    }
+    this (dstring src) { this.src = src; }
 
 
     Token[] tokenize()
@@ -65,9 +62,9 @@ final class Tokenizer
             tr.type,
             front.type == TokenType.newLine
                 ? Position (front.start.line + 1, 0)
-                : Position (front.start.line, front.start.column + cast(uint)front.text.length),
+                : Position (front.start.line, front.start.column + front.text.length),
             src[0 .. tr.length],
-            front.pos + cast(uint)front.text.length,
+            front.pos + front.text.length,
             tr.isError);
 
         src = src[tr.length .. $];
@@ -122,12 +119,8 @@ TokenResult parseTextEscape (const dstring src)
 
 TokenResult parseOp (const dstring src)
 {
-    immutable lDot = src.lengthWhile!(ch => ch == '.');
-    
-    if (lDot == 1)
-        return ok(TokenType.dot, lDot);
-    else if (lDot > 1)
-        return ok(TokenType.op, lDot);
+    if      (src[0] == ',') return ok(TokenType.coma, 1);
+    else if (src[0] == ';') return ok(TokenType.op, 1);
 
     immutable l = src.lengthWhile!isOp;
 
@@ -135,13 +128,13 @@ TokenResult parseOp (const dstring src)
         switch (src[0])
         {
             case '=': return ok(TokenType.assign, 1);
-            case ',': return ok(TokenType.coma, 1);
+            case '.': return ok(TokenType.dot, 1);
             case ':': return ok(TokenType.asType, 1);
             case '#': return ok(TokenType.unknown, 1);
-            default: return ok(TokenType.op, l);
+            default: break;
         }
 
-    return src[0] == ',' ? ok(TokenType.coma, 1) : ok(TokenType.op, l);
+    return ok(TokenType.op, l);
 }
 
 
@@ -259,7 +252,8 @@ bool isWhite (dchar ch) { return ch == ' ' || ch == '\t'; }
 
 bool isNewLine (dchar ch) { return ch == '\r' || ch == '\n'; }
 
-bool isEcapeChar (dchar ch) { return ch == 'r' || ch == 'n' || ch == '\'' || ch == '"' || ch == '\\' || ch == '#'; }
+bool isEcapeChar (dchar ch) { return ch == 'r' || ch == 'n' || ch == '\'' || ch == '"'
+    || ch == '\\' || ch == '#' || ch == '#' || ch == '&'; }
 
 bool isIdent (dchar ch) { return ch >= 'a' && ch <= 'z' || (ch >= 'A' && ch <= 'Z'); }
 

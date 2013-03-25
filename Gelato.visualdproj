@@ -297,6 +297,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
   <Folder name="syntax">
    <File path="src\syntax\ast.d" />
    <File path="src\syntax\Formatter.d" />
+   <File path="src\syntax\NamedCharRefs.d" />
    <File path="src\syntax\Parser.d" />
    <File path="src\syntax\SyntaxValidator.d" />
    <File path="src\syntax\Tokenizer.d" />
@@ -307,6 +308,12 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
    <File path="src\test\TestFormatVisitor.d" />
    <File path="src\test\TestInterpreterContext.d" />
    <File path="src\test\TokenTestFormatVisitor.d" />
+  </Folder>
+  <Folder name="tests">
+   <Folder name="prog2">
+    <File path="tests\prog2\test.gel" />
+   </Folder>
+   <File path="tests\tests.geltest" />
   </Folder>
   <Folder name="validate">
    <File path="src\validate\remarks.d" />

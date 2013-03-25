@@ -181,7 +181,7 @@ final class Program
     {
         debug context.printer.dbg("TOKENIZE " ~  fileName.to!dstring());
         auto toks = (new Tokenizer(fileData)).tokenize();
-        //debug foreach (t; toks) context.printer.println(t.toDebugString());
+        debug foreach (t; toks) context.printer.println(t.toDebugString());
         return toks;
     }
     

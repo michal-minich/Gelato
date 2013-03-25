@@ -2,7 +2,7 @@ module syntax.Parser;
 
 
 import std.array, std.conv, std.format;
-import common, validate.remarks, syntax.ast;
+import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
 
 @safe:
@@ -647,9 +647,43 @@ final class Parser
                 break;
             }
 
-            txt ~= current.type == TokenType.textEscape 
-                ? current.text.toInvisibleCharsText() 
-                : current.text;
+            if (current.type == TokenType.textEscape)
+            {
+                if (current.text[1] == '&')
+                {
+                    ts ~= current;
+                    nextTok();
+                    
+                    if (current.type == TokenType.ident)
+                    {
+                        auto namedChar = current.text;
+                        if (auto charValue = namedChar in namedCharRefs)
+                            txt ~= *charValue;
+                        else
+                            vctx.remark(textRemark("unknown named escape"));
+
+                        nextTok();
+
+                        if (current.text != ";")
+                        {
+                            vctx.remark(textRemark("named char escape \&amp;ident is not closed by semicolon"));
+                        }
+                    }
+                    else
+                    {
+                        vctx.remark(textRemark("named char escape \&amp; should be followed by char identifier"));
+                        txt ~= current.text;
+                    }
+                }
+                else
+                {
+                    txt ~= current.text.toInvisibleCharsText();
+                }
+            }
+            else
+            {
+                txt ~= current.text;
+            }
         }
 
         Exp t;
