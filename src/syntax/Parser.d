@@ -19,7 +19,6 @@ final class Parser
         bool sepPassed;
         Comment comment;
         dchar[] braceStack;
-        size_t prevStartIndex;
     }
 
 
@@ -379,13 +378,7 @@ final class Parser
     {
         immutable s = current.text.replace("_", "");
         nextTok();
-        return newExp!ValueInt(current.index - 1, parent, parseNum(s));
-    }
-
-
-    @trusted long parseNum (dstring s)
-    {
-        return s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long();
+        return newExp!ValueInt(current.index - 1, parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
     }
 
 
@@ -655,7 +648,9 @@ final class Parser
 
             if (current.type == TokenType.textEscape)
             {
-                if (current.text[1] == '&')
+                nextTok();
+
+                if (current.text[0] == '&')
                 {
                     ts ~= current;
                     nextTok();
@@ -681,13 +676,11 @@ final class Parser
                         txt ~= current.text;
                     }
                 }
-                else if (current.text[1] == '#')
+                else if (current.text[0] == '#')
                 {
-                    ts ~= current;                    nextTok();
                     if (current.type == TokenType.num)
                     {
-                        immutable s = '#' ~ current.text.replace("_", "");
-                        auto n = newExp!ValueInt(current.index - 2, parent, parseNum(s));                        nextTok();
+                        auto n = parseNum(parent);
                         if (n.value >= 0)
                             txt ~= cast(dchar)n.value;
                         else
@@ -706,7 +699,8 @@ final class Parser
                 }
                 else
                 {
-                    txt ~= current.text.toInvisibleCharsText();
+                    txt ~= ('\\' ~ current.text).toInvisibleCharsText();
+                    // TODO dont prepend \, refactor the fn to use char
                 }
             }
             else
@@ -729,9 +723,9 @@ final class Parser
     Exp parseIdentOrAssign (ValueScope parent)
     {
         auto i = newExp1!ExpIdent(parent, current.text);
+        nextNonWhiteTok();
 
         Exp type;
-        nextNonWhiteTok();
         if (current.type == TokenType.asType)
         {
             nextTok();

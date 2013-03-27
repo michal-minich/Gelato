@@ -48,12 +48,9 @@ INTERPRETER
 	  anonymous scope ?
 
 TOKENIZER
-	! handle file loading errors (make code shared in entire app, fn readText)
-	! skip invalid unicode characters
-	! remark unicode chars outside quotes
-	! in text hex escape, there are two tokens "\#" and then "123", but the 123 is interpeted as hex
-	     number, so it should form token "#123", which is hardly possible now, but needs to be done.
-		 .. possibly tokenize all escapes as single char only "\"
+	handle file loading errors (make code shared in entire app, fn readText)
+    skip invalid unicode characters
+	remark unicode chars outside quotes
 
 PARSER
 	! remark file origin

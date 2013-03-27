@@ -101,11 +101,9 @@ TokenResult parseTextStart (const dstring src) { return newTr(TokenType.quote, s
 
 TokenResult parseTextEscape (const dstring src)
 {
-    if (src[0] == '\\')
-        return src.length >= 2
-            ? newTr(src[1].isEcapeChar ? TokenType.textEscape : TokenType.error, 2)
-            : newTr(TokenType.error, 1);
-    return empty;
+    return src[0] == '\\'
+        ? newTr((src[1].isEcapeChar && src.length >= 2) ? TokenType.textEscape : TokenType.error, 1)
+        : empty;
 }
 
 
