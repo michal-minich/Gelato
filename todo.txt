@@ -48,11 +48,12 @@ INTERPRETER
 	  anonymous scope ?
 
 TOKENIZER
-	! text hex escapes
-	! text unicode escapes
-	! unicode support in text/char
-	  unicode support in identifiers
-	  allow unicode operators as an option "option uniop"
+	! handle file loading errors (make code shared in entire app, fn readText)
+	! skip invalid unicode characters
+	! remark unicode chars outside quotes
+	! in text hex escape, there are two tokens "\#" and then "123", but the 123 is interpeted as hex
+	     number, so it should form token "#123", which is hardly possible now, but needs to be done.
+		 .. possibly tokenize all escapes as single char only "\"
 
 PARSER
 	! remark file origin
@@ -102,6 +103,15 @@ formatter - configuration profiles
 autofix formatting / syntax
 cmd interactive - first version
 call functions as members  of first parameter
+
+
+
+
+FUTURE
+
+TOKENIZER / PARSER
+	  unicode support in identifiers "option uninames"
+	  allow unicode operators as an option "option uniop"
 
 
   fix sample here, and contribue to phobos

@@ -52,7 +52,7 @@ enum newLine = "\r\n";
 }
 
 
-nothrow @trusted debug void dbg (T) (T a, bool nl = true)
+debug @trusted nothrow void dbg (T) (T a, bool nl = true)
 {
     try
     {

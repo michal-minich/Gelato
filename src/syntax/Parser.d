@@ -379,7 +379,13 @@ final class Parser
     {
         immutable s = current.text.replace("_", "");
         nextTok();
-        return newExp!ValueInt(current.index - 1, parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
+        return newExp!ValueInt(current.index - 1, parent, parseNum(s));
+    }
+
+
+    @trusted long parseNum (dstring s)
+    {
+        return s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long();
     }
 
 
@@ -625,7 +631,7 @@ final class Parser
     }
 
 
-    Exp parseText (ValueScope parent)
+    @trusted Exp parseText (ValueScope parent)
     {
         immutable start = current.index;
         Token[] ts;
@@ -672,6 +678,29 @@ final class Parser
                     else
                     {
                         vctx.remark(textRemark("named char escape \&amp; should be followed by char identifier"));
+                        txt ~= current.text;
+                    }
+                }
+                else if (current.text[1] == '#')
+                {
+                    ts ~= current;                    nextTok();
+                    if (current.type == TokenType.num)
+                    {
+                        immutable s = '#' ~ current.text.replace("_", "");
+                        auto n = newExp!ValueInt(current.index - 2, parent, parseNum(s));                        nextTok();
+                        if (n.value >= 0)
+                            txt ~= cast(dchar)n.value;
+                        else
+                            vctx.remark(textRemark("utf number must be positive"));
+
+                        if (current.text != ";")
+                        {
+                            vctx.remark(textRemark("hex cchar escape \&amp;number is not closed by semicolon"));
+                        }
+                    }
+                    else
+                    {
+                        vctx.remark(textRemark("hex char escape \&amp; should be followed by number, then semicolon"));
                         txt ~= current.text;
                     }
                 }

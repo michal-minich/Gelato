@@ -16,7 +16,6 @@ struct Token
     Position start;
     dstring text;
     uint pos;
-    bool isError;
 
     const @property nothrow size_t endColumn ()
     {
@@ -28,7 +27,7 @@ struct Token
         auto writer = appender!dstring(); 
         formattedWrite(writer, "%2s %-17s%2s:%s-%s(%s)%s  ", 
                        index, type, start.line, start.column, endColumn, text.length, pos);
-        return writer.data ~ (isError ? "error"d : "     ") ~ "\t\"" ~ text.toVisibleCharsText() ~ "\"";
+        return writer.data ~ "\"" ~ text.toVisibleCharsText() ~ "\"";
     }
 }
 
@@ -41,7 +40,7 @@ struct Position
 
 enum TokenType
 {
-    empty, unknown,
+    empty, error, unknown,
     white, newLine,
     num,
     ident,

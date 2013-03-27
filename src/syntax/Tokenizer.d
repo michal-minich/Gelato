@@ -10,22 +10,15 @@ immutable struct TokenResult
 {
     TokenType type;
     size_t length;
-    bool isError;
 }
 
 
 private enum TokenResult empty = TokenResult();
 
 
-private pure TokenResult ok (immutable TokenType tokenType, immutable size_t length)
+private pure TokenResult newTr (immutable TokenType tokenType, immutable size_t length)
 {
     return TokenResult(tokenType, length);
-}
-
-
-private pure TokenResult error (immutable size_t length)
-{
-    return TokenResult(TokenType.unknown, length, true);
 }
 
 
@@ -64,8 +57,7 @@ final class Tokenizer
                 ? Position (front.start.line + 1, 0)
                 : Position (front.start.line, front.start.column + front.text.length),
             src[0 .. tr.length],
-            front.pos + front.text.length,
-            tr.isError);
+            front.pos + front.text.length);
 
         src = src[tr.length .. $];
     }
@@ -73,7 +65,7 @@ final class Tokenizer
 
     pure private TokenResult parseNext ()
     {
-        auto errorLength = 0;
+        auto unknownLength = 0;
         enum parsers = [&parseWhite, &parseIdent, &parseNum, &parseNewLine,
                         &parseBraceStart, &parseBraceEnd,
                         &parseCommentLine, &parseCommentStart, &parseCommentEnd,
@@ -85,14 +77,14 @@ final class Tokenizer
         {
             immutable tr = p(src2);
             if (tr.length)
-                return errorLength == 0 ? tr : error(errorLength);
+                return unknownLength == 0 ? tr : newTr(TokenType.unknown, unknownLength);
         }
 
         src2 = src2[1 .. $];
-        ++errorLength;
+        ++unknownLength;
 
         if (!src2.length)
-            return error(errorLength);
+            return newTr(TokenType.unknown, unknownLength);
 
         goto tryAgain;
     }
@@ -102,39 +94,39 @@ final class Tokenizer
 pure:
 
 
-TokenResult parseCharStart (const dstring src) { return ok(TokenType.quote, src[0] == '\''); }
+TokenResult parseCharStart (const dstring src) { return newTr(TokenType.quote, src[0] == '\''); }
 
-TokenResult parseTextStart (const dstring src) { return ok(TokenType.quote, src[0] == '"'); }
+TokenResult parseTextStart (const dstring src) { return newTr(TokenType.quote, src[0] == '"'); }
 
 
 TokenResult parseTextEscape (const dstring src)
 {
     if (src[0] == '\\')
         return src.length >= 2
-            ? src[1].isEcapeChar ? ok(TokenType.textEscape, 2) : error(2)
-            : error(1);
+            ? newTr(src[1].isEcapeChar ? TokenType.textEscape : TokenType.error, 2)
+            : newTr(TokenType.error, 1);
     return empty;
 }
 
 
 TokenResult parseOp (const dstring src)
 {
-    if      (src[0] == ',') return ok(TokenType.coma, 1);
-    else if (src[0] == ';') return ok(TokenType.op, 1);
+    if      (src[0] == ',') return newTr(TokenType.coma, 1);
+    else if (src[0] == ';') return newTr(TokenType.op, 1);
 
     immutable l = src.lengthWhile!isOp;
 
     if (l == 1)
         switch (src[0])
         {
-            case '=': return ok(TokenType.assign, 1);
-            case '.': return ok(TokenType.dot, 1);
-            case ':': return ok(TokenType.asType, 1);
-            case '#': return ok(TokenType.unknown, 1);
+            case '=': return newTr(TokenType.assign, 1);
+            case '.': return newTr(TokenType.dot, 1);
+            case ':': return newTr(TokenType.asType, 1);
+            case '#': return newTr(TokenType.error, 1);
             default: break;
         }
 
-    return ok(TokenType.op, l);
+    return newTr(TokenType.op, l);
 }
 
 
@@ -160,31 +152,31 @@ TokenResult parseIdent (const dstring src)
 
     switch (src[0 .. tr.length])
     {
-        case "if":     return ok(TokenType.keyIf,     tr.length);
-        case "then":   return ok(TokenType.keyThen,   tr.length);
-        case "else":   return ok(TokenType.keyElse,   tr.length);
-        case "end":    return ok(TokenType.keyEnd,    tr.length);
-        case "fn":     return ok(TokenType.keyFn,     tr.length);
-        case "return": return ok(TokenType.keyReturn, tr.length);
-        case "goto":   return ok(TokenType.keyGoto,   tr.length);
-        case "label":  return ok(TokenType.keyLabel,  tr.length);
-        case "struct": return ok(TokenType.keyStruct, tr.length);
-        case "throw":  return ok(TokenType.keyThrow,  tr.length);
-        case "var":    return ok(TokenType.keyVar,    tr.length);
-        case "import": return ok(TokenType.keyImport, tr.length);
-        case "public": return ok(TokenType.keyPublic, tr.length);
-        case "package":return ok(TokenType.keyPackage,tr.length);
-        case "module": return ok(TokenType.keyModule, tr.length);
+        case "if":     return newTr(TokenType.keyIf,     tr.length);
+        case "then":   return newTr(TokenType.keyThen,   tr.length);
+        case "else":   return newTr(TokenType.keyElse,   tr.length);
+        case "end":    return newTr(TokenType.keyEnd,    tr.length);
+        case "fn":     return newTr(TokenType.keyFn,     tr.length);
+        case "return": return newTr(TokenType.keyReturn, tr.length);
+        case "goto":   return newTr(TokenType.keyGoto,   tr.length);
+        case "label":  return newTr(TokenType.keyLabel,  tr.length);
+        case "struct": return newTr(TokenType.keyStruct, tr.length);
+        case "throw":  return newTr(TokenType.keyThrow,  tr.length);
+        case "var":    return newTr(TokenType.keyVar,    tr.length);
+        case "import": return newTr(TokenType.keyImport, tr.length);
+        case "public": return newTr(TokenType.keyPublic, tr.length);
+        case "package":return newTr(TokenType.keyPackage,tr.length);
+        case "module": return newTr(TokenType.keyModule, tr.length);
 
-        case "Type":   return ok(TokenType.typeType,  tr.length);
-        case "Void":   return ok(TokenType.typeVoid,  tr.length);
-        case "Any":    return ok(TokenType.typeAny,   tr.length);
-        case "AnyOf":  return ok(TokenType.typeAnyOf, tr.length);
-        case "Fn":     return ok(TokenType.typeFn,    tr.length);
-        case "Int":    return ok(TokenType.typeInt,   tr.length);
-        case "Float":  return ok(TokenType.typeFloat, tr.length);
-        case "Text":   return ok(TokenType.typeText,  tr.length);
-        case "Char":   return ok(TokenType.typeChar,  tr.length);
+        case "Type":   return newTr(TokenType.typeType,  tr.length);
+        case "Void":   return newTr(TokenType.typeVoid,  tr.length);
+        case "Any":    return newTr(TokenType.typeAny,   tr.length);
+        case "AnyOf":  return newTr(TokenType.typeAnyOf, tr.length);
+        case "Fn":     return newTr(TokenType.typeFn,    tr.length);
+        case "Int":    return newTr(TokenType.typeInt,   tr.length);
+        case "Float":  return newTr(TokenType.typeFloat, tr.length);
+        case "Text":   return newTr(TokenType.typeText,  tr.length);
+        case "Char":   return newTr(TokenType.typeChar,  tr.length);
 
         default:       return tr;
     }
@@ -200,34 +192,34 @@ TokenResult parseIdentOrNum (alias start, alias rest) (const dstring src, TokenT
     l = l + nl;
     if (l)
         l = l + src[l .. $].lengthWhile!rest;
-    return ok(tokType, l);
+    return newTr(tokType, l);
 }
 
 
-TokenResult parseBraceStart (const dstring src) { return ok(TokenType.braceStart, src[0].isBraceStart); }
+TokenResult parseBraceStart (const dstring src) { return newTr(TokenType.braceStart, src[0].isBraceStart); }
 
-TokenResult parseBraceEnd (const dstring src) { return ok(TokenType.braceEnd, src[0].isBraceEnd); }
+TokenResult parseBraceEnd (const dstring src) { return newTr(TokenType.braceEnd, src[0].isBraceEnd); }
 
-TokenResult parseNewLine (const dstring src) { return ok(TokenType.newLine, src.lengthWhile!isNewLine); }
+TokenResult parseNewLine (const dstring src) { return newTr(TokenType.newLine, src.lengthWhile!isNewLine); }
 
-TokenResult parseWhite (const dstring src) { return ok(TokenType.white, src.lengthWhile!isWhite); }
+TokenResult parseWhite (const dstring src) { return newTr(TokenType.white, src.lengthWhile!isWhite); }
 
 
 TokenResult parseCommentLine (const dstring src)
 {
-    return ok(TokenType.commentLine, src.matchTwo ('-', '-'));
+    return newTr(TokenType.commentLine, src.matchTwo ('-', '-'));
 }
 
 
 TokenResult parseCommentStart (const dstring src)
 {
-    return ok(TokenType.commentMultiStart, src.matchTwo ('/', '-'));
+    return newTr(TokenType.commentMultiStart, src.matchTwo ('/', '-'));
 }
 
 
 TokenResult parseCommentEnd (const dstring src)
 {
-    return ok(TokenType.commentMultiEnd, src.matchTwo ('-', '/'));
+    return newTr(TokenType.commentMultiEnd, src.matchTwo ('-', '/'));
 }
 
 
@@ -252,9 +244,6 @@ bool isWhite (dchar ch) { return ch == ' ' || ch == '\t'; }
 
 bool isNewLine (dchar ch) { return ch == '\r' || ch == '\n'; }
 
-bool isEcapeChar (dchar ch) { return ch == 'r' || ch == 'n' || ch == '\'' || ch == '"'
-    || ch == '\\' || ch == '#' || ch == '#' || ch == '&'; }
-
 bool isIdent (dchar ch) { return ch >= 'a' && ch <= 'z' || (ch >= 'A' && ch <= 'Z'); }
 
 bool isBraceStart (dchar ch) { return ch == '(' || ch == '{' || ch == '['; }
@@ -264,6 +253,12 @@ bool isBraceEnd (dchar ch) { return ch == ')' || ch == '}' || ch == ']'; }
 bool isNum (dchar ch) { return ch >= '0' && ch <= '9'; }
 
 bool isHexNum (dchar ch) { return ch.isNum || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'); }
+
+bool isEcapeChar (dchar ch)
+{ 
+    return ch == 'r' || ch == 'n' || ch == '\'' || ch == '"'
+        || ch == '\\' || ch == '#' || ch == '&' || ch == 'u' || ch == 'U';
+}
 
 bool isOp (dchar ch)
 {
