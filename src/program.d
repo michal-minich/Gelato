@@ -61,6 +61,8 @@ final class Program
         if (context.hasBlocker)
             return astFile;
 
+        return null;
+/*
         auto start = findName(astFile.exps, "start");
 
         if (!start)
@@ -103,7 +105,7 @@ final class Program
             return null;
         }
 
-        return eval (starts[0]);
+        return eval (starts[0]);*/
     }
 
 
@@ -190,7 +192,14 @@ final class Program
     {
         debug context.printer.dbg("PARSE");
         auto par = new Parser(context, toks);
-        return par.parseAll();
+        auto ast = par.parseAll();
+        debug
+        {
+            auto dtf = new test.DebugTokenFormater.DebugTokenFormater;
+            auto str = dtf.visit(ast);
+            writeln(str);
+        }
+        return ast;
     }
 
 

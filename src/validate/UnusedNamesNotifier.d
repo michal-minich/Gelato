@@ -140,6 +140,4 @@ final class UnusedNamesNotifier : IAstVisitor!void
     void visit (TypeChar) { }
     void visit (TypeStruct) { }
     void visit (TypeArray) { }
-
-    void visit (WhiteSpace) { }
 }

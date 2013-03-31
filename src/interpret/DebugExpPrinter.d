@@ -141,6 +141,4 @@ import common, syntax.ast;
     void visit (TypeArray ta) { printer.println("TypeArray"); }
 
     void visit (TypeFn tfn) { printer.println("TypeFn"); }
-
-    void visit (WhiteSpace ws) { printer.println("WhiteSpace"); }
 }

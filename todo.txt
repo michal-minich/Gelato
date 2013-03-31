@@ -48,32 +48,8 @@ INTERPRETER
 	  anonymous scope ?
 
 TOKENIZER
-	handle file loading errors (make code shared in entire app, fn readText)
-    skip invalid unicode characters
 	remark unicode chars outside quotes
 
-PARSER
-	! remark file origin
-	! parse comments
-	! braces
-	  ! allow braces everywhere
-	  ! parse op dot in form a.(+)  a.(..)
-	  ! how to parse 3.(14)   (3).14   (3).(14)   3.(m)   (3).m   (r).(m)  ? (also for hex nums)
-	  ! remark redundant brace as in "(a)"
-	  ! wrong braces ( a, ] b, [ c )  - also mind coma
-	! test for braces
-	! fix parse op crash "+ a"
-	! fix crash when calling parseBracedExpList when current token is not brace
-	! parse : and = as sequence in parse fn after main parse
-	! decimal exponent (hex and dec)
-	! cancel unclosed text on first line
-	! when code text ends with single quote, is it char/text/error ?
-	! better recovery parsing of incorrect code
-		if w t e  |  if w ignore then t e  |  if w then t ignore else e  |  if w then t e ...
-	  documentation comments
-	  nested comment
-	  custom brace op apply
-	  variables in text "abc $variable 123"
 
 PREPARER
   operators priority
@@ -101,14 +77,6 @@ autofix formatting / syntax
 cmd interactive - first version
 call functions as members  of first parameter
 
-
-
-
-FUTURE
-
-TOKENIZER / PARSER
-	  unicode support in identifiers "option uninames"
-	  allow unicode operators as an option "option uniop"
 
 
   fix sample here, and contribue to phobos

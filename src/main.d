@@ -28,7 +28,7 @@ int main (string[] args)
     auto p = new Program(taskSpecs);
     auto r = p.runInConsole();
 
-    readln();
+    //readln();
 
     return r;
 }

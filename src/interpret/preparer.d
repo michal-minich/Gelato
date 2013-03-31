@@ -211,6 +211,4 @@ import common, syntax.ast, validate.remarks, interpret.builtins, interpret.NameF
     void visit (TypeStruct) { }
 
     void visit (TypeArray) { }
-
-    void visit (WhiteSpace ws) { }
 }

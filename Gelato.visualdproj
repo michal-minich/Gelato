@@ -34,7 +34,7 @@
   <useInline>0</useInline>
   <release>0</release>
   <preservePaths>0</preservePaths>
-  <warnings>1</warnings>
+  <warnings>0</warnings>
   <infowarnings>1</infowarnings>
   <checkProperty>1</checkProperty>
   <genStackFrame>1</genStackFrame>
@@ -303,6 +303,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
    <File path="src\syntax\Tokenizer.d" />
   </Folder>
   <Folder name="test">
+   <File path="src\test\DebugTokenFormater.d" />
    <File path="src\test\FolderTester.d" />
    <File path="src\test\tester.d" />
    <File path="src\test\TestFormatVisitor.d" />

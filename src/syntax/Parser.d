@@ -128,7 +128,7 @@ final class Parser
     }
 
 
-    T newExp (T : Exp, A...) (size_t start, A args)
+    T newExp (T, A...) (size_t start, A args)
     {
         auto e = new T(args);
         e.setTokens = toks2[start .. current.index];
@@ -680,7 +680,8 @@ final class Parser
                 {
                     if (current.type == TokenType.num)
                     {
-                        auto n = parseNum(parent);
+                        auto n = parseNum(parent);
+
                         if (n.value >= 0)
                             txt ~= cast(dchar)n.value;
                         else
@@ -699,8 +700,7 @@ final class Parser
                 }
                 else
                 {
-                    txt ~= ('\\' ~ current.text).toInvisibleCharsText();
-                    // TODO dont prepend \, refactor the fn to use char
+                    txt ~= current.text[0].toInvisibleChar();
                 }
             }
             else

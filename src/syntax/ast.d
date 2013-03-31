@@ -106,8 +106,6 @@ interface IAstVisitor (R)
     R visit (TypeChar);
     R visit (TypeStruct);
     R visit (TypeArray);
-
-    R visit (WhiteSpace);
 }
 
 
@@ -150,8 +148,6 @@ interface INothrowAstVisitor (R)
     R visit (TypeChar);
     R visit (TypeStruct);
     R visit (TypeArray);
-
-    R visit (WhiteSpace);
 }
 
 
@@ -167,7 +163,7 @@ mixin template visitImpl ()
     override dstring      str       (IFormatVisitor v)       { return v.visit(this); }
     override Exp          eval      (Interpreter v)          { return v.visit(this); }
     override Exp          infer     (TypeInferer v)          { return v.visit(this); }
-    nothrow override void findName  (INothrowAstVisitor!void v)           { return v.visit(this); }
+    nothrow override void findName  (INothrowAstVisitor!void v) { return v.visit(this); }
 }
 
 
@@ -194,32 +190,10 @@ EffectValue linear;
 EffectValue usedInReturn;
 
 
-abstract class Exp
+mixin template TokensProperties ()
 {
-    Exp infType;
     Token[] tokens;
-    ValueScope parent;
-
-    EffectValueNonPropagating used; // propagates opposite direction
-
-    EffectValue throws;
-    EffectValue unsafe;
-    EffectValue allocatesOnGC;
-    EffectValue writesGlobal;
-    EffectValue readsGlobal;
-    EffectValue writesIO;
-    EffectValue readsIO;
-
-    debug string typeName;
     debug string dbgTokensText;
-
-
-    nothrow this (ValueScope parent = null)
-    {
-        debug typeName = typeid(this).name;
-
-        this.parent = parent;
-    }
 
 
     nothrow @property void setTokens (Token[] ts)
@@ -249,7 +223,34 @@ abstract class Exp
         }
         return std.exception.assumeUnique(s);
     }
+}
 
+
+abstract class Exp
+{
+    Exp infType;
+    ValueScope parent;
+    Wadding wadding;
+    /*
+    EffectValueNonPropagating used; // propagates opposite direction
+
+    EffectValue throws;
+    EffectValue unsafe;
+    EffectValue allocatesOnGC;
+    EffectValue writesGlobal;
+    EffectValue readsGlobal;
+    EffectValue writesIO;
+    EffectValue readsIO;
+    */
+    debug string typeName;
+
+    mixin TokensProperties;
+
+    nothrow this (ValueScope parent = null)
+    {
+        this.parent = parent;
+        debug typeName = typeid(this).name;
+    }
 
     abstract void accept (IAstVisitor!void);
     abstract dstring str (IFormatVisitor);
@@ -619,16 +620,23 @@ final class TypeArray: Exp
 }
 
 
-// =================================================== White
-class WhiteSpace: Exp
+// =================================================== Wadding
+abstract class Wadding
 {
-    mixin visitImpl;
-    nothrow this () { }
+    mixin TokensProperties;
 }
 
 
-final class Comment: WhiteSpace
+final class Punctuation: Wadding
 {
-    mixin visitImpl;
-    nothrow this () { }
+}
+
+
+final class Comment: Wadding
+{
+}
+
+
+final class WhiteSpace: Wadding
+{
 }

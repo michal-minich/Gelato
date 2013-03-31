@@ -263,6 +263,7 @@ void cmdPrint (string[] text ...)
         .replace("\t", "\\t");
 }
 
+
 @trusted dstring toInvisibleCharsText (const dstring str)
 {
     return str
@@ -273,14 +274,8 @@ void cmdPrint (string[] text ...)
         .replace("\\\"", "\"")
         .replace("\\\'", "\'");
 }
-/*
-    switch (ptChar.capture[0])
-    {
-        case "\\n": t.value = '\n'; break;
-        case "\\r": t.value = '\r'; break;
-        case "\\t": t.value = '\t'; break;
-        default: t.value = ptChar.capture[0][0];
-    }*/
+
+
 @safe pure nothrow dchar toInvisibleChar (const dchar escape)
 {
     switch (escape)
@@ -288,7 +283,10 @@ void cmdPrint (string[] text ...)
         case 'n': return '\n';
         case 'r': return '\r';
         case 't': return '\t';
-        default:  return 0;
+        case '\"': return '\"';
+        case '\'': return '\'';
+        case '\\': return '\\';
+        default:  assert(false);
     }
 }
 

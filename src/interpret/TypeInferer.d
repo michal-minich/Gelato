@@ -382,6 +382,4 @@ final class TypeInferer : IAstVisitor!Exp
     Exp visit (TypeStruct s) { return new TypeType(null, s); }
 
     Exp visit (TypeArray arr) { return new TypeType(null, arr); }
-
-    Exp visit (WhiteSpace ws) { return null; }
 }

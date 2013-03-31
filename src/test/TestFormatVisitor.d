@@ -68,6 +68,4 @@ import syntax.ast;
     const dstring visit (TypeArray tao) { return "TypeArray"; }
 
     const dstring visit (TypeFn tfn) { return "TypeFn"; }
-
-    const dstring visit (WhiteSpace ws) { return "WhiteSpace"; }
 }

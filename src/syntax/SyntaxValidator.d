@@ -201,6 +201,4 @@ final class SyntaxValidator : IAstVisitor!void
     void visit (TypeArray) { }
 
     void visit (ValueBuiltinFn) { }
-
-    void visit (WhiteSpace ws) { }
 }

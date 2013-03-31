@@ -13,9 +13,9 @@ import common, syntax.ast;
     enum dstring tabs = "    "d.replicate(16);
 
 
-    const private @property tab() { return tabs[0 .. 4 * level]; }
+    const private @property dstring tab() { return tabs[0 .. 4 * level]; }
 
-    const private @property tab1() { return tabs[0 .. 4 * (level - 1)]; }
+    const private @property dstring tab1() { return tabs[0 .. 4 * (level - 1)]; }
 
 
     const dstring visit (ValueInt i) { return i.value.to!dstring(); }
@@ -245,9 +245,6 @@ import common, syntax.ast;
     {
         return dtext("Fn(", (tfn.types ~ tfn.retType).map!(t => t.str(this))().join(", "), ")");
     }
-
-
-    const dstring visit (WhiteSpace ws) { return ws.tokensText; }
 
 
     private dstring formatBraceOpApply (dstring braceStart, Exp[] items)

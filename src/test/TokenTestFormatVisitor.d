@@ -95,6 +95,4 @@ import syntax.ast;
     const dstring visit (TypeArray arr) { return arr.tokensText ~ "|"; }
 
     const dstring visit (TypeFn tfn) { return tfn.tokensText ~ "|"; }
-
-    const dstring visit (WhiteSpace ws) { return ws.tokensText ~ "|"; }
 }

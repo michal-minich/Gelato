@@ -120,6 +120,4 @@ nothrow:
     void visit (TypeChar) { }
     void visit (TypeStruct) { }
     void visit (TypeArray) { }
-
-    void visit (WhiteSpace) { }
 }
