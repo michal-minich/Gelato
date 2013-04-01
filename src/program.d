@@ -191,8 +191,7 @@ final class Program
     ValueStruct parse (Token[] toks)
     {
         debug context.printer.dbg("PARSE");
-        auto par = new Parser(context, toks);
-        auto ast = par.parseAll();
+        auto ast = (new Parser).parseAll(context, toks);
         debug
         {
             auto dtf = new test.DebugTokenFormater.DebugTokenFormater;

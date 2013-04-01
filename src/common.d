@@ -90,6 +90,18 @@ debug @trusted nothrow void dbg (T) (T a, bool nl = true)
 }
 
 
+@trusted pure nothrow dstring filterChar(dstring str, dchar ch)
+{
+    dchar[] res;
+    res.length = str.length;
+    uint ix;
+    foreach (strch; str)
+        if (strch != ch)
+            res[ix++] = strch;
+    return assumeUnique(res[0 .. ix]);
+}
+
+
 @trusted nothrow string toString(dstring str)
 {
     try
@@ -168,13 +180,13 @@ Token[] tokenizeFile (string filePath)
 
 ValueStruct parseString (IValidationContext vctx, const dstring src)
 {
-    return (new Parser(vctx, (new Tokenizer(src)).tokenize())).parseAll();
+    return (new Parser).parseAll(vctx, (new Tokenizer(src)).tokenize());
 }
 
 
 ValueStruct parseFile (IValidationContext vctx, string filePath)
 {
-    return (new Parser(vctx, tokenizeFile(filePath))).parseAll();
+    return (new Parser).parseAll(vctx, tokenizeFile(filePath));
 }
 
 

@@ -1,68 +1,75 @@
 module syntax.Parser;
 
 
-import std.array, std.conv, std.format;
+import std.conv;
 import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
 
-@safe:
-
-
-final class Parser
+@safe final class Parser
 {
-    private
+    
+    ValueStruct parseAll (IValidationContext context, Token[] tokens)
     {
-        Token[] toks2;
-        Token[] toks;
-        IValidationContext vctx;
-        Token current;
-        bool sepPassed;
-        Comment comment;
-        dchar[] braceStack;
-    }
-
-
-    this (IValidationContext valContext, Token[] tokens)
-    {
-        vctx = valContext;
+        vctx = context;
         toks = tokens;
-        toks2 = tokens;
-        if (toks.length)
-            current = toks.front;
-    }
 
+        if (notEmpty)
+            current = toks[0];
 
-    ValueStruct parseAll ()
-    {
-        auto s = new ValueStruct(null);
-        s.setTokens = toks2;
+        auto root = new ValueStruct(null);
+        //s.setTokens = toks2;
         Exp e;
-        skipWhite();
-        while ((e = parse(s)) !is null)
-            s.exps ~= e;
-        return s;
+        while ((e = parse(root)) !is null)
+            root.exps ~= e;
+        return root;
     }
 
 
     private:
 
 
-    @property const bool isWhite ()
+    Token[] toks;
+    uint currentIx;
+    IValidationContext vctx;
+    Token current;
+    bool sepPassed;
+    Wadding[] waddings;
+    dchar[] braceStack;
+
+
+    @property nothrow const bool isWhite ()
     {
         return current.type == TokenType.newLine || current.type == TokenType.white;
     }
 
 
-    void nextTok ()
+    @property nothrow const bool empty () { return currentIx >= toks.length; }
+
+    @property nothrow const bool notEmpty () { return currentIx < toks.length; }
+
+
+    nothrow void nextTok ()
     {
-        if (toks.length)
+        if (notEmpty)
         {
-            toks.popFront();
-            if (toks.length)
-                current = toks.front;
-            else if (current.type != TokenType.empty)
-                current = Token(current.index + 1, TokenType.empty);
+            ++currentIx;
+            if (notEmpty)
+                current = toks[currentIx];
+
+            if (current.type == TokenType.white || current.type == TokenType.newLine)
+                addWadding!WhiteSpace();
+            else if (current.type ==  TokenType.coma)
+                addWadding!Punctuation();
         }
+    }
+
+
+    nothrow void addWadding (W : Wadding) ()
+    {            
+        if (waddings ? cast(W)waddings[$ - 1] : null)
+            waddings[$ - 1].setTokens = toks[waddings[$ - 1].tokens[0].index .. current.index + 1];
+        else
+            waddings ~= newExp1!W();
     }
 
 
@@ -78,7 +85,7 @@ final class Parser
         sepPassed = false;
         auto sepLine = 0;
         auto sepComa = 0;
-        while(toks.length)
+        while(notEmpty)
         {
             switch (current.type)
             {
@@ -101,17 +108,17 @@ final class Parser
     }
 
 
-    void nextNonWhiteTokOnSameLine ()
+    nothrow void nextNonWhiteTokOnSameLine ()
     {
         nextTok();
-        while (toks.length && current.type == TokenType.white)
+        while (notEmpty && current.type == TokenType.white)
             nextTok();
     }
 
 
     bool skipSep ()
     {
-        while(toks.length)
+        while(notEmpty)
         {
             switch (current.type)
             {
@@ -128,26 +135,26 @@ final class Parser
     }
 
 
-    T newExp (T, A...) (size_t start, A args)
+    nothrow T newExp (T, A...) (size_t start, A args)
     {
         auto e = new T(args);
-        e.setTokens = toks2[start .. current.index];
+        e.setTokens = toks[start .. current.index];
         return e;
     }
 
 
-    T newExp1 (T : Exp, A...) (A args)
+    nothrow T newExp1 (T, A...) (A args)
     {
         auto e = new T(args);
-        e.setTokens = toks2[current.index .. current.index + 1];
+        e.setTokens = toks[current.index .. current.index + 1];
         return e;
     }
 
 
-    T newExp2 (T : Exp, A...) (size_t start, size_t end, A args)
+    nothrow T newExp2 (T, A...) (size_t start, size_t end, A args)
     {
         auto e = new T(args);
-        e.setTokens = toks2[start .. end];
+        e.setTokens = toks[start .. end];
         return e;
     }
 
@@ -155,17 +162,16 @@ final class Parser
     Exp parse (ValueScope parent)
     {
         next:
-        skipComment:
+        Exp exp;
 
-        if (!toks.length)
+        if (empty)
             return null;
 
         sepPassed = false;
 
         skipSep();
 
-        Exp exp;
-        switch (current.type)
+        final switch (current.type)
         {
             case TokenType.num: exp = parseNum(parent); break;
             case TokenType.ident: exp = parseIdentOrAssign(parent); break;
@@ -205,17 +211,23 @@ final class Parser
 
             case TokenType.braceStart: exp = parseBracedExp(parent); break;
 
-            case TokenType.commentLine: comment = parseCommentLine(parent); break;
-            case TokenType.commentMultiStart: comment = parseCommentMulti(parent); break;
+            case TokenType.commentLine: parseCommentLine(parent); goto next;
+            case TokenType.commentMultiStart: parseCommentMulti(parent); goto next;
 
-            case TokenType.empty: return null;
-            default: assert (false);
-        }
-
-        if (comment)
-        {
-            comment = null;
-            goto skipComment;
+            case TokenType.empty:
+            case TokenType.error:
+            case TokenType.newLine:
+            case TokenType.op:
+            case TokenType.dot:
+            case TokenType.asType:
+            case TokenType.assign:
+            case TokenType.coma:
+            case TokenType.textEscape:
+            case TokenType.commentMultiEnd:
+            case TokenType.typeFloat:
+            case TokenType.white:
+                dbg("Attempt to parse token ", current.type);
+                assert (false);
         }
 
         typeof(current.index) prevIndex;
@@ -244,6 +256,8 @@ final class Parser
 
         } while (prevIndex != current.index);
 
+        exp.waddings = waddings;
+        waddings = null;
         return exp;
     }
 
@@ -302,7 +316,7 @@ final class Parser
                 continue;
             }
 
-            if (!toks.length)
+            if (empty)
             {
                 vctx.remark(textRemark(start, "reached end of file and close brace not found"));
                 return list;
@@ -358,7 +372,7 @@ final class Parser
             auto txt = current.text;
             nextTok();
             auto f = newExp!ValueFloat(operand1.tokens[0].index, parent, 0);
-            immutable s = txt.replace("_", "");
+            immutable s = txt.filterChar('_');
             auto nDecimal = (s[0] == '#' || isBase16) ? s[(s[0] == '#' ? 1 : 0) .. $].to!long(16) : s.to!long();
             if (s[0] == '#')
                 vctx.remark(textRemark(f, "# in decimal part is unnecessary"));
@@ -376,7 +390,7 @@ final class Parser
 
     @trusted ValueInt parseNum (ValueScope parent)
     {
-        immutable s = current.text.replace("_", "");
+        immutable s = current.text.filterChar('_');
         nextTok();
         return newExp!ValueInt(current.index - 1, parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
     }
@@ -467,7 +481,7 @@ final class Parser
         {
             nextNonWhiteTok();
 
-            while (toks.length && current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
+            while (notEmpty && current.type != TokenType.keyElse && current.type != TokenType.keyEnd)
                 then.exps ~= parse(then);
 
             if (!then.exps.length)
@@ -482,7 +496,7 @@ final class Parser
         {
             nextNonWhiteTok();
 
-            while (toks.length && current.type != TokenType.keyEnd)
+            while (notEmpty && current.type != TokenType.keyEnd)
                 otherwise.exps ~= parse(otherwise); 
             if (!otherwise.exps.length)
             {
@@ -491,7 +505,7 @@ final class Parser
             }
         }
 
-        if (!toks.length)
+        if (empty)
             vctx.remark(textRemark("if without 'end'"));
         else
             nextTok();
@@ -537,7 +551,7 @@ final class Parser
         auto s = new ValueStruct(parent);
         nextNonWhiteTok();
         s.exps = parseBracedExpList(s);
-        s.setTokens = toks2[start .. current.index];
+        s.setTokens = toks[start .. current.index];
         return s;
     }
 
@@ -570,7 +584,7 @@ final class Parser
         }
 
         f.exps = parseBracedExpList(f);
-        f.setTokens = toks2[start .. current.index];
+        f.setTokens = toks[start .. current.index];
         return f;
     }
 
@@ -579,7 +593,7 @@ final class Parser
     {
         immutable start = current.index;
         nextNonWhiteTokOnSameLine();
-        return newExp!StmThrow(start, parent, (toks.length && current.type != TokenType.newLine) ? parse(parent) : null);
+        return newExp!StmThrow(start, parent, (notEmpty && current.type != TokenType.newLine) ? parse(parent) : null);
     }
 
 
@@ -587,7 +601,7 @@ final class Parser
     {
         immutable start = current.index;
         nextNonWhiteTokOnSameLine();
-        return newExp!StmReturn(start, parent, (toks.length && current.type != TokenType.newLine) ? parse(parent) : null);
+        return newExp!StmReturn(start, parent, (notEmpty && current.type != TokenType.newLine) ? parse(parent) : null);
     }
 
 
@@ -595,7 +609,7 @@ final class Parser
     {
         immutable start = current.index;
         nextNonWhiteTokOnSameLine();
-        return newExp!StmImport(start, parent, (toks.length && current.type != TokenType.newLine) ? parse(parent) : null);
+        return newExp!StmImport(start, parent, (notEmpty && current.type != TokenType.newLine) ? parse(parent) : null);
     }
 
 
@@ -636,7 +650,7 @@ final class Parser
             ts ~= current;
             nextTok();
 
-            if (!toks.length)
+            if (empty)
                 break;
 
             if (current.type == TokenType.quote && current.text[0] == startQoute)
@@ -754,33 +768,43 @@ final class Parser
     }
 
 
-    Comment parseCommentLine (ValueScope parent)
+    void parseCommentLine (ValueScope parent)
     {
-        immutable stasrt = current.index;
-        while (toks.length && current.type != TokenType.newLine)
-            nextTok();
-        auto c = newExp!Comment(stasrt);
+        immutable start = current.index;
+        while (notEmpty && current.type != TokenType.newLine)
+        { 
+            ++currentIx;
+            if (notEmpty)
+                current = toks[currentIx];
+        }
+            
+        waddings ~= newExp!Comment(start);     
+        
+        if (current.type == TokenType.white || current.type == TokenType.newLine)
+            addWadding!WhiteSpace();
+        else if (current.type ==  TokenType.coma)
+            addWadding!Punctuation();
+
         nextTok();
-        return c;
     }
 
 
-    Comment parseCommentMulti (ValueScope parent)
+    void parseCommentMulti (ValueScope parent)
     {
         immutable start = current.index;
         while (current.type != TokenType.commentMultiEnd)
         {
-            if (!toks.length)
+            if (empty)
             {
                 vctx.remark(textRemark("unclosed multiline comment"));
-                return newExp!Comment(start);
+                waddings ~= newExp!Comment(start);
+                return;
             }
 
             nextTok();
         }
-        auto c = newExp!Comment(start);
+        waddings ~= newExp!Comment(start);
         nextTok();
-        return c;
     }
 
 

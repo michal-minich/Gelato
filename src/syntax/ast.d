@@ -230,7 +230,7 @@ abstract class Exp
 {
     Exp infType;
     ValueScope parent;
-    Wadding wadding;
+    Wadding[] waddings;
     /*
     EffectValueNonPropagating used; // propagates opposite direction
 

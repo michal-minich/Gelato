@@ -5,19 +5,51 @@ import std.array, std.algorithm;
 import common, syntax.ast;
 
 
+@trusted private dstring toVisibleCharsTextDbg (const dstring str)
+{
+    return str
+        .replace("\n", "\x1F")
+        .replace("\r", "\x11")
+        .replace("\t", "\x1A")
+        .replace(" ", "\x16");
+}
+
+
 @trusted pure final class DebugTokenFormater : IFormatVisitor
 {   
     private uint level;
     enum dstring tabs = "    "d.replicate(16);
 
-    const private @property dstring tab() { return '\n' ~ tabs[0 .. 2 * level]; }
 
-    const private @property dstring ttw(Exp e) { return "|" ~ e.tokensText.toVisibleCharsText() ~ wad(e); }
+    const private @property dstring tab(uint l = -1)
+    {
+        return '\n' ~ tabs[0 .. 2 * (l == -1 ? level : l)];
+    }
+
+
+    const private @property dstring ttw(Exp e)
+    {
+        return "|" ~ e.tokensText.toVisibleCharsTextDbg() ~ "|" ~ wad(e);
+    }
 
 
     const private @property dstring wad(Exp e)
     {
-        return "|" ~ (e.wadding ? e.wadding.tokensText : "") ~ "|";
+        dstring s;
+
+        foreach (w; e.waddings)
+        {
+            if (cast(WhiteSpace)w)
+                s ~= tab(level + 1) ~ "WhiteSpace\t\t";
+            else if (cast(Punctuation)w)
+                s ~= tab(level + 1) ~ "Punctuation\t\t";
+            else if (cast(Comment)w)
+                s ~= tab(level + 1) ~ "Comment\t\t";
+
+            s ~= "|" ~ w.tokensText.toVisibleCharsTextDbg() ~ "|";
+        }
+
+        return s;
     }
 
 
