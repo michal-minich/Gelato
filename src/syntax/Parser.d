@@ -53,6 +53,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         ++currentIx;
         if (notEmpty)
             current = toks[currentIx];
+        else if (current.type != TokenType.empty)
+            current = Token(current.index + 1, TokenType.empty);
 
         //if (current.type == TokenType.white || current.type == TokenType.newLine)
         //    addWadding!WhiteSpace();
