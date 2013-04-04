@@ -4,7 +4,7 @@ module program;
 import std.stdio, std.algorithm, std.string, std.array, std.conv, std.file, std.path, std.utf, std.path;
 import std.file : exists, isFile;
 import common, settings, syntax.Formatter, validate.remarks, syntax.SyntaxValidator,
-    syntax.Tokenizer, syntax.Parser, syntax.ast, interpret.Interpreter, interpret.preparer,
+    syntax.Tokenizer, syntax.Parser2, syntax.ast, interpret.Interpreter, interpret.preparer,
     interpret.TypeInferer, validate.UnusedNamesNotifier, interpret.NameFinder, interpret.NameAssigner, interpret.builtins, 
     interpret.ConsoleInterpreterContext;
 
@@ -191,7 +191,7 @@ final class Program
     ValueStruct parse (Token[] toks)
     {
         debug context.printer.dbg("PARSE");
-        auto ast = (new Parser).parseAll(context, toks);
+        auto ast = (new Parser2).parseAll(context, toks);
         debug
         {
             auto dtf = new test.DebugTokenFormater.DebugTokenFormater;

@@ -299,6 +299,7 @@ del $(ConfigurationName)\Gelato.obj</preBuildCommand>
    <File path="src\syntax\Formatter.d" />
    <File path="src\syntax\NamedCharRefs.d" />
    <File path="src\syntax\Parser.d" />
+   <File path="src\syntax\Parser2.d" />
    <File path="src\syntax\SyntaxValidator.d" />
    <File path="src\syntax\Tokenizer.d" />
   </Folder>
