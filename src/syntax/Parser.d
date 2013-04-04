@@ -7,16 +7,16 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
 @safe final class Parser
 {
-    
+    ValueStruct root;
+
     ValueStruct parseAll (IValidationContext context, Token[] tokens)
     {
         vctx = context;
         toks = tokens;
 
-        if (notEmpty)
-            current = toks[0];
+        nextTok();
 
-        auto root = new ValueStruct(null);
+        root = new ValueStruct(null);
         //s.setTokens = toks2;
         Exp e;
         while ((e = parse(root)) !is null)
@@ -29,7 +29,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
 
     Token[] toks;
-    uint currentIx;
+    int currentIx = -1;
     IValidationContext vctx;
     Token current;
     bool sepPassed;
@@ -50,17 +50,14 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
     nothrow void nextTok ()
     {
+        ++currentIx;
         if (notEmpty)
-        {
-            ++currentIx;
-            if (notEmpty)
-                current = toks[currentIx];
+            current = toks[currentIx];
 
-            if (current.type == TokenType.white || current.type == TokenType.newLine)
-                addWadding!WhiteSpace();
-            else if (current.type ==  TokenType.coma)
-                addWadding!Punctuation();
-        }
+        //if (current.type == TokenType.white || current.type == TokenType.newLine)
+        //    addWadding!WhiteSpace();
+        //else if (current.type ==  TokenType.coma)
+         //   addWadding!Punctuation();
     }
 
 
@@ -139,6 +136,9 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     {
         auto e = new T(args);
         e.setTokens = toks[start .. current.index];
+        //auto ws = new WhiteSpace;
+        //e.waddings = [ws];
+        //ws.setTokens =  toks[root.exps[$ - 1].tokens[$ - 1].index .. start];
         return e;
     }
 
@@ -147,6 +147,9 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     {
         auto e = new T(args);
         e.setTokens = toks[current.index .. current.index + 1];
+        //auto ws = new WhiteSpace;
+        //e.waddings = [ws];
+        //ws.setTokens =  toks[root.exps[$ - 1].tokens[$ - 1].index .. current.index];
         return e;
     }
 
@@ -155,6 +158,9 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     {
         auto e = new T(args);
         e.setTokens = toks[start .. end];
+        //auto ws = new WhiteSpace;
+        //e.waddings = [ws];
+        //ws.setTokens =  toks[root.exps[$ - 1].tokens[$ - 1].index .. start];
         return e;
     }
 
@@ -777,13 +783,13 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             if (notEmpty)
                 current = toks[currentIx];
         }
-            
+        
         waddings ~= newExp!Comment(start);     
         
-        if (current.type == TokenType.white || current.type == TokenType.newLine)
-            addWadding!WhiteSpace();
-        else if (current.type ==  TokenType.coma)
-            addWadding!Punctuation();
+        //if (current.type == TokenType.white || current.type == TokenType.newLine)
+        //    addWadding!WhiteSpace();
+        //else if (current.type ==  TokenType.coma)
+        //    addWadding!Punctuation();
 
         nextTok();
     }
