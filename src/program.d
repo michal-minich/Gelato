@@ -2,7 +2,7 @@ module program;
 
 
 import std.stdio, std.algorithm, std.string, std.array, std.conv, std.file, std.path, std.utf, std.path;
-import std.file : readText, exists, isFile;
+import std.file : exists, isFile;
 import common, settings, syntax.Formatter, validate.remarks, syntax.SyntaxValidator,
     syntax.Tokenizer, syntax.Parser, syntax.ast, interpret.Interpreter, interpret.preparer,
     interpret.TypeInferer, validate.UnusedNamesNotifier, interpret.NameFinder, interpret.NameAssigner, interpret.builtins, 
@@ -48,7 +48,7 @@ final class Program
         this.context = context;
 
         auto fileData = taskSpecs.startFilePath
-            ? toUTF32(readText!string(taskSpecs.startFilePath))
+            ? readtUtf8FileUtf32(taskSpecs.startFilePath)
             : taskSpecs.startFileData;
 
         ExpAssign[] starts;
@@ -153,7 +153,7 @@ final class Program
         if (adddFilePaths.canFind(filePath))
             return null;
 
-        auto fileData = toUTF32(readText!string(filePath));
+        auto fileData = readtUtf8FileUtf32(filePath);
 
         auto moduleName = filePath.baseName().stripExtension().to!dstring();
 

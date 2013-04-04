@@ -2,7 +2,7 @@ module test.tester;
 
 
 import std.stdio, std.range, std.range, std.algorithm, std.conv, std.string, std.utf, std.path;
-import std.file : readText, exists, isFile;
+import std.file : exists, isFile;
 
 import common, settings, syntax.Formatter, syntax.ast, syntax.Parser, syntax.Tokenizer, validate.remarks,
        syntax.SyntaxValidator, interpret.preparer, interpret.Interpreter, program;

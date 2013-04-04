@@ -3,7 +3,7 @@ module common;
 
 import std.stdio, std.range, std.array, std.range, std.algorithm, std.conv,
        std.string, std.utf, std.path, std.traits, std.exception;
-import std.file : readText, exists, isFile;
+import std.file : read, exists, isFile;
 
 import settings, syntax.Formatter, syntax.ast, syntax.Parser, syntax.Tokenizer, validate.remarks,
        interpret.Interpreter;
@@ -172,9 +172,15 @@ pure nothrow immutable(T)[] getReversed (T) (T[] arr)
 B sureCast (B, A) (A obj) { return cast(B)cast(void*)obj; }
 
 
+dstring readtUtf8FileUtf32 (string filePath)
+{
+    return toUTF32(cast(char[])read(filePath));
+}
+
+
 Token[] tokenizeFile (string filePath)
 {
-    return (new Tokenizer(toUTF32(readText!string(filePath)))).tokenize();
+    return (new Tokenizer(readtUtf8FileUtf32(filePath))).tokenize();
 }
 
 

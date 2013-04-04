@@ -40,7 +40,7 @@ int testAllFilesInFolder(string folderPath)
 
 bool testFile (string filePath, int folerPathCountChars)
 {
-    auto txt = toUTF32(readText!string(filePath[0 .. $ - 3] ~ "txt"));
+    auto txt = readtUtf8FileUtf32(filePath[0 .. $ - 3] ~ "txt");
     auto lines = txt.splitLines();
     auto expectedReturn = lines[0];
     auto expectedLines = lines[1 .. $];
