@@ -14,14 +14,17 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         vctx = context;
         toks = tokens;
         current = toks[0];
+        prevExp = ValueUnknown.single;
         root = new ValueStruct(null);
-        while (notEmpty)
-            root.exps ~= parse(root);
+        root.exps ~= prevExp;
+        Exp e;
+        while ((e = parse(root)) !is null)
+            root.exps ~= e;
         return root;
     }
 
 
-private:
+    private:
 
 
     Token[] toks;
@@ -30,29 +33,57 @@ private:
     bool sepPassed;
     Wadding[] waddings;
     dchar[] braceStack;
+    Exp prevExp;
+
+
+    nothrow T newWad (T, A...) (size_t start, A args)
+    {
+        auto w = new T(args);
+        w.setTokens = toks[start .. current.index];
+        return w;
+    }
+
+
+    nothrow T newWad1 (T, A...) (A args)
+    {
+        auto w = new T(args);
+        w.setTokens = toks[current.index .. current.index + 1];
+        return w;
+    }
 
 
     nothrow T newExp (T, A...) (size_t start, A args)
     {
-        auto e = new T(args);
-        e.setTokens = toks[start .. current.index];
-        return e;
+        return newExpWithTokens!T(args, toks[start .. end]);
     }
 
 
     nothrow T newExp1 (T, A...) (A args)
     {
-        auto e = new T(args);
-        e.setTokens = toks[current.index .. current.index + 1];
-        return e;
+        return newExpWithTokens!T(args, toks[current.index .. current.index + 1]);
     }
 
 
     nothrow T newExp2 (T, A...) (size_t start, size_t end, A args)
     {
+        return newExpWithTokens!T(args, toks[start .. end]);
+    }
+
+
+    nothrow T newExpWithTokens (T, A...) (A args, Token[] toks)
+    {
+        associateWadding(prevExp);
         auto e = new T(args);
-        e.setTokens = toks[start .. end];
+        prevExp = e;
+        e.setTokens = toks;
         return e;
+    }
+
+
+    nothrow void associateWadding (Exp e)
+    {
+        e.waddings ~= waddings;
+        waddings = null;
     }
 
 
@@ -81,12 +112,6 @@ private:
     }
 
 
-    nothrow void prevTok ()
-    {
-        current = toks[current.index - 1];
-    }
-
-
     void parseWaddings ()
     {
         again:
@@ -101,7 +126,7 @@ private:
     }
 
 
-    Exp parse (ValueScope parent)
+    Exp parse (ValueScope parent, bool parsingFromExpAssign = false)
     {
         parseWaddings();
 
@@ -109,49 +134,50 @@ private:
 
         switch (current.type)
         {
-            case TokenType.ident: e = parseIdentOrAssign  (parent); break;
-            case TokenType.num:   e = parseNum            (parent); break;
-            case TokenType.empty: return withWadding(ValueUnknown.single);
+            case TokenType.ident:  e = parseExpIdent(parent); break;
+            case TokenType.num:    e = parseValueNum(parent); break;
+            case TokenType.empty:  associateWadding(prevExp); return null;
             default:
                 dbg("Attempt to parse token ", current.type);
                 assert (false);
         }
 
-        nextTok();
+        if (notEmpty)
+            nextNonWhiteTok();
 
-        return withWadding(e);
-    }
+        if (!parsingFromExpAssign)
+        {
+            if (current.type == TokenType.asType || current.type == TokenType.assign)
+            {
+                innerAssign:
+                e = parseExpAssign(e, parent);
 
+                parseWaddings();
 
-    nothrow Exp withWadding (Exp e)
-    {
-        addWadding(e);
+                if (current.type == TokenType.assign)
+                    goto innerAssign;
+            }
+        }
+
         return e;
-    }
-
-
-    nothrow void addWadding (Exp e)
-    {
-        e.waddings ~= waddings;
-        waddings = null;
     }
 
 
     nothrow Wadding parseWadWhite ()
     {
         immutable start = current.index;
-        do nextTok();
-        while (notEmpty && (current.type == TokenType.white || current.type == TokenType.white));
-        return newExp!WhiteSpace(start);
+        while (notEmpty && (current.type == TokenType.white || current.type == TokenType.newLine))
+            nextTok();
+        return newWad!WhiteSpace(start);
     }
 
 
     nothrow Wadding parseWadCommentLine ()
     {
         immutable start = current.index;
-        do nextTok();
-        while (notEmpty && current.type != TokenType.newLine);
-        return newExp!Comment(start);
+        while (notEmpty && current.type != TokenType.newLine)
+            nextTok();
+        return newWad!Comment(start);
     }
 
 
@@ -163,57 +189,48 @@ private:
             if (empty)
             {
                 vctx.remark(textRemark("unclosed multiline comment"));
-                return newExp!Comment(start);
+                return newWad!Comment(start);
             }
             nextTok();
         }
         nextTok();
-        return newExp!Comment(start);
+        return newWad!Comment(start);
     }
 
 
-    @trusted ValueInt parseNum (ValueScope parent)
+    Exp parseExpIdent (ValueScope parent) { return newExp1!ExpIdent(parent, current.text); }
+
+
+    @trusted ValueInt parseValueNum (ValueScope parent)
     {
         immutable s = current.text.filterChar('_');
         return newExp1!ValueInt(parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
     }
 
 
-    Exp parseIdentOrAssign (ValueScope parent)
+    Exp parseExpAssign (Exp slot, ValueScope parent)
     {
-        auto i = newExp1!ExpIdent(parent, current.text);
-        addWadding(i);
-        nextNonWhiteTok();
-
         Exp type;
         if (current.type == TokenType.asType)
         {
-            waddings ~= newExp1!Punctuation();
+            waddings ~= newWad1!Punctuation();
             nextTok();
-            type = parse(parent);
+            type = parse(parent, true);
         }
 
         Exp value;
         if (current.type == TokenType.assign)
         {
-            waddings ~= newExp1!Punctuation();
+            waddings ~= newWad1!Punctuation();
             nextTok();
-            auto v = parse(parent);
-            value = v ? v : new ValueUnknown(parent);
+            value = parse(parent, true);
         }
+        
+        if (!value)
+            value = new ValueUnknown(parent);
 
-        if (type || value)
-        {
-            if (!value)
-                value = new ValueUnknown(parent);
-
-            auto d = newExp2!ExpAssign(i.tokens[0].index, current.index, parent, i, value);
-            d.type = type;
-            prevTok();
-            return d;
-        }
-
-        prevTok();
-        return i;
+        auto d = newExp2!ExpAssign(slot.tokens[0].index, current.index, parent, slot, value);
+        d.type = type;
+        return d;
     }
 }
