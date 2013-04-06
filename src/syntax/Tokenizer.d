@@ -86,11 +86,18 @@ TokenResult parseOp (const dstring src)
     if      (src[0] == ',') return TokenResult(TokenType.coma, 1);
     else if (src[0] == ';') return TokenResult(TokenType.op, 1);
 
-    immutable l = src.lengthWhile!(ch => 
+    auto l = src.lengthWhile!(ch => 
         ch == '!' ||  ch == '\\' ||  ch == '^' ||  ch == '`' ||  ch == '|' ||  ch == '~'
         || (ch >= '#' && ch <= '\'')
         || (ch >= '*' && ch <= '/')
         || (ch >= ':' && ch <= '@'));
+
+    if (l > 1)
+    {
+        for (auto i = 0; i < l - 1; i++)
+            if (src[i] == '-' && src[i + 1] == '-')
+                l = i;
+    }
 
     if (l == 1)
         switch (src[0])
