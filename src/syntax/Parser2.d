@@ -7,9 +7,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
 @safe final class Parser2
 {
-    ValueStruct root;
-
-    ValueStruct parseAll (IValidationContext context, Token[] tokens)
+    nothrow this (IValidationContext context, Token[] tokens)
     {
         vctx = context;
         toks = tokens;
@@ -17,6 +15,11 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         prevExp = ValueUnknown.single;
         root = new ValueStruct(null);
         root.exps ~= prevExp;
+    }
+
+
+    ValueStruct parseAll ()
+    {
         Exp e;
         while ((e = parse(root)) !is null)
             root.exps ~= e;
@@ -27,14 +30,16 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     private:
 
 
-    Token[] toks;
     IValidationContext vctx;
+    Token[] toks;
+    ValueStruct root;
     Token current;
     bool sepPassed;
     Wadding[] waddings;
     dchar[] braceStack;
     Exp prevExp;
-
+    bool inParsingOp;
+    bool inParsingAsType;
 
     nothrow T newWad (T, A...) (size_t start, A args)
     {
@@ -100,7 +105,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
     nothrow void nextTok ()
     {
-        debug assert (notEmpty, "past last token");
+        debug assert (notEmpty, "Parsing Past last token");
         current = toks[current.index + 1];
     }
 
@@ -126,8 +131,9 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    Exp parse (ValueScope parent, bool parsingFromExpAssign = false)
+    Exp parse (ValueScope parent)
     {
+        next:
         parseWaddings();
 
         Exp e;
@@ -136,7 +142,15 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         {
             case TokenType.ident:  e = parseExpIdent(parent); break;
             case TokenType.num:    e = parseValueNum(parent); break;
+            
             case TokenType.empty:  associateWadding(prevExp); return null;
+            
+            case TokenType.op:     e = parseOp(new ValueUnknown(parent)); goto nextOp;
+
+            case TokenType.asType: 
+            case TokenType.assign: vctx.remark(textRemark(
+                "Unexpected token " ~ current.type.toDString() ~ " '" ~ current.text ~ "'")); return null;
+            
             default:
                 dbg("Attempt to parse token ", current.type);
                 assert (false);
@@ -145,18 +159,26 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         if (notEmpty)
             nextNonWhiteTok();
 
-        if (!parsingFromExpAssign)
+        nextOp:
+        if (!inParsingOp && current.type == TokenType.op)
         {
-            if (current.type == TokenType.asType || current.type == TokenType.assign)
-            {
-                innerAssign:
-                e = parseExpAssign(e, parent);
+            e = parseOp(e);
+            parseWaddings();
+            goto nextOp;
+        }
 
-                parseWaddings();
+        if (current.type == TokenType.asType)
+        {
+            e = parseExpAssign(e);
+            parseWaddings();
+        }
 
-                if (current.type == TokenType.assign)
-                    goto innerAssign;
-            }
+        nextAssign:
+        if (!inParsingAsType && current.type == TokenType.assign)
+        {
+            e = parseExpAssign(e);
+            parseWaddings();
+            goto nextAssign;
         }
 
         return e;
@@ -188,7 +210,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         {
             if (empty)
             {
-                vctx.remark(textRemark("unclosed multiline comment"));
+                vctx.remark(textRemark("Unclosed multiline comment"));
                 return newWad!Comment(start);
             }
             nextTok();
@@ -198,7 +220,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    Exp parseExpIdent (ValueScope parent) { return newExp1!ExpIdent(parent, current.text); }
+    ExpIdent parseExpIdent (ValueScope parent) { return newExp1!ExpIdent(parent, current.text); }
 
 
     @trusted ValueInt parseValueNum (ValueScope parent)
@@ -208,29 +230,58 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    Exp parseExpAssign (Exp slot, ValueScope parent)
+    ExpAssign parseExpAssign (Exp slot)
     {
         Exp type;
         if (current.type == TokenType.asType)
         {
             waddings ~= newWad1!Punctuation();
-            nextTok();
-            type = parse(parent, true);
+            nextNonWhiteTok();
+            if (current.type == TokenType.assign)
+            {
+                vctx.remark(textRemark(
+                    "Expected type specification after double colon"));
+                goto parseAssign;
+            }
+            inParsingAsType = true;
+            type = parse(slot.parent);
+            inParsingAsType = false;
         }
 
+        parseAssign:
         Exp value;
         if (current.type == TokenType.assign)
         {
             waddings ~= newWad1!Punctuation();
             nextTok();
-            value = parse(parent, true);
+            value = parse(slot.parent);
         }
         
         if (!value)
-            value = new ValueUnknown(parent);
+            value = new ValueUnknown(slot.parent);
 
-        auto d = newExp2!ExpAssign(slot.tokens[0].index, current.index, parent, slot, value);
+        auto d = newExp2!ExpAssign(slot.tokens[0].index, current.index, slot.parent, slot, value);
         d.type = type;
         return d;
+    }
+
+
+    ExpFnApply parseOp (Exp op1, bool reverse = false)
+    {
+        auto op = newExp1!ExpIdent(op1.parent, current.text);
+        nextTok();
+        inParsingOp = !reverse;
+        auto op2 = parse(op1.parent);
+        inParsingOp = false;
+
+        if (!op2)
+        {
+            vctx.remark(textRemark(null, "Second operand for '" ~ op.tokens[0].text ~ "' is missing"));
+            op2 = new ValueUnknown(op1.parent);
+        }
+
+        immutable start = (op1.tokens ? op1.tokens : op.tokens)[0].index;
+        auto fna = newExp2!ExpFnApply(start, current.index, op1.parent, op, [op1, op2]);
+        return fna;
     }
 }

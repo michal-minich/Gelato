@@ -115,6 +115,20 @@ debug @trusted  void dbg (T) (T a, bool nl = true) nothrow
 }
 
 
+
+@trusted nothrow dstring toDString (T) (T item)
+{
+    try
+    {
+        return item.to!dstring();
+    }
+    catch (Exception ex)
+    {
+        return ex.msg.toDString();
+    }
+}
+
+
 @safe @property O[] of (O, I) (I[] objs)
 {
     O[] res;
