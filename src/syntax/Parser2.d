@@ -41,6 +41,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     bool inParsingOp;
     bool inParsingAsType;
 
+
     nothrow T newWad (T, A...) (size_t start, A args)
     {
         auto w = new T(args);
@@ -105,10 +106,17 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
     nothrow void nextTok ()
     {
-        debug assert (notEmpty, "Parsing Past last token");
+        debug assert (notEmpty, "Parsing past last token");
         current = toks[current.index + 1];
     }
 
+/*
+    @property nothrow Token next ()
+    {
+        debug assert (toks.length > current.index + 1, "Peeking past last token");
+        return toks[current.index + 1];
+    }
+*/
 
     void nextNonWhiteTok ()
     {
@@ -134,6 +142,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     Exp parse (ValueScope parent)
     {
         next:
+
         parseWaddings();
 
         Exp e;
@@ -147,7 +156,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             
             case TokenType.op:     e = parseOp(new ValueUnknown(parent)); goto nextOp;
 
-            case TokenType.asType: 
+            case TokenType.asType:
             case TokenType.assign: vctx.remark(textRemark(
                 "Unexpected token " ~ current.type.toDString() ~ " '" ~ current.text ~ "'")); return null;
             
@@ -169,6 +178,11 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
         if (current.type == TokenType.asType)
         {
+            if (inParsingAsType)
+            {
+                vctx.remark(textRemark("Repeated double colon"));
+                nextTok();
+            }
             e = parseExpAssign(e);
             parseWaddings();
         }
@@ -229,7 +243,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         return newExp1!ValueInt(parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
     }
 
-
+    // ends on next tok
     ExpAssign parseExpAssign (Exp slot)
     {
         Exp type;
@@ -237,12 +251,6 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         {
             waddings ~= newWad1!Punctuation();
             nextNonWhiteTok();
-            if (current.type == TokenType.assign)
-            {
-                vctx.remark(textRemark(
-                    "Expected type specification after double colon"));
-                goto parseAssign;
-            }
             inParsingAsType = true;
             type = parse(slot.parent);
             inParsingAsType = false;
@@ -265,7 +273,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         return d;
     }
 
-
+    // ends on next tok
     ExpFnApply parseOp (Exp op1, bool reverse = false)
     {
         auto op = newExp1!ExpIdent(op1.parent, current.text);
