@@ -165,8 +165,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
                 assert (false);
         }
 
-        if (notEmpty)
-            nextNonWhiteTok();
+        parseWaddings();
 
         nextOp:
         if (!inParsingOp && current.type == TokenType.op)
@@ -234,16 +233,23 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    ExpIdent parseExpIdent (ValueScope parent) { return newExp1!ExpIdent(parent, current.text); }
+    ExpIdent parseExpIdent (ValueScope parent)
+    {
+        auto e = newExp1!ExpIdent(parent, current.text);
+        nextTok();
+        return e;
+    }
 
 
     @trusted ValueInt parseValueNum (ValueScope parent)
     {
         immutable s = current.text.filterChar('_');
-        return newExp1!ValueInt(parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
+        auto e = newExp1!ValueInt(parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
+        nextTok();
+        return e;
     }
 
-    // ends on next tok
+
     ExpAssign parseExpAssign (Exp slot)
     {
         Exp type;
@@ -273,7 +279,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         return d;
     }
 
-    // ends on next tok
+
     ExpFnApply parseOp (Exp op1, bool reverse = false)
     {
         auto op = newExp1!ExpIdent(op1.parent, current.text);
