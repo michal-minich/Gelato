@@ -23,6 +23,11 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         Exp e;
         while ((e = parse(root)) !is null)
             root.exps ~= e;
+
+        auto u = root.exps[0];
+        if (u.waddings.length)
+            u.setTokens = toks[u.waddings[0].tokens[0].index .. u.waddings[$ - 1].tokens[$ - 1].index + 1];
+
         return root;
     }
 
@@ -38,7 +43,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     Wadding[] waddings;
     dchar[] braceStack;
     Exp prevExp;
-    bool inParsingOp;
+    bool reverseParseOp = true;
+    int inParsingOp;
     bool inParsingAsType;
 
 
@@ -151,6 +157,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         {
             case TokenType.ident:  e = parseExpIdent(parent); break;
             case TokenType.num:    e = parseValueNum(parent); break;
+            case TokenType.braceStart: e = parseBrace(parent); if (!e) goto next; else break;
             
             case TokenType.empty:  associateWadding(prevExp); return null;
             
@@ -168,17 +175,18 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         parseWaddings();
 
         nextOp:
-        if (!inParsingOp && current.type == TokenType.op)
+        if (reverseParseOp && current.type == TokenType.op)
         {
             e = parseOp(e);
             parseWaddings();
             goto nextOp;
         }
 
-        if (current.type == TokenType.asType)
+        if (!inParsingOp && current.type == TokenType.asType)
         {
             if (inParsingAsType)
             {
+                // TODO: implement here more handlings of incorrect colon
                 vctx.remark(textRemark("Repeated double colon"));
                 nextTok();
             }
@@ -187,7 +195,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         }
 
         nextAssign:
-        if (!inParsingAsType && current.type == TokenType.assign)
+        if (!inParsingAsType && !inParsingOp && current.type == TokenType.assign)
         {
             e = parseExpAssign(e);
             parseWaddings();
@@ -284,9 +292,11 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     {
         auto op = newExp1!ExpIdent(op1.parent, current.text);
         nextTok();
-        inParsingOp = !reverse;
+        ++inParsingOp;
+        reverseParseOp = reverse;
         auto op2 = parse(op1.parent);
-        inParsingOp = false;
+        reverseParseOp = true;
+        --inParsingOp;
 
         if (!op2)
         {
@@ -297,5 +307,52 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         immutable start = (op1.tokens ? op1.tokens : op.tokens)[0].index;
         auto fna = newExp2!ExpFnApply(start, current.index, op1.parent, op, [op1, op2]);
         return fna;
+    }
+
+
+    Exp parseBrace (ValueScope parent)
+    {
+        auto opposite = oppositeBrace(current.text[0]);
+        waddings ~= newWad1!Punctuation();
+        nextNonWhiteTok();
+
+        if (opposite == current.text[0])
+        {
+            waddings ~= newWad1!Punctuation();
+            nextTok();
+            return null;
+        }
+
+        auto old = reverseParseOp;
+        reverseParseOp = true;
+        auto e = parse(parent);
+        reverseParseOp = old;
+
+        if (empty)
+        {
+            vctx.remark(textRemark(null, "Missing closing brace"));
+            return e;
+        }
+        else if (opposite != current.text[0])
+        {
+            vctx.remark(textRemark(null, "Expected closing brace'"d ~ opposite ~ "', found '" ~ current.text ~ "'" ));
+            nextTok();
+            return e;
+        }
+        waddings ~= newWad1!Punctuation();
+        nextTok();
+        return e;
+    }
+
+
+    static dchar oppositeBrace (dchar brace)
+    {
+        switch (brace)
+        {
+            case '(': return ')';
+            case '[': return ']';
+            case '{': return '}';
+            default: assert (false, "bad brace '" ~ brace.toString() ~ "'");
+        }
     }
 }

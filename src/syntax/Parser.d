@@ -342,7 +342,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    dstring oppositeBrace (dstring brace)
+    static dstring oppositeBrace (dstring brace)
     {
         switch (brace)
         {

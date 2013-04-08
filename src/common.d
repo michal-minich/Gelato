@@ -102,11 +102,11 @@ debug @trusted  void dbg (T) (T a, bool nl = true) nothrow
 }
 
 
-@trusted nothrow string toString(dstring str)
+@trusted nothrow string toString (T) (T item)
 {
     try
     {
-        return str.to!string();
+        return item.to!string();
     }
     catch (Exception ex)
     {
