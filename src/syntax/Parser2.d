@@ -1,12 +1,13 @@
 module syntax.Parser2;
 
 
-import std.conv;
 import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
 
 @safe final class Parser2
 {
+    nothrow:
+
     this (IValidationContext context, Token[] tokens)
     {
         vctx = context;
@@ -210,7 +211,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
                 return null;
             
             default:
-                dbg("Attempt to parse token ", current.type);
+                dbg("Attempt to parse token " ~ current.type.toString());
                 assert (false);
         }
 
@@ -260,7 +261,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     @trusted ValueInt parseValueNum (ValueScope parent)
     {
         immutable s = current.text.filterChar('_');
-        auto e = newExp1!ValueInt(parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
+        auto e = newExp1!ValueInt(parent, s[0] == '#' ? s[1 .. $].toLong(16) : s.toLong());
         nextTok();
         return e;
     }

@@ -1,18 +1,21 @@
 module validate.remarks;
 
+
 import std.conv;
 import common, syntax.ast;
 
 
 class Remark
 {
+    nothrow:
+
     immutable dstring name;
     Exp subject;
     Token token;
 
-    @safe pure nothrow this (dstring n, Exp s) { name = n; subject = s; }
+    @safe pure this (dstring n, Exp s) { name = n; subject = s; }
 
-    @safe pure nothrow this (dstring n, Token t) { name = n; token = t; }
+    @safe pure this (dstring n, Token t) { name = n; token = t; }
 
     @property const RemarkSeverity severity () { return sett.remarkLevel.severityOf(this); }
 
@@ -29,13 +32,13 @@ final class GroupRemark : Remark
 
 interface IRemarkTranslation
 {
-    dstring textOf (const Remark);
+    nothrow dstring textOf (const Remark);
 }
 
 
 interface IRemarkLevel
 {
-    RemarkSeverity severityOf (const Remark);
+    nothrow RemarkSeverity severityOf (const Remark);
 }
 
 
@@ -107,6 +110,8 @@ final class NoRemarkTranslation : IRemarkTranslation
 
 final class RemarkTranslation : IRemarkTranslation
 {
+    nothrow:
+
     private dstring[dstring] values;
     private string rootPath;
     private string inherit;
@@ -142,7 +147,7 @@ final class RemarkTranslation : IRemarkTranslation
             auto d = cast(ExpAssign)e;
             auto i = cast(ExpIdent)d.slot;
             if (i.text == "inherit")
-                rt.inherit = (cast(ValueText)d.value).value.to!string();
+                rt.inherit = (cast(ValueText)d.value).value.toString();
         }
 
         rt.values = loadValues (vctx, rootPath ~ "/lang/" ~ language ~ "/remarks.gel");

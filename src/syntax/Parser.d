@@ -1,12 +1,13 @@
 module syntax.Parser;
 
 
-import std.conv;
 import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
 
 @safe final class Parser
 {
+    nothrow:
+
     ValueStruct root;
 
     ValueStruct parseAll (IValidationContext context, Token[] tokens)
@@ -223,6 +224,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             case TokenType.commentMultiStart: parseCommentMulti(parent); goto next;
 
             case TokenType.empty:
+                return null;
+
             case TokenType.error:
             case TokenType.newLine:
             case TokenType.op:
@@ -234,7 +237,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             case TokenType.commentMultiEnd:
             case TokenType.typeFloat:
             case TokenType.white:
-                dbg("Attempt to parse token ", current.type);
+                dbg("Attempt to parse token " ~ current.type.toDString());
                 assert (false);
         }
 
@@ -381,11 +384,11 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             nextTok();
             auto f = newExp!ValueFloat(operand1.tokens[0].index, parent, 0);
             immutable s = txt.filterChar('_');
-            auto nDecimal = (s[0] == '#' || isBase16) ? s[(s[0] == '#' ? 1 : 0) .. $].to!long(16) : s.to!long();
+            auto nDecimal = (s[0] == '#' || isBase16) ? s[(s[0] == '#' ? 1 : 0) .. $].toLong(16) : s.toLong();
             if (s[0] == '#')
                 vctx.remark(textRemark(f, "# in decimal part is unnecessary"));
-            auto nTxt = nInt.value.to!string() ~ '.' ~ nDecimal.to!string();
-            real n = nTxt.to!real();
+            auto nTxt = nInt.value.toString() ~ '.' ~ nDecimal.toString();
+            real n = nTxt.toReal();
             f.value = n; 
             return f;
         }
@@ -400,7 +403,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     {
         immutable s = current.text.filterChar('_');
         nextTok();
-        return newExp!ValueInt(current.index - 1, parent, s[0] == '#' ? s[1 .. $].to!long(16) : s.to!long());
+        return newExp!ValueInt(current.index - 1, parent, s[0] == '#' ? s[1 .. $].toLong(16) : s.toLong());
     }
 
 

@@ -16,6 +16,27 @@ Formatter fv;
 enum newLine = "\r\n";
 
 
+@safe nothrow onEx (Exception ex)
+{
+    dbg("Exception: " ~ ex.msg);
+}
+
+
+@safe nothrow auto silentEx (T) (lazy T action)
+{
+    try
+    {
+        return action();
+    }
+    catch (Exception ex)
+    {
+        onEx (ex);
+        static if (!is(typeof(return) : void))
+            return ex.msg.toDString();
+    }
+}
+
+
 @safe pure string commonPath (const string[] paths, 
                               immutable char sep = pathSeparator[0])
 {
@@ -52,7 +73,7 @@ enum newLine = "\r\n";
 }
 
 
-debug @trusted  void dbg (T) (T a, bool nl = true) nothrow
+debug @trusted nothrow void dbg (T) (T a, bool nl = true)
 {
     try
     {
@@ -142,6 +163,30 @@ debug @trusted  void dbg (T) (T a, bool nl = true) nothrow
 }
 
 
+@trusted nothrow long toLong (dstring str, uint base = 10)
+{
+    try
+        return str.to!long(base);
+    catch (Exception ex)
+    {
+        onEx(ex);
+        return 0;
+    }
+}
+
+
+@trusted nothrow real toReal (string str)
+{
+    try
+        return str.to!real();
+    catch (Exception ex)
+    {
+        onEx(ex);
+        return 0;
+    }
+}
+
+
 @trusted debug void dbg (T...) (T items)
 {
     foreach (i; items)
@@ -192,19 +237,25 @@ dstring readtUtf8FileUtf32 (string filePath)
 }
 
 
-Token[] tokenizeFile (string filePath)
+nothrow Token[] tokenizeFile (string filePath)
 {
-    return (new Tokenizer(readtUtf8FileUtf32(filePath))).tokenize();
+    try
+        return (new Tokenizer(readtUtf8FileUtf32(filePath))).tokenize();
+    catch (Exception ex)
+    {
+        onEx(ex);
+        return (new Tokenizer("")).tokenize();
+    }
 }
 
 
-ValueStruct parseString (IValidationContext vctx, const dstring src)
+nothrow ValueStruct parseString (IValidationContext vctx, const dstring src)
 {
     return (new Parser).parseAll(vctx, (new Tokenizer(src)).tokenize());
 }
 
 
-ValueStruct parseFile (IValidationContext vctx, string filePath)
+nothrow ValueStruct parseFile (IValidationContext vctx, string filePath)
 {
     return (new Parser).parseAll(vctx, tokenizeFile(filePath));
 }
@@ -212,12 +263,28 @@ ValueStruct parseFile (IValidationContext vctx, string filePath)
 
 @safe interface IValidationContext
 {
-    void remark (Remark);
+    nothrow void remark (Remark);
+}
+
+dstring mydtext(T...)(T args)
+{
+    return silentEx(dtext(args));
+}
+
+
+@safe pure nothrow ptrdiff_t indexOf (T, U) (T[] arr, U item)
+{
+    foreach (i, a; arr)
+        if (a == item)
+            return i;
+    return -1;
 }
 
 
 interface IPrinter
 {
+    nothrow:
+
     void print (dstring);
 
     void println ();
@@ -234,15 +301,15 @@ final class ConsolePrinter : IPrinter
 {
     bool dbgEnabled;
 
-    void print (dstring str) { write(str); }
+    void print (dstring str) { silentEx(write(str)); }
 
-    void println () { writeln(); }
+    void println () { silentEx(writeln()); }
 
-    void println (dstring str) { writeln(str); }
+    void println (dstring str) { silentEx(writeln(str)); }
 
     void dbg (dstring str) { if (dbgEnabled) println(str); }
 
-    dstring readln () { return std.stdio.readln().idup.to!dstring(); }
+    dstring readln () { return silentEx(std.stdio.readln().idup.to!dstring()); }
 }
 
 
@@ -266,7 +333,7 @@ final class StringPrinter : IPrinter
 
 interface IInterpreterContext : IValidationContext
 {
-    @property IPrinter printer ();
+    nothrow @property IPrinter printer ();
 
     Exp eval (Exp exp);
 

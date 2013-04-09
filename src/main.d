@@ -11,8 +11,8 @@ int main (string[] args)
     fv = new Formatter;
 
     sett = Settings.beforeLoad;
-    //sett = Settings.load (new ConsoleInterpreterContext(new ConsolePrinter),
-    //                      args[0].buildNormalizedPath().dirName());
+    sett = Settings.load (new ConsoleInterpreterContext(new ConsolePrinter),
+                          args[0].buildNormalizedPath().dirName());
 
     auto taskSpecs = parseCmdArgs (args);
 

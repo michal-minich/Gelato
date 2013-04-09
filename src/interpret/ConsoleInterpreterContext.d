@@ -1,7 +1,6 @@
 module interpret.ConsoleInterpreterContext;
 
 
-import std.conv, std.algorithm;
 import common, syntax.ast, interpret.Interpreter, validate.remarks;
 
 
@@ -40,12 +39,12 @@ final class ConsoleInterpreterContext : IInterpreterContext
         if (remark.subject && remark.subject.tokens)
         {
             auto ts = remark.subject.tokens;
-            location = dtext("Line ", ts[0].start.line + 1, " Column ", ts[0].start.column + 1);
+            location = mydtext("Line ", ts[0].start.line + 1, " Column ", ts[0].start.column + 1);
         }
         else if (remark.token.type != TokenType.empty)
         {
             auto t = remark.token;
-            location = dtext("Line ", t.start.line + 1, " Column ", t.start.column + 1);
+            location = mydtext("Line ", t.start.line + 1, " Column ", t.start.column + 1);
         }
 
         pPrinter.print("* "d);
@@ -58,9 +57,9 @@ final class ConsoleInterpreterContext : IInterpreterContext
         if (remark.subject)
         {
             auto txt = remark.subject.tokensText;
-            auto newLineIx = txt.countUntil('\r');
+            auto newLineIx = txt.indexOf('\r');
             if (newLineIx == -1)
-                newLineIx = txt.countUntil('\n');
+                newLineIx = txt.indexOf('\n');
 
             pPrinter.print("\t");
             pPrinter.print(txt[0 .. newLineIx != -1 ? newLineIx : $]);
