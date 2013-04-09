@@ -307,8 +307,15 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         auto opposite = oppositeBrace(current.text[0]);
         nextTok();
 
+        if (empty)
+        {
+            vctx.remark(textRemark("Missing closing brace"));
+            return null;
+        }
+
         if (opposite == current.text[0])
         {
+            vctx.remark(textRemark("Empty braces"));
             nextTok();
             return null;
         }
@@ -323,7 +330,9 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
                 return op;
             }
             else
+            {
                 parseOp(new ValueUnknown(parent), op);
+            }
         }
 
         auto old = parseOpLeftToRight;
