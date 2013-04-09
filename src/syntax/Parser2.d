@@ -7,11 +7,12 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
 @safe final class Parser2
 {
-    nothrow this (IValidationContext context, Token[] tokens)
+    this (IValidationContext context, Token[] tokens)
     {
         vctx = context;
         toks = tokens;
         current = toks[0];
+        parseWaddings();
         prevExp = ValueUnknown.single;
         root = new ValueStruct(null);
         root.exps ~= prevExp;
@@ -43,7 +44,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     Wadding[] waddings;
     dchar[] braceStack;
     Exp prevExp;
-    bool reverseParseOp = true;
+    bool parseOpLeftToRight;
     int inParsingOp;
     bool inParsingAsType;
 
@@ -66,19 +67,13 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
     nothrow T newExp (T, A...) (size_t start, A args)
     {
-        return newExpWithTokens!T(args, toks[start .. end]);
+        return newExpWithTokens!T(args, toks[start .. current.index]);
     }
 
 
     nothrow T newExp1 (T, A...) (A args)
     {
         return newExpWithTokens!T(args, toks[current.index .. current.index + 1]);
-    }
-
-
-    nothrow T newExp2 (T, A...) (size_t start, size_t end, A args)
-    {
-        return newExpWithTokens!T(args, toks[start .. end]);
     }
 
 
@@ -110,24 +105,17 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     @property nothrow const bool notEmpty () { return current.type != TokenType.empty; }
 
 
-    nothrow void nextTok ()
+    void nextTok ()
+    {
+        nextOneTok();
+        parseWaddings();
+    }
+
+
+    void nextOneTok ()
     {
         debug assert (notEmpty, "Parsing past last token");
         current = toks[current.index + 1];
-    }
-
-/*
-    @property nothrow Token next ()
-    {
-        debug assert (toks.length > current.index + 1, "Peeking past last token");
-        return toks[current.index + 1];
-    }
-*/
-
-    void nextNonWhiteTok ()
-    {
-        nextTok();
-        parseWaddings();
     }
 
 
@@ -140,86 +128,32 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             case TokenType.newLine:           waddings ~= parseWadWhite();        goto again;
             case TokenType.commentLine:       waddings ~= parseWadCommentLine();  goto again;
             case TokenType.commentMultiStart: waddings ~= parseWadCommentMulti(); goto again;
+
+            case TokenType.braceStart:
+            case TokenType.braceEnd:
+            case TokenType.asType:
+            case TokenType.assign:
+                waddings ~= newWad1!Punctuation();
+                return;
             default: return;
         }
     }
 
 
-    Exp parse (ValueScope parent)
-    {
-        next:
-
-        parseWaddings();
-
-        Exp e;
-
-        switch (current.type)
-        {
-            case TokenType.ident:  e = parseExpIdent(parent); break;
-            case TokenType.num:    e = parseValueNum(parent); break;
-            case TokenType.braceStart: e = parseBrace(parent); if (!e) goto next; else break;
-            
-            case TokenType.empty:  associateWadding(prevExp); return null;
-            
-            case TokenType.op:     e = parseOp(new ValueUnknown(parent)); goto nextOp;
-
-            case TokenType.asType:
-            case TokenType.assign: vctx.remark(textRemark(
-                "Unexpected token " ~ current.type.toDString() ~ " '" ~ current.text ~ "'")); return null;
-            
-            default:
-                dbg("Attempt to parse token ", current.type);
-                assert (false);
-        }
-
-        parseWaddings();
-
-        nextOp:
-        if (reverseParseOp && current.type == TokenType.op)
-        {
-            e = parseOp(e);
-            parseWaddings();
-            goto nextOp;
-        }
-
-        if (!inParsingOp && current.type == TokenType.asType)
-        {
-            if (inParsingAsType)
-            {
-                // TODO: implement here more handlings of incorrect colon
-                vctx.remark(textRemark("Repeated double colon"));
-                nextTok();
-            }
-            e = parseExpAssign(e);
-            parseWaddings();
-        }
-
-        nextAssign:
-        if (!inParsingAsType && !inParsingOp && current.type == TokenType.assign)
-        {
-            e = parseExpAssign(e);
-            parseWaddings();
-            goto nextAssign;
-        }
-
-        return e;
-    }
-
-
-    nothrow Wadding parseWadWhite ()
+    Wadding parseWadWhite ()
     {
         immutable start = current.index;
         while (notEmpty && (current.type == TokenType.white || current.type == TokenType.newLine))
-            nextTok();
+            nextOneTok();
         return newWad!WhiteSpace(start);
     }
 
 
-    nothrow Wadding parseWadCommentLine ()
+    Wadding parseWadCommentLine ()
     {
         immutable start = current.index;
         while (notEmpty && current.type != TokenType.newLine)
-            nextTok();
+            nextOneTok();
         return newWad!Comment(start);
     }
 
@@ -236,8 +170,63 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             }
             nextTok();
         }
-        nextTok();
+        nextOneTok();
         return newWad!Comment(start);
+    }
+
+
+    Exp parse (ValueScope parent)
+    {
+        next:
+
+        Exp e;
+
+        switch (current.type)
+        {
+            case TokenType.ident:  e = parseExpIdent(parent); break;
+            case TokenType.num:    e = parseValueNum(parent); break;
+            case TokenType.braceStart: e = parseBrace(parent); if (!e) goto next; else break;
+            
+            case TokenType.empty:  associateWadding(prevExp); return null;
+            
+            case TokenType.op:     e = parseOp(new ValueUnknown(parent)); goto nextOp;
+
+            case TokenType.asType:
+            case TokenType.assign: vctx.remark(textRemark(
+                "Unexpected token " ~ current.type.toDString() ~ " '" ~ current.text ~ "'")); 
+                return null;
+            
+            default:
+                dbg("Attempt to parse token ", current.type);
+                assert (false);
+        }
+
+        nextOp:
+        if (!parseOpLeftToRight && current.type == TokenType.op)
+        {
+            e = parseOp(e);
+            goto nextOp;
+        }
+
+        if (!inParsingOp && current.type == TokenType.asType)
+        {
+            if (inParsingAsType)
+            {
+                // TODO: implement here more handlings of incorrect colon
+                vctx.remark(textRemark("Repeated double colon"));
+                nextTok();
+            }
+            e = parseExpAssign(e);
+        }
+
+        nextAssign:
+        if (!inParsingAsType && !inParsingOp && current.type == TokenType.assign)
+        {
+            e = parseExpAssign(e);
+            goto nextAssign;
+        }
+
+        return e;
     }
 
 
@@ -263,8 +252,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         Exp type;
         if (current.type == TokenType.asType)
         {
-            waddings ~= newWad1!Punctuation();
-            nextNonWhiteTok();
+            nextTok();
             inParsingAsType = true;
             type = parse(slot.parent);
             inParsingAsType = false;
@@ -274,7 +262,6 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         Exp value;
         if (current.type == TokenType.assign)
         {
-            waddings ~= newWad1!Punctuation();
             nextTok();
             value = parse(slot.parent);
         }
@@ -282,30 +269,35 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         if (!value)
             value = new ValueUnknown(slot.parent);
 
-        auto d = newExp2!ExpAssign(slot.tokens[0].index, current.index, slot.parent, slot, value);
+        auto d = newExp!ExpAssign(slot.tokens[0].index, slot.parent, slot, value);
         d.type = type;
         return d;
     }
 
 
-    ExpFnApply parseOp (Exp op1, bool reverse = false)
+    ExpFnApply parseOp (Exp op1)
     {
         auto op = newExp1!ExpIdent(op1.parent, current.text);
+        
         nextTok();
+
         ++inParsingOp;
-        reverseParseOp = reverse;
+        parseOpLeftToRight = true;
+        
         auto op2 = parse(op1.parent);
-        reverseParseOp = true;
+        
+        parseOpLeftToRight = false;
         --inParsingOp;
 
         if (!op2)
         {
-            vctx.remark(textRemark(null, "Second operand for '" ~ op.tokens[0].text ~ "' is missing"));
+            vctx.remark(textRemark(op, "Second operand for '" 
+                                   ~ op.tokens[0].text ~ "' is missing"));
             op2 = new ValueUnknown(op1.parent);
         }
 
         immutable start = (op1.tokens ? op1.tokens : op.tokens)[0].index;
-        auto fna = newExp2!ExpFnApply(start, current.index, op1.parent, op, [op1, op2]);
+        auto fna = newExp!ExpFnApply(start, op1.parent, op, [op1, op2]);
         return fna;
     }
 
@@ -313,34 +305,35 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     Exp parseBrace (ValueScope parent)
     {
         auto opposite = oppositeBrace(current.text[0]);
-        waddings ~= newWad1!Punctuation();
-        nextNonWhiteTok();
+        nextTok();
 
         if (opposite == current.text[0])
         {
-            waddings ~= newWad1!Punctuation();
             nextTok();
             return null;
         }
 
-        auto old = reverseParseOp;
-        reverseParseOp = true;
+        auto old = parseOpLeftToRight;
+        parseOpLeftToRight = false;
         auto e = parse(parent);
-        reverseParseOp = old;
+        parseOpLeftToRight = old;
 
         if (empty)
         {
-            vctx.remark(textRemark(null, "Missing closing brace"));
+            vctx.remark(textRemark(e, "Missing closing brace"));
             return e;
         }
         else if (opposite != current.text[0])
         {
-            vctx.remark(textRemark(null, "Expected closing brace'"d ~ opposite ~ "', found '" ~ current.text ~ "'" ));
+            vctx.remark(textRemark(e, "Expected closing brace'"d ~ opposite 
+                                   ~ "', found '" ~ current.text ~ "'" ));
             nextTok();
             return e;
         }
-        waddings ~= newWad1!Punctuation();
         nextTok();
+        e.setTokens = toks[e.tokens[0].index .. current.index + 1];
+
+        vctx.remark(textRemark(e, "Braces around expressions are not needed"));
         return e;
     }
 
