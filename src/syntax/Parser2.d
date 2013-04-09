@@ -275,9 +275,9 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    ExpFnApply parseOp (Exp op1)
+    ExpFnApply parseOp (Exp op1, ExpIdent op = null)
     {
-        auto op = newExp1!ExpIdent(op1.parent, current.text);
+        op = op ? op : newExp1!ExpIdent(op1.parent, current.text);
         
         nextTok();
 
@@ -311,6 +311,19 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         {
             nextTok();
             return null;
+        }
+
+        if (current.type == TokenType.op)
+        {
+            auto op = newExp1!ExpIdent(parent, current.text);
+            nextTok();
+            if (opposite == current.text[0])
+            {
+                nextTok();
+                return op;
+            }
+            else
+                parseOp(new ValueUnknown(parent), op);
         }
 
         auto old = parseOpLeftToRight;
