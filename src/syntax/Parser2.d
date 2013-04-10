@@ -42,6 +42,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     ValueStruct root;
     Token current;
     bool sepPassed;
+    bool sepPassedIsComa;
     Wadding[] waddings;
     dchar[] braceStack;
     Exp prevExp;
@@ -148,11 +149,13 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         sepPassed = sepLine > 0 || sepComa > 0;
 
         if (sepComa > 1)
-            vctx.remark(textRemark("Coma is repeated"));
+            vctx.remark(textRemark("Coma is repeated, expected and expression between comas"));
 
         else if (sepComa == 1 && sepLine > 0)
             vctx.remark(textRemark("To separate expressions use coma or new line, "
                                    ~ "there is no need to use both"));
+
+        sepPassedIsComa = sepComa != 0;
     }
 
 
@@ -207,6 +210,11 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             case TokenType.empty:  associateWadding(prevExp); return null;
             
             case TokenType.op:     e = parseOp(new ValueUnknown(parent)); goto nextOp;
+
+            case TokenType.braceEnd:
+                vctx.remark(textRemark(current, "Closing brace is redundant"));
+                nextTok();
+                break;
 
             case TokenType.asType:
             case TokenType.assign: 
@@ -405,19 +413,25 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             {
                 vctx.remark(textRemark(list[$ - 1], "Closing brace is missing"));
                 missingClosingBrace = true;
+                if (sepPassedIsComa)
+                    vctx.remark(textRemark(list[$ - 1], "Expected an expression after coma"));
                 return list;
             }
             else if (current.type == TokenType.braceEnd)
             {
+                if (sepPassedIsComa)
+                    vctx.remark(textRemark(list[$ - 1], "Expected an expression after coma"));
+
                 if (current.text[0] == opposite)
                     break;
 
                 vctx.remark(textRemark(current, "Closing brace has no matching opening brace"));
+
                 nextTok();
                 continue;
             }
 
-            if (list.length >=2  && !sepPassed)
+            if (list  && !sepPassed)
                 vctx.remark(textRemark(current, "To separate expressions use coma or new line"));
         }
 
