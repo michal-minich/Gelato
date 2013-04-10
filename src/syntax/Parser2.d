@@ -48,6 +48,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     bool parseOpLeftToRight;
     int inParsingOp;
     bool inParsingAsType;
+    bool missingClosingBrace;
 
 
     nothrow T newWad (T, A...) (size_t start, A args)
@@ -129,9 +130,9 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         again:
         switch (current.type)
         {
-            case TokenType.white: 
+            case TokenType.white:              waddings ~= parseWadWhite();        goto again;
             case TokenType.newLine: ++sepLine; waddings ~= parseWadWhite();        goto again;
-            case TokenType.coma:    ++sepComa; waddings ~= newWad1!Punctuation(); nextOneTok();  goto again;
+            case TokenType.coma:    ++sepComa; waddings ~= newWad1!Punctuation();  nextOneTok(); goto again;
             case TokenType.commentLine:        waddings ~= parseWadCommentLine();  goto again;
             case TokenType.commentMultiStart:  waddings ~= parseWadCommentMulti(); goto again;
 
@@ -147,10 +148,11 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         sepPassed = sepLine > 0 || sepComa > 0;
 
         if (sepComa > 1)
-            vctx.remark(textRemark(null, "repeated coma"));
+            vctx.remark(textRemark("Coma is repeated"));
 
         else if (sepComa == 1 && sepLine > 0)
-            vctx.remark(textRemark(null, "coma is optional when new line is used"));
+            vctx.remark(textRemark("To separate expressions use coma or new line, "
+                                   ~ "there is no need to use both"));
     }
 
 
@@ -179,7 +181,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         {
             if (empty)
             {
-                vctx.remark(textRemark("Unclosed multiline comment"));
+                vctx.remark(textRemark("Multiline comment is not closed "
+                                       ~ "(use '-/' to end the comment)"));
                 return newWad!Comment(start);
             }
             nextTok();
@@ -206,8 +209,10 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             case TokenType.op:     e = parseOp(new ValueUnknown(parent)); goto nextOp;
 
             case TokenType.asType:
-            case TokenType.assign: vctx.remark(textRemark(
-                "Unexpected token " ~ current.type.toDString() ~ " '" ~ current.text ~ "'")); 
+            case TokenType.assign: 
+                vctx.remark(textRemark(
+                    "Token " ~ current.type.toDString() ~ " '" ~ current.text ~ "' is unexpected at this place"));
+                nextTok();
                 return null;
             
             default:
@@ -227,7 +232,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             if (inParsingAsType)
             {
                 // TODO: implement here more handlings of incorrect colon
-                vctx.remark(textRemark("Repeated double colon"));
+                vctx.remark(textRemark("Double colon is repeated"));
                 nextTok();
             }
             e = parseExpAssign(e);
@@ -330,10 +335,11 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         {
             auto exps = parseBracedExpList(parent);
             if (exps.length > 1)
-                vctx.remark(textRemark(exps[0], "Only one exp can be braced ()"));
-            else if (exps.length == 1)
-                vctx.remark(textRemark(exps[0], "Braces around expressions are not needed"));
-            return exps ? exps[0] : null;
+                vctx.remark(textRemark(exps[0], "Multiple expressions are enclosed in brace, "
+                                       ~ " did you wanted to call some function?"));
+            else if (exps.length == 1 && exps[0] !is null && !missingClosingBrace)
+                vctx.remark(textRemark(exps[0], "Braces around expression are not needed"));
+            return exps ? (exps[0] is null ? null : exps[0]) : null;
         }
         else if (current.text[0] == '[')
         {
@@ -352,20 +358,23 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
     Exp[] parseBracedExpList (ValueScope parent, bool remarkEmptyBraces = true)
     {
+        missingClosingBrace = false;
+
         Exp[] list;
         auto opposite = oppositeBrace(current.text[0]);
         nextTok();
 
         if (empty)
         {
-            vctx.remark(textRemark("Missing closing brace"));
+            vctx.remark(textRemark("Closing brace is missing"));
+            missingClosingBrace = true;
             return null;
         }
 
         if (opposite == current.text[0])
         {
             if (remarkEmptyBraces)
-                vctx.remark(textRemark("Empty braces"));
+                vctx.remark(textRemark("Braces are empty, it has no meaning."));
             nextTok();
             return null;
         }
@@ -394,7 +403,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
             if (empty)
             {
-                vctx.remark(textRemark(list[$ - 1], "Missing closing brace"));
+                vctx.remark(textRemark(list[$ - 1], "Closing brace is missing"));
+                missingClosingBrace = true;
                 return list;
             }
             else if (current.type == TokenType.braceEnd)
@@ -402,24 +412,28 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
                 if (current.text[0] == opposite)
                     break;
 
-                vctx.remark(textRemark(current, "Closing brace has no matching beginning brace"));
+                vctx.remark(textRemark(current, "Closing brace has no matching opening brace"));
                 nextTok();
                 continue;
             }
-           /* else if (opposite != current.text[0])
-            {
-                vctx.remark(textRemark(list[$ - 1], "Expected closing brace'"d ~ opposite 
-                                       ~ "', found '" ~ current.text ~ "'" ));
-                nextTok();
-                return list;
-            }*/
 
             if (list.length >=2  && !sepPassed)
-                vctx.remark(textRemark(current, "missing comma or new line to separate expressions"));
+                vctx.remark(textRemark(current, "To separate expressions use coma or new line"));
         }
 
         nextTok();
-        list[$ -1].setTokens = toks[list[$ -1].tokens[0].index .. current.index + 1];
+        
+        Exp lastNotNull;
+        foreach_reverse (i; list)
+            if (i !is null)
+            {
+                lastNotNull = i;
+                break;
+            }
+
+        if (lastNotNull)
+            list[$ -1].setTokens = toks[list[$ -1].tokens[0].index .. current.index + 1];
+        
         return list;
     }
 
