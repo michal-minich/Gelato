@@ -242,9 +242,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
 
         while (!sepPassed && current.type == TokenType.braceStart)
-        {
-            e = newExp!ExpFnApply(e.tokens[0].index, parent, e, parseBracedExpList(parent));
-        }
+            e = newExp!ExpFnApply(e.tokens[0].index, parent, e, parseBracedExpList(parent, false));
 
         return e;
     }
@@ -335,7 +333,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
                 vctx.remark(textRemark(exps[0], "Only one exp can be braced ()"));
             else if (exps.length == 1)
                 vctx.remark(textRemark(exps[0], "Braces around expressions are not needed"));
-            return exps[0];
+            return exps ? exps[0] : null;
         }
         else if (current.text[0] == '[')
         {
@@ -352,7 +350,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    Exp[] parseBracedExpList (ValueScope parent)
+    Exp[] parseBracedExpList (ValueScope parent, bool remarkEmptyBraces = true)
     {
         Exp[] list;
         auto opposite = oppositeBrace(current.text[0]);
@@ -366,7 +364,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
         if (opposite == current.text[0])
         {
-            vctx.remark(textRemark("Empty braces"));
+            if (remarkEmptyBraces)
+                vctx.remark(textRemark("Empty braces"));
             nextTok();
             return null;
         }
