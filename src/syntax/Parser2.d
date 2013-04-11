@@ -1,7 +1,10 @@
 module syntax.Parser2;
 
 
+import std.bitmanip;
 import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
+
+
 
 
 @safe final class Parser2
@@ -22,9 +25,12 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
     ValueStruct parseAll ()
     {
-        Exp e;
-        while ((e = parse(root)) !is null)
-            root.exps ~= e;
+        while (continueParsing)
+        {
+            auto e = parse(root, ParsingState());
+            if (e)
+                root.exps ~= e;
+        }
 
         auto u = root.exps[0];
         if (u.waddings.length)
@@ -46,10 +52,30 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     Wadding[] waddings;
     dchar[] braceStack;
     Exp prevExp;
-    bool parseOpLeftToRight;
-    int inParsingOp;
-    bool inParsingAsType;
+    bool continueParsing = true;
+
     bool missingClosingBrace;
+
+
+    static struct ParsingState
+    {
+        debug
+        {
+            bool nonFnApplyOpenBraceStart;
+            bool parseOpLeftToRight;
+            bool inParsingOp;
+            bool inParsingAsType;
+        }
+        else
+        {
+            mixin(bitfields!(
+                             bool, "nonFnApplyOpenBraceStart", 1,
+                             bool, "parseOpLeftToRight", 1,
+                             bool, "inParsingOp", 1,
+                             bool, "inParsingAsType", 1,
+                             uint, "padding", 4));
+        }
+    }
 
 
     nothrow T newWad (T, A...) (size_t start, A args)
@@ -195,7 +221,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    Exp parse (ValueScope parent)
+    Exp parse (ValueScope parent, ParsingState ps)
     {
         next:
 
@@ -205,11 +231,11 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         {
             case TokenType.ident:  e = parseExpIdent(parent); break;
             case TokenType.num:    e = parseValueNum(parent); break;
-            case TokenType.braceStart: e = parseBrace(parent); if (!e) goto next; else break;
+            case TokenType.braceStart: e = parseBrace(parent, ps);  break;
             
-            case TokenType.empty:  associateWadding(prevExp); return null;
+            case TokenType.empty:  associateWadding(prevExp); continueParsing = false; return null;
             
-            case TokenType.op:     e = parseOp(new ValueUnknown(parent)); goto nextOp;
+            case TokenType.op:     e = parseOp(parent, ps, null); goto nextOp;
 
             case TokenType.braceEnd:
                 vctx.remark(textRemark(current, "Closing brace is redundant"));
@@ -229,33 +255,41 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         }
 
         nextOp:
-        if (!parseOpLeftToRight && current.type == TokenType.op)
+        
+        if (sepPassed)
+            return e;
+
+        if (!ps.parseOpLeftToRight && current.type == TokenType.op)
         {
-            e = parseOp(e);
+            e = parseOp(parent, ps, e);
             goto nextOp;
         }
 
-        if (!inParsingOp && current.type == TokenType.asType)
+        if (!ps.inParsingOp && current.type == TokenType.asType)
         {
-            if (inParsingAsType)
+            if (ps.inParsingAsType)
             {
                 // TODO: implement here more handlings of incorrect colon
                 vctx.remark(textRemark("Double colon is repeated"));
                 nextTok();
             }
-            e = parseExpAssign(e);
+            e = parseExpAssign(e, ps);
         }
 
         nextAssign:
-        if (!inParsingAsType && !inParsingOp && current.type == TokenType.assign)
+
+        if (sepPassed)
+            return e;
+
+        if (!ps.inParsingAsType && !ps.inParsingOp && current.type == TokenType.assign)
         {
-            e = parseExpAssign(e);
+            e = parseExpAssign(e, ps);
             goto nextAssign;
         }
 
 
         while (!sepPassed && current.type == TokenType.braceStart)
-            e = newExp!ExpFnApply(e.tokens[0].index, parent, e, parseBracedExpList(parent, false));
+            e = newExp!ExpFnApply(e.tokens[0].index, parent, e, parseBracedExpList(parent, ps, true));
 
         return e;
     }
@@ -278,15 +312,15 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    ExpAssign parseExpAssign (Exp slot)
+    ExpAssign parseExpAssign (Exp slot, ParsingState ps)
     {
         Exp type;
         if (current.type == TokenType.asType)
         {
             nextTok();
-            inParsingAsType = true;
-            type = parse(slot.parent);
-            inParsingAsType = false;
+            ps.inParsingAsType = true;
+            type = parse(slot.parent, ps);
+            ps.inParsingAsType = false;
         }
 
         parseAssign:
@@ -294,7 +328,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         if (current.type == TokenType.assign)
         {
             nextTok();
-            value = parse(slot.parent);
+            value = parse(slot.parent, ps);
         }
         
         if (!value)
@@ -306,53 +340,85 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    ExpFnApply parseOp (Exp op1, ExpIdent op = null)
+    Exp parseOp (ValueScope parent, ParsingState ps, Exp op1, ExpIdent op = null)
     {
-        op = op ? op : newExp1!ExpIdent(op1.parent, current.text);
+        if (!op)
+            op = newExp1!ExpIdent(parent, current.text);
         
         nextTok();
 
-        ++inParsingOp;
-        parseOpLeftToRight = true;
-        
-        auto op2 = parse(op1.parent);
-        
-        parseOpLeftToRight = false;
-        --inParsingOp;
-
-        if (!op2)
+        Exp op2;
+        if (current.type == TokenType.braceEnd)
         {
+            //nextTok();
+        }
+        else
+        {
+            ps.inParsingOp = true;
+            ps.parseOpLeftToRight = true;
+        
+            op2 = parse(parent, ps);
+        
+            ps.parseOpLeftToRight = false;
+            ps.inParsingOp = false;
+        }
+
+        if (!op2 && !op1)
+        {
+            op1 = new ValueUnknown(parent);
+            op2 = new ValueUnknown(parent);
+            vctx.remark(textRemark(op, "Both operands for '" 
+                                   ~ op.tokens[0].text ~ "' are missing. "
+                                   ~ "To use operator as identifier, enclosed it in braces"));
+            // TODO: additional waddings need to be addte to op here
+            return op;
+        }
+        else if (!op1)
+        {
+            op1 = new ValueUnknown(parent);
+            vctx.remark(textRemark(op, "First operand for '" 
+                                   ~ op.tokens[0].text ~ "' is missing"));
+        }
+        else if (!op2)
+        {
+            op2 = new ValueUnknown(parent);
             vctx.remark(textRemark(op, "Second operand for '" 
                                    ~ op.tokens[0].text ~ "' is missing"));
-            op2 = new ValueUnknown(op1.parent);
         }
 
         immutable start = (op1.tokens ? op1.tokens : op.tokens)[0].index;
-        auto fna = newExp!ExpFnApply(start, op1.parent, op, [op1, op2]);
+        auto fna = newExp!ExpFnApply(start, parent, op, [op1, op2]);
         return fna;
     }
 
 
 
-    Exp parseBrace (ValueScope parent)
+    Exp parseBrace (ValueScope parent, ParsingState ps)
     {        
         immutable start = current.index;
         braceStack ~= current.text[0];
 
         if (current.text[0] == '(')
         {
-            auto exps = parseBracedExpList(parent);
+            auto exps = parseBracedExpList(parent, ps);
+            
             if (exps.length > 1)
                 vctx.remark(textRemark(exps[0], "Multiple expressions are enclosed in brace, "
                                        ~ " did you wanted to call some function?"));
-            else if (exps.length == 1 && exps[0] !is null && !missingClosingBrace)
-                vctx.remark(textRemark(exps[0], "Braces around expression are not needed"));
-            return exps ? (exps[0] is null ? null : exps[0]) : null;
+
+            else if (exps.length == 1 && cast(ValueUnknown)exps[0] && !missingClosingBrace)
+            {
+                auto i = cast(ExpIdent)exps[0];
+                if (i && i.tokens[0].type != TokenType.op)
+                    vctx.remark(textRemark(exps[0], "Braces around expression are not needed"));
+            }
+
+            return exps ? (cast(ValueUnknown)exps[0] ? null : exps[0]) : null;
         }
         else if (current.text[0] == '[')
         {
             auto op = newExp1!ExpIdent(parent, current.text);
-            auto exps = parseBracedExpList(parent);
+            auto exps = parseBracedExpList(parent, ps);
             auto fna = newExp!ExpFnApply(start, parent, op, exps);
             return fna;
         }
@@ -364,7 +430,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     }
 
 
-    Exp[] parseBracedExpList (ValueScope parent, bool remarkEmptyBraces = true)
+    Exp[] parseBracedExpList (ValueScope parent, ParsingState ps, bool parsingFnApply = false)
     {
         missingClosingBrace = false;
 
@@ -381,13 +447,13 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
         if (opposite == current.text[0])
         {
-            if (remarkEmptyBraces)
+            if (parsingFnApply)
                 vctx.remark(textRemark("Braces are empty, it has no meaning."));
             nextTok();
             return null;
         }
 
-        if (current.type == TokenType.op)
+       /* if (!parsingFnApply && current.type == TokenType.op)
         {
             auto op = newExp1!ExpIdent(parent, current.text);
             nextTok();
@@ -398,16 +464,16 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             }
             else
             {
-                parseOp(new ValueUnknown(parent), op);
+                parseOp(parent, null, op);
             }
-        }
+        }*/
         
         while (true)
         {
-            auto old = parseOpLeftToRight;
-            parseOpLeftToRight = false;
-            list ~= parse(parent);
-            parseOpLeftToRight = old;
+            auto old = ps.parseOpLeftToRight;
+            ps.parseOpLeftToRight = false;
+            list ~= parse(parent, ps);
+            ps.parseOpLeftToRight = old;
 
             if (empty)
             {
@@ -415,7 +481,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
                 missingClosingBrace = true;
                 if (sepPassedIsComa)
                     vctx.remark(textRemark(list[$ - 1], "Expected an expression after coma"));
-                return list;
+                goto end;
             }
             else if (current.type == TokenType.braceEnd)
             {
@@ -436,7 +502,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         }
 
         nextTok();
-        
+
+        end:
         Exp lastNotNull;
         foreach_reverse (i; list)
             if (i !is null)
@@ -445,8 +512,12 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
                 break;
             }
 
+        foreach (ref e; list)
+            if (e is null)
+                e = new ValueUnknown(parent);
+
         if (lastNotNull)
-            list[$ -1].setTokens = toks[list[$ -1].tokens[0].index .. current.index + 1];
+            lastNotNull.setTokens = toks[lastNotNull.tokens[0].index .. current.index + 1];
         
         return list;
     }
