@@ -123,7 +123,7 @@ import common, syntax.ast;
 
     const dstring visit (ExpIdent i)
     {
-        return i.text;
+        return i.tokens[0].type == TokenType.op ? '(' ~ i.text ~ ')' : i.text;
     }
 
 

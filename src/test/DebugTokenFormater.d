@@ -10,15 +10,18 @@ import common, syntax.ast;
     return str
         .replace("\n", "\x1F")
         .replace("\r", "\x11")
-        .replace("\t", "\x1A")
+        .replace("    ", "\x1A")
         .replace(" ", "\x16");
 }
 
 
 @trusted pure final class DebugTokenFormater : IFormatVisitor
 {   
-    private uint level;
-    enum dstring tabs = "    "d.replicate(16);
+    private uint level;   
+    private uint maxLevel = 5;
+    private enum dstring tabs = "    "d.replicate(16);
+    bool printWaddings = true;
+    bool printTokens = true;
 
 
     const private @property dstring tab(uint l = -1)
@@ -27,26 +30,39 @@ import common, syntax.ast;
     }
 
 
+    const private @property dstring bat(uint l = -1)
+    {
+        return tabs[0 .. 2 * (maxLevel - (l == -1 ? level : l))];
+    }
+
+
     const private @property dstring ttw(Exp e)
     {
-        return "|" ~ e.tokensText.toVisibleCharsTextDbg() ~ "|" ~ wad(e);
+        auto t = ""d;
+        if (printTokens)
+            t = "\t\t\"" ~ e.tokensText.toVisibleCharsTextDbg() ~ '\"';
+
+        return '|' ~  e.str(fv) ~ '|' ~ t ~ wad(e);
     }
 
 
     const private @property dstring wad(Exp e)
     {
+        if (!printWaddings)
+            return "";
+
         dstring s;
 
         foreach (w; e.waddings)
         {
             if (cast(WhiteSpace)w)
-                s ~= tab(level + 1) ~ "WhiteSpace\t\t";
+                s ~= tab(level + 1) ~ "WhiteSpace  ";
             else if (cast(Punctuation)w)
-                s ~= tab(level + 1) ~ "Punctuation\t\t";
+                s ~= tab(level + 1) ~ "Punctuation ";
             else if (cast(Comment)w)
-                s ~= tab(level + 1) ~ "Comment\t\t";
+                s ~= tab(level + 1) ~ "Comment     ";
 
-            s ~= "|" ~ w.tokensText.toVisibleCharsTextDbg() ~ "|";
+            s ~=  bat ~ '|' ~ w.tokensText.toVisibleCharsTextDbg() ~ '|';
         }
 
         return s;
@@ -75,110 +91,112 @@ import common, syntax.ast;
 
     dstring visit (ExpAssign d)
     {
-        return tab ~ "ExpAssign\t\t" ~ ttw(d) ~ strExp(d.slot) ~ strExp(d.type) ~ strExp(d.value);
+        return tab ~ "ExpAssign     " ~ bat ~ ttw(d) 
+            ~ strExp(d.slot) ~ strExp(d.type) ~ strExp(d.value);
     }
 
 
     dstring visit (ValueStruct s)
     {
-        return tab ~ "ValueStruct\t\t" ~ ttw(s) ~ strExps(s.exps);
+        return tab ~ "ValueStruct   " ~ bat ~ ttw(s) ~ strExps(s.exps);
     }
 
 
     dstring visit (ValueFn fn)
     {
-        return tab ~ "ValueFn\t\t" ~ ttw(fn) ~ strExps(fn.params) ~ strExps(fn.exps);
+        return tab ~ "ValueFn       " ~ bat ~ ttw(fn) ~ strExps(fn.params) ~ strExps(fn.exps);
     }
 
     dstring visit (ExpFnApply fna)
     {
-        return tab ~ "ExpFnApply\t\t" ~ ttw(fna) ~ strExp(fna.applicable) ~ strExps(fna.args);
+        return tab ~ "ExpFnApply    " ~ bat ~ ttw(fna) ~ strExp(fna.applicable) ~ strExps(fna.args);
     }
 
 
     dstring visit (ExpIf i)
     {
-        return tab ~ "ExpIf\t\t" ~ ttw(i) ~ strExp(i.when) ~ strExps(i.then.exps) ~ strExps(i.otherwise.exps);
+        return tab ~ "ExpIf         " ~ bat ~ ttw(i) ~ strExp(i.when) ~ strExps(i.then.exps) 
+            ~ strExps(i.otherwise.exps);
     }
 
 
     dstring visit (TypeAnyOf tao)
     {
-        return tab ~ "TypeAnyOf\t\t" ~ ttw(tao) ~ strExps(tao.types);
+        return tab ~ "TypeAnyOf     " ~ bat ~ ttw(tao) ~ strExps(tao.types);
     }
 
 
     dstring visit (StmReturn r)
     {
-        return tab ~ "StmReturn\t\t" ~ ttw(r) ~ strExp(r.exp);
+        return tab ~ "StmReturn     " ~ bat ~ ttw(r) ~ strExp(r.exp);
     }
 
 
     dstring visit (StmImport im)
     {
-        return tab ~ "StmImport\t\t" ~ ttw(im) ~ strExp(im.exp);
+        return tab ~ "StmImport     " ~ bat ~ ttw(im) ~ strExp(im.exp);
     }
 
 
     dstring visit (StmThrow th)
     {
-        return tab ~ "StmThrow\t\t" ~ ttw(th) ~ strExp(th.exp);
+        return tab ~ "StmThrow      " ~ bat ~ ttw(th) ~ strExp(th.exp);
     }
 
 
     dstring visit (ExpDot dot)
-    { 
-        return tab ~ "ExpDot\t\t" ~ ttw(dot) ~ strExp(dot.record) ~ strExp(dot.member);
+    {
+        return tab ~ "ExpDot        " ~ bat ~ ttw(dot) ~ strExp(dot.record) ~ strExp(dot.member);
     }
 
 
     const dstring visit (StmLabel l)
     {
-        return tab ~ "StmLabel\t\t" ~ ttw(l) ~ (l.label ? l.label : "");
+        return tab ~ "StmLabel      " ~ bat ~ ttw(l) ~ (l.label ? l.label : "");
     }
 
 
     const dstring visit (StmGoto gt)
     {
-        return tab ~ "StmGoto\t\t" ~ ttw(gt) ~ (gt.label ? gt.label : "");
+        return tab ~ "StmGoto       " ~ bat ~ ttw(gt) ~ (gt.label ? gt.label : "");
     }
 
 
-    const dstring visit (Closure c) { return tab ~ "Closure\t\t" ~ ttw(c); }
+    const dstring visit (Closure c)          { return tab ~ "Closure       " ~ bat ~ ttw(c); }
 
-    const dstring visit (ValueBuiltinFn bfn) { return tab ~ "ValueBuiltinFn\t\t" ~ ttw(bfn); }
+    const dstring visit (ValueBuiltinFn bfn) { return tab ~ "ValueBuiltinFn" ~ bat ~ ttw(bfn); }
 
-    const dstring visit (ValueInt i) { return tab ~ "ValueInt\t\t" ~ ttw(i); }
+    const dstring visit (ValueInt i)         { return tab ~ "ValueInt      " ~ bat ~ ttw(i); }
 
-    const dstring visit (ValueFloat f) { return tab ~ "ValueFloat\t\t" ~ ttw(f); }
+    const dstring visit (ValueFloat f)       { return tab ~ "ValueFloat    " ~ bat ~ ttw(f); }
 
-    const dstring visit (ValueUnknown u) { return tab ~ "ValueUnknown\t\t" ~ ttw(u); }
+    const dstring visit (ValueUnknown u)     { return tab ~ "ValueUnknown  " ~ bat ~ ttw(u); }
 
-    const dstring visit (ExpIdent i) { return tab ~ "ExpIdent\t\t" ~ ttw(i); }
+    const dstring visit (ExpIdent i)         { return tab ~ "ExpIdent      " ~ bat ~ ttw(i); }
 
-    const dstring visit (ValueText t){ return tab ~ "ValueText\t\t" ~ ttw(t); }
+    const dstring visit (ValueText t)        { return tab ~ "ValueText     " ~ bat ~ ttw(t); }
 
-    const dstring visit (ValueChar ch) { return tab ~ "ValueChar\t\t" ~ ttw(ch); }
+    const dstring visit (ValueChar ch)       { return tab ~ "ValueChar     " ~ bat ~ ttw(ch); }
 
-    const dstring visit (ValueArray arr) { return tab ~ "ValueArray\t\t" ~ ttw(arr); }
+    const dstring visit (ValueArray arr)    { return tab ~ "ValueArray     " ~ bat ~ ttw(arr); }
 
-    const dstring visit (TypeType tt) { return tab ~ "TypeType\t\t" ~ ttw(tt); }
+    const dstring visit (TypeType tt)       { return tab ~ "TypeType       " ~ bat ~ ttw(tt); }
 
-    const dstring visit (TypeAny ta) { return tab ~ "TypeAny\t\t" ~ ttw(ta); }
+    const dstring visit (TypeAny ta)        { return tab ~ "TypeAny        " ~ bat ~ ttw(ta); }
 
-    const dstring visit (TypeVoid tv) { return tab ~ "TypeVoid\t\t" ~ ttw(tv); }
+    const dstring visit (TypeVoid tv)       { return tab ~ "TypeVoid       " ~ bat ~ ttw(tv); }
 
-    const dstring visit (TypeInt ti) { return tab ~ "TypeInt\t\t" ~ ttw(ti); }
+    const dstring visit (TypeInt ti)        { return tab ~ "TypeInt        " ~ bat ~ ttw(ti); }
 
-    const dstring visit (TypeFloat tf) { return tab ~ "TypeFloat\t\t" ~ ttw(tf); }
+    const dstring visit (TypeFloat tf)      { return tab ~ "TypeFloat      " ~ bat ~ ttw(tf); }
 
-    const dstring visit (TypeText tt) { return tab ~ "TypeText\t\t" ~ ttw(tt); }
+    const dstring visit (TypeText tt)       { return tab ~ "TypeText       " ~ bat ~ ttw(tt); }
 
-    const dstring visit (TypeChar tch) { return tab ~ "TypeChar\t\t" ~ ttw(tch); }
+    const dstring visit (TypeChar tch)      { return tab ~ "TypeChar       " ~ bat ~ ttw(tch); }
 
-    const dstring visit (TypeStruct ts) { return tab ~ "TypeStruct\t\t" ~ ttw(ts); }
+    const dstring visit (TypeStruct ts)     { return tab ~ "TypeStruct     " ~ bat ~ ttw(ts); }
 
-    const dstring visit (TypeArray tarr) { return tab ~ "TypeArray\t\t" ~ ttw(tarr); }
+    const dstring visit (TypeArray tarr)    { return tab ~ "TypeArray      " ~ bat ~ ttw(tarr); }
 
-    const dstring visit (TypeFn tfn) { return tab ~ "TypeFn\t\t" ~ ttw(tfn); }
+    const dstring visit (TypeFn tfn)        { return tab ~ "TypeFn         " ~ bat ~ ttw(tfn); }
 }

@@ -49,7 +49,7 @@ bool testFile (string filePath, int folerPathCountChars)
     ts.startFilePath = filePath;
     auto p = new Program(ts);
     auto sp = new StringPrinter;
-    auto cp = new ConsolePrinter;
+    sp.dbgEnabled = true;
 
     auto c = new ConsoleInterpreterContext(sp);
     c.evaluator = new Interpreter(c);

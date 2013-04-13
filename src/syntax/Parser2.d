@@ -1,7 +1,6 @@
 module syntax.Parser2;
 
 
-import std.bitmanip;
 import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
 
@@ -53,27 +52,27 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     dchar[] braceStack;
     Exp prevExp;
     bool continueParsing = true;
-
     bool missingClosingBrace;
+
+
+    enum ParsingAction
+    {
+        none,
+        parsingFnApply,
+        parsingBracedExps,
+        parsingOp,
+        parsingAsType,
+    }
 
 
     static struct ParsingState
     {
-        debug
+        ParsingAction[] actions;
+        bool parseOpLeftToRight;
+
+        const nothrow @property bool curr (ParsingAction act)
         {
-            bool nonFnApplyOpenBraceStart;
-            bool parseOpLeftToRight;
-            bool inParsingOp;
-            bool inParsingAsType;
-        }
-        else
-        {
-            mixin(bitfields!(
-                             bool, "nonFnApplyOpenBraceStart", 1,
-                             bool, "parseOpLeftToRight", 1,
-                             bool, "inParsingOp", 1,
-                             bool, "inParsingAsType", 1,
-                             uint, "padding", 4));
+            return actions.length ? actions[$ - 1] == act : false;
         }
     }
 
@@ -229,13 +228,10 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
         switch (current.type)
         {
-            case TokenType.ident:  e = parseExpIdent(parent); break;
-            case TokenType.num:    e = parseValueNum(parent); break;
+            case TokenType.ident:      e = parseExpIdent(parent); break;
+            case TokenType.num:        e = parseValueNum(parent); break;
             case TokenType.braceStart: e = parseBrace(parent, ps);  break;
-            
-            case TokenType.empty:  associateWadding(prevExp); continueParsing = false; return null;
-            
-            case TokenType.op:     e = parseOp(parent, ps, null); goto nextOp;
+            case TokenType.op:         e = parseOp(parent, ps, null); goto nextOp;
 
             case TokenType.braceEnd:
                 vctx.remark(textRemark(current, "Closing brace is redundant"));
@@ -248,6 +244,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
                     "Token " ~ current.type.toDString() ~ " '" ~ current.text ~ "' is unexpected at this place"));
                 nextTok();
                 return null;
+
+            case TokenType.empty:  associateWadding(prevExp); continueParsing = false; return null;
             
             default:
                 dbg("Attempt to parse token " ~ current.type.toString());
@@ -259,36 +257,50 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         if (sepPassed)
             return e;
 
-        if (!ps.parseOpLeftToRight && current.type == TokenType.op)
+        if (current.type == TokenType.op && !ps.parseOpLeftToRight)
         {
             e = parseOp(parent, ps, e);
             goto nextOp;
         }
 
-        if (!ps.inParsingOp && current.type == TokenType.asType)
-        {
-            if (ps.inParsingAsType)
-            {
-                // TODO: implement here more handlings of incorrect colon
-                vctx.remark(textRemark("Double colon is repeated"));
-                nextTok();
-            }
-            e = parseExpAssign(e, ps);
-        }
+        e = continueParsingAsType(parent, ps, e);
 
         nextAssign:
 
         if (sepPassed)
             return e;
 
-        if (!ps.inParsingAsType && !ps.inParsingOp && current.type == TokenType.assign)
+        if (current.type == TokenType.assign && ps.curr(ParsingAction.parsingAsType) && !ps.curr(ParsingAction.parsingOp))
         {
             e = parseExpAssign(e, ps);
             goto nextAssign;
         }
 
+        e = continueParsingFnApply(parent, ps, e);
 
-        while (!sepPassed && current.type == TokenType.braceStart)
+        return e;
+    }
+
+ 
+    Exp continueParsingAsType(ValueScope parent, ParsingState ps, Exp e)
+    {
+        if (current.type == TokenType.asType && !ps.curr(ParsingAction.parsingOp))
+        {
+            if (ps.curr(ParsingAction.parsingAsType))
+            {
+                // TODO: implement here more handlings of incorrect colon
+                vctx.remark(textRemark("Double colon is repeated"));
+                nextTok();
+            }
+            return parseExpAssign(e, ps);
+        }
+        return e;
+    }
+
+
+    Exp continueParsingFnApply (ValueScope parent, ParsingState ps, Exp e)
+    {
+        while (current.type == TokenType.braceStart && !sepPassed)
             e = newExp!ExpFnApply(e.tokens[0].index, parent, e, parseBracedExpList(parent, ps, true));
 
         return e;
@@ -318,9 +330,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         if (current.type == TokenType.asType)
         {
             nextTok();
-            ps.inParsingAsType = true;
+            ps.actions ~= ParsingAction.parsingAsType;
             type = parse(slot.parent, ps);
-            ps.inParsingAsType = false;
         }
 
         parseAssign:
@@ -354,17 +365,19 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         }
         else
         {
-            ps.inParsingOp = true;
+            ps.actions ~= ParsingAction.parsingOp;
             ps.parseOpLeftToRight = true;
         
             op2 = parse(parent, ps);
         
             ps.parseOpLeftToRight = false;
-            ps.inParsingOp = false;
         }
 
         if (!op2 && !op1)
         {
+            if (ps.curr(ParsingAction.parsingBracedExps))
+                return op;
+
             op1 = new ValueUnknown(parent);
             op2 = new ValueUnknown(parent);
             vctx.remark(textRemark(op, "Both operands for '" 
@@ -400,13 +413,14 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
 
         if (current.text[0] == '(')
         {
+            ps.actions ~= ParsingAction.parsingBracedExps;
             auto exps = parseBracedExpList(parent, ps);
             
             if (exps.length > 1)
                 vctx.remark(textRemark(exps[0], "Multiple expressions are enclosed in brace, "
                                        ~ " did you wanted to call some function?"));
 
-            else if (exps.length == 1 && cast(ValueUnknown)exps[0] && !missingClosingBrace)
+            else if (exps.length == 1 && !missingClosingBrace)
             {
                 auto i = cast(ExpIdent)exps[0];
                 if (i && i.tokens[0].type != TokenType.op)

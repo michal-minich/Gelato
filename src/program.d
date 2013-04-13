@@ -1,7 +1,7 @@
 module program;
 
 
-import std.stdio, std.algorithm, std.string, std.array, std.conv, std.file, std.path, std.utf, std.path;
+import std.algorithm, std.string, std.array, std.conv, std.file, std.path, std.utf, std.path;
 import std.file : exists, isFile;
 import common, settings, syntax.Formatter, validate.remarks, syntax.SyntaxValidator,
     syntax.Tokenizer, syntax.Parser2, syntax.ast, interpret.Interpreter, interpret.preparer,
@@ -181,9 +181,9 @@ final class Program
 
     Token[] tokenize (dstring fileData, string fileName)
     {
-        debug context.printer.dbg("TOKENIZE " ~  fileName.to!dstring());
+        debug context.printer.dbg("TOKENIZE");// ~  fileName.to!dstring());
         auto toks = (new Tokenizer(fileData)).tokenize();
-        debug foreach (t; toks) context.printer.println(t.toDebugString());
+        debug foreach (t; toks) context.printer.dbg(t.toDebugString());
         return toks;
     }
     
@@ -196,7 +196,7 @@ final class Program
         {
             auto dtf = new test.DebugTokenFormater.DebugTokenFormater;
             auto str = dtf.visit(ast);
-            writeln(str);
+            debug context.printer.dbg(str);
         }
         return ast;
     }
