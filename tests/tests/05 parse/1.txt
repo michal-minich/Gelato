@@ -11,9 +11,7 @@ TOKENIZE
  8 empty             0:0-4294967295(0)0  ""
 PARSE
 
-ValueStruct             |<unknown>
-x((+))|
-  ValueUnknown          |<unknown>|
+ValueStruct             |x((+))|
   ExpFnApply            |x((+))|
     ExpIdent            |x|
     ExpIdent            |(+)|

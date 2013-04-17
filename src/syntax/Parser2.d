@@ -16,9 +16,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         toks = tokens;
         current = toks[0];
         parseWaddings();
-        prevExp = ValueUnknown.single;
         root = new ValueStruct(null);
-        root.exps ~= prevExp;
+        prevExp = root;
     }
 
 
@@ -53,6 +52,44 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     Exp prevExp;
     bool continueParsing = true;
     bool missingClosingBrace;
+    enum dstring[][] opPrecedence = [
+        ["."],
+        ["*", "/", "%"],
+        ["+", "-"],
+        ["<<", ">>"],
+        ["<", ">", "<=", ">=", ""],
+        ["==", "!="],
+        ["&"],
+        ["^"],
+        ["|"],
+        ["&&"],
+        ["||"],
+        [".."],
+        ["=", "*=", "/=", "%=", "+=", "-=", "<<=", ">>=", "&=", "^=", "|="]];
+
+       
+    bool isHigherPrecedence (dstring op1, dstring op2)
+    {
+        if (op1 == op2)
+            return false;
+
+        auto op1Prec = -1;
+        auto op2Prec = -1;
+
+        foreach (prec, ops; opPrecedence)
+            foreach (op; ops)
+            {
+                if (op == op1)
+                    op1Prec = prec;
+                else if (op == op2)
+                    op2Prec = prec;
+
+                if (op1Prec != -1 && op2Prec != -1)
+                    return op2Prec > op1Prec;
+            }
+
+        return false;
+    }
 
 
     enum ParsingAction
@@ -68,7 +105,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
     static struct ParsingState
     {
         ParsingAction[] actions;
-        bool parseOpLeftToRight;
+        dstring[] ops;
 
         const nothrow @property bool curr (ParsingAction act)
         {
@@ -257,10 +294,14 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         if (sepPassed)
             return e;
 
-        if (current.type == TokenType.op && !ps.parseOpLeftToRight)
+        if (current.type == TokenType.op)
         {
-            e = parseOp(parent, ps, e);
-            goto nextOp;
+            bool isHigher = ps.ops.length ? isHigherPrecedence(ps.ops[$ - 1], current.text) : false;
+            if (!isHigher)
+            {
+                e = parseOp(parent, ps, e);
+                goto nextOp;
+            }
         }
 
         e = continueParsingAsType(parent, ps, e);
@@ -270,7 +311,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         if (sepPassed)
             return e;
 
-        if (current.type == TokenType.assign && ps.curr(ParsingAction.parsingAsType) && !ps.curr(ParsingAction.parsingOp))
+        if (current.type == TokenType.assign)
         {
             e = parseExpAssign(e, ps);
             goto nextAssign;
@@ -356,6 +397,8 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         if (!op)
             op = newExp1!ExpIdent(parent, current.text);
         
+        ps.ops ~= current.text;
+
         nextTok();
 
         Exp op2;
@@ -366,11 +409,7 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
         else
         {
             ps.actions ~= ParsingAction.parsingOp;
-            ps.parseOpLeftToRight = true;
-        
             op2 = parse(parent, ps);
-        
-            ps.parseOpLeftToRight = false;
         }
 
         if (!op2 && !op1)
@@ -466,28 +505,10 @@ import common, validate.remarks, syntax.ast, syntax.NamedCharRefs;
             nextTok();
             return null;
         }
-
-       /* if (!parsingFnApply && current.type == TokenType.op)
-        {
-            auto op = newExp1!ExpIdent(parent, current.text);
-            nextTok();
-            if (opposite == current.text[0])
-            {
-                nextTok();
-                return [op];
-            }
-            else
-            {
-                parseOp(parent, null, op);
-            }
-        }*/
         
         while (true)
         {
-            auto old = ps.parseOpLeftToRight;
-            ps.parseOpLeftToRight = false;
             list ~= parse(parent, ps);
-            ps.parseOpLeftToRight = old;
 
             if (empty)
             {

@@ -18,7 +18,7 @@ import common, syntax.ast;
 @trusted pure final class DebugTokenFormater : IFormatVisitor
 {   
     private uint level;   
-    private uint maxLevel = 5;
+    private uint maxLevel = 6;
     private enum dstring tabs = "    "d.replicate(16);
     bool printWaddings = true;
     bool printTokens = true;
